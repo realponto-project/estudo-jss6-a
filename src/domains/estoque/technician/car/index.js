@@ -88,6 +88,12 @@ module.exports = class CarDomain {
       transaction,
     })
 
+    // const test = await Car.findOne({
+    //   model: 'CELTA',
+    // })
+
+    // console.log(JSON.parse(JSON.stringify(test)))
+
     if (cars.length === 0) return []
 
     return cars

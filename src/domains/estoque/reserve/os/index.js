@@ -221,7 +221,7 @@ module.exports = class OsDomain {
         transaction,
       })
 
-      osParts.map(async (item) => {
+      const osPartsPromise = osParts.map(async (item) => {
         const stockBase = await StockBase.findOne({
           where: { stockBase: item.stockBase },
           transaction,
@@ -242,9 +242,10 @@ module.exports = class OsDomain {
 
         await productBase.update(productBaseUpdate, { transaction })
 
-
         await item.destroy()
       })
+
+      await Promise.all(osPartsPromise)
 
       await os.destroy()
     } else {
@@ -559,7 +560,7 @@ module.exports = class OsDomain {
       technician: osReturn.technician.name,
       reserve: formatedReserve(osReturn.products),
     }
-    
+
     return response
   }
 

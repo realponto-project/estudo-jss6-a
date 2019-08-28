@@ -15,12 +15,17 @@ module.exports = (sequelize) => {
   })
 
   kitParts.associate = (models) => {
-    kitParts.belongsTo(models.stockBase, {
+    // kitParts.belongsTo(models.stockBase, {
+    //   foreignKey: {
+    //     allowNull: true,
+    //   },
+    // })
+    kitParts.belongsTo(models.productBase, {
       foreignKey: {
         allowNull: true,
       },
     })
-    kitParts.belongsTo(models.product, {
+    kitParts.belongsTo(models.kit, {
       foreignKey: {
         allowNull: true,
       },

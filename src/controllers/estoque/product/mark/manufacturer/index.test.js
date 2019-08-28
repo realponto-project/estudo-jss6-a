@@ -23,6 +23,14 @@ describe('manufacturerController', () => {
       token,
       username,
     }
+
+    const markMock = {
+      manufacturer: 'FESTO',
+      mark: 'FESTO',
+      responsibleUser: 'modrp',
+    }
+
+    await request().post('/api/mark', markMock, { headers })
   })
 
   test('create', async () => {
@@ -35,11 +43,11 @@ describe('manufacturerController', () => {
   })
 
   test('getAll', async () => {
-    const resposta = await request().get('/api/manufacturer', { headers, params: { query: 'DELL' } })
+    const resposta = await request().get('/api/manufacturer', { headers, params: { query: 'FESTO' } })
 
     const { body, statusCode } = resposta
 
     expect(statusCode).toBe(200)
-    expect(body).toBe('DELL')
+    expect(body).toBe('FESTO')
   })
 })

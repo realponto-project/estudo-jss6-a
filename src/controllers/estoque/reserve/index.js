@@ -30,8 +30,6 @@ const output = async (req, res, next) => {
     // console.log(req.body)
     const Os = await osDomain.output(req.body, { transaction })
 
-    // console.log(Os)
-
     await transaction.commit()
     res.json(Os)
   } catch (error) {

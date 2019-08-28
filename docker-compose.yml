@@ -2,15 +2,15 @@ version: '3.1'
 
 services:
 
-  db_labtec:
+  db_estoque:
     image: postgres:11.2-alpine
     environment:
-      POSTGRES_PASSWORD: labtec
-      POSTGRES_DB: labtec
+      POSTGRES_PASSWORD: estoque
+      POSTGRES_DB: estoque
     ports:
-      - 5401:5432
+      - 5402:5432
     volumes:
-      - db_labtec:/var/lib/postgresql/data
+      - db_estoque:/var/lib/postgresql/data
     
 volumes:
-  db_labtec:
+  db_estoque:

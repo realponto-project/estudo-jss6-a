@@ -65,7 +65,7 @@ describe('reserveOsDomain', () => {
     const companyCreated = await companyDomain.add(companyMock)
 
     const entranceMock = {
-      amountAdded: '12',
+      amountAdded: '32',
       stockBase: 'PONTOREAL',
       productId: productCreated.id,
       companyId: companyCreated.id,

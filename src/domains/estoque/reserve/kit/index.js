@@ -45,27 +45,22 @@ module.exports = class KitDomain {
 
     const technicial = await Technician.findAll({ transaction })
 
-    console.log(JSON.parse(JSON.stringify(technicial)))
+    // console.log(JSON.parse(JSON.stringify(technicial)))
 
     const oldKit = await Kit.findAll({ transaction })
 
-    console.log(JSON.parse(JSON.stringify(oldKit)))
+    // console.log(JSON.parse(JSON.stringify(oldKit)))
 
     if (oldKit) {
       const oldKitDelete = oldKit.map(async (itemOldKit) => {
         const oldKitParts = await KitParts.findAll({
           where: { kitId: itemOldKit.id },
-          attributes: ['id', 'productId', 'amount', 'stockBaseId'],
+          attributes: ['id', 'amount', 'productBaseId'],
           transaction,
         })
 
         const kitPartsDeletePromises = oldKitParts.map(async (item) => {
-          const productBase = await ProductBase.findOne({
-            where: {
-              productId: item.productId,
-              stockBaseId: item.stockBaseId,
-            },
-          })
+          const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
           const productBaseUpdate = {
             ...productBase,
@@ -97,14 +92,6 @@ module.exports = class KitDomain {
             transaction,
           })
 
-          const kitPartsCreatted = {
-            ...item,
-            kitId: kitCreated.id,
-            stockBaseId: stockBase.id,
-          }
-
-          await KitParts.create(kitPartsCreatted, { transaction })
-
           const productBase = await ProductBase.findOne({
             where: {
               productId: item.productId,
@@ -112,6 +99,13 @@ module.exports = class KitDomain {
             },
           })
 
+          const kitPartsCreatted = {
+            amount: item.amount,
+            kitId: kitCreated.id,
+            productBaseId: productBase.id,
+          }
+
+          await KitParts.create(kitPartsCreatted, { transaction })
 
           const productBaseUpdate = {
             ...productBase,
@@ -167,31 +161,34 @@ module.exports = class KitDomain {
 
     const entrances = await KitParts.findAndCountAll({
       // where: getWhere('kit'),
-      // include: [
-      //   {
-      //     model: Product,
-      //     // where: getWhere('product'),
-      //     include: [
-      //       // {
-      //       //   model: Mark,
-      //       //   include: [{
-      //       //     model: Manufacturer,
-      //       //   }],
-      //       // },
-      //       {
-      //         model: Part,
-      //         // where: getWhere('part'),
-      //       },
-      //       {
-      //         model: EquipModel,
-      //         // where: getWhere('equipModel'),
-      //       },
-      //     ],
-      //   },
-      //   {
-      //     model: StockBase,
-      //   },
-      // ],
+      include: [
+        {
+          model: ProductBase,
+          include: [
+            {
+              model: Product,
+              include: [
+                {
+                  model: Part,
+                },
+                {
+                  model: EquipModel,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: Kit,
+          include: [
+            {
+              model: Technician,
+              where: getWhere('technician'),
+            },
+          ],
+          required: true,
+        },
+      ],
       order: [
         [newOrder.field, newOrder.direction],
       ],
@@ -237,7 +234,7 @@ module.exports = class KitDomain {
         // mark: entrance.product.mark.mark,
         // manufacturer: entrance.product.mark.manufacturer.manufacturer,
         // // eslint-disable-next-line max-len
-        // name: entrance.product.partId ? entrance.product.part.name : entrance.product.equipModel.name,
+        name: entrance.productBase.product.partId ? entrance.productBase.product.part.name : entrance.productBase.product.equipModel.name,
         // createdAt: formatDateFunct(entrance.createdAt),
       }
       return resp
@@ -261,7 +258,7 @@ module.exports = class KitDomain {
       rows: entrancesList,
     }
 
-    console.log(response)
+    // console.log(response)
 
     return response
   }

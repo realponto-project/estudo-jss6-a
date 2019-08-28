@@ -204,6 +204,7 @@ module.exports = class TechnicianDomain {
       transaction,
     })
 
+
     // const formatData = R.map((technician) => {
     //   const resp = {
     //     name: technician.name,
