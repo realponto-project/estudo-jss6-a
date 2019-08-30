@@ -7,14 +7,28 @@ module.exports = (sequelize) => {
       defaultValue: Sequelize.UUIDV4,
       primaryKey: true,
     },
+
+    action: {
+      type: Sequelize.ENUM(['reposicao', 'expedicao', 'perda']),
+      allowNull: false,
+    },
+
+    amount: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+
+    os: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      unique: true,
+    },
   })
 
   kitOut.associate = (models) => {
-    kitOut.belongsToMany(models.product, { through: 'kitPartsOut' })
-
-    kitOut.belongsTo(models.technician, {
+    kitOut.belongsTo(models.kitParts, {
       foreignKey: {
-        allowNull: true,
+        allowNull: false,
       },
     })
   }

@@ -39,7 +39,7 @@ describe('markController', () => {
   })
 
   test('getAll', async () => {
-    const resposta = await request().get('/api/mark', { headers, params: { query: 'peca' } })
+    const resposta = await request().get('/api/mark', { headers })
 
     const { body, statusCode } = resposta
 

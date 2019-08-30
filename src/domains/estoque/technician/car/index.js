@@ -85,8 +85,17 @@ module.exports = class CarDomain {
 
     const cars = await Car.findAll({
       attributes: ['model', 'plate'],
+      order: [
+        ['model', 'ASC'],
+      ],
       transaction,
     })
+
+    // const test = await Car.findOne({
+    //   model: 'CELTA',
+    // })
+
+    // console.log(JSON.parse(JSON.stringify(test)))
 
     if (cars.length === 0) return []
 

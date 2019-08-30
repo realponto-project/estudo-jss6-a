@@ -22,6 +22,7 @@ describe('technicianDomain', () => {
       name: 'CARLOS',
       CNH: '01/01/2000',
       plate: 'ABC-4321',
+      external: false,
     }
   })
 

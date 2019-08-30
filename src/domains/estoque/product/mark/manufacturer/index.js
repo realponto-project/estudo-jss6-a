@@ -69,7 +69,6 @@ module.exports = class ManufacturerDomain {
         {
           model: Manufacturer,
           attributes: ['manufacturer'],
-
         },
       ],
       transaction,

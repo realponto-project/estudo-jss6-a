@@ -13,8 +13,6 @@ const Product = database.model('product')
 // const User = database.model('user')
 const Mark = database.model('mark')
 const Manufacturer = database.model('manufacturer')
-const Part = database.model('part')
-const EquipModel = database.model('equipModel')
 const StockBase = database.model('stockBase')
 const ProductBase = database.model('productBase')
 // const Equip = database.model('equip')
@@ -45,32 +43,26 @@ module.exports = class StockDomain {
       pageResponse,
     } = formatQuery(newQuery)
 
+    // console.log(getWhere('manufacturer'))
+
     const entrances = await ProductBase.findAndCountAll({
       // where: getWhere('productBase'),
-      attributes: ['id', 'amount'],
+      attributes: ['id', 'amount', 'available'],
       include: [
         {
           model: Product,
-          attributes: ['partId', 'equipModelId'],
+          attributes: ['name'],
+          where: getWhere('product'),
           include: [
-            {
-              model: EquipModel,
-              attributes: ['name'],
-              // where: { name: 'DEDO BOM' },
-              // required: true,
-            },
-            {
-              model: Part,
-              attributes: ['name'],
-              // where: { name: 'FONT 3 V' },
-              // required: true,
-            },
             {
               model: Mark,
               attributes: ['manufacturerId'],
+              required: true,
               include: [{
                 model: Manufacturer,
                 attributes: ['manufacturer'],
+                where: getWhere('manufacturer'),
+                required: true,
               }],
             },
           ],
@@ -79,12 +71,12 @@ module.exports = class StockDomain {
         {
           model: StockBase,
           attributes: ['stockBase'],
+          where: getWhere('stockBase'),
         },
       ],
       order: [
         [newOrder.field, newOrder.direction],
       ],
-      // required: false,
       limit,
       offset,
       transaction,
@@ -115,10 +107,8 @@ module.exports = class StockDomain {
       const resp = {
         id: entrance.id,
         amount: entrance.amount,
-        name: entrance.product.equipModel
-          ? entrance.product.equipModel.name
-          : entrance.product.part.name,
-        // name: entrance.product.part ? entrance.product.part.name : 'teste',
+        available: entrance.available,
+        name: entrance.product.name,
         manufacturer: entrance.product.mark.manufacturer.manufacturer,
         stockBase: entrance.stockBase.stockBase,
       // oldAmount: entrance.oldAmount,
@@ -142,6 +132,8 @@ module.exports = class StockDomain {
       count: entrances.count,
       rows: entrancesList,
     }
+
+    // console.log(response)
 
     return response
   }

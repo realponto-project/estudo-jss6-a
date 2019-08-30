@@ -40,6 +40,7 @@ describe('etraceController', () => {
       minimumStock: '12',
       mark: 'LG',
       name: 'MONITOR',
+      serial: false,
       responsibleUser: 'modrp',
     }
 

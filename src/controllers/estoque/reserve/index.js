@@ -24,13 +24,25 @@ const addOs = async (req, res, next) => {
   }
 }
 
+const updateOs = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    // console.log(req.body)
+    const Os = await osDomain.update(req.body, { transaction })
+
+    await transaction.commit()
+    res.json(Os)
+  } catch (error) {
+    await transaction.rollback()
+    next(error)
+  }
+}
+
 const output = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
     // console.log(req.body)
     const Os = await osDomain.output(req.body, { transaction })
-
-    // console.log(Os)
 
     await transaction.commit()
     res.json(Os)
@@ -151,6 +163,7 @@ const getOsByOs = async (req, res, next) => {
 module.exports = {
   addOs,
   output,
+  updateOs,
   deleteOs,
   addKit,
   getAllKit,

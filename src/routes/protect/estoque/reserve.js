@@ -2,6 +2,7 @@ const router = require('express').Router({ mergeParams: true })
 const reserveController = require('../../../controllers/estoque/reserve')
 
 router.post('/OS', reserveController.addOs)
+router.put('/OS', reserveController.updateOs)
 router.delete('/OS', reserveController.deleteOs)
 router.get('/OS', reserveController.getAllOs)
 router.get('/getOsByOs', reserveController.getOsByOs)

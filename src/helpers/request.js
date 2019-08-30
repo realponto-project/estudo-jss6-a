@@ -25,7 +25,7 @@ const transformResponseProps = applySpec({
 
 const getRequest = (config = {}) => {
   const defaultConfig = {
-    baseURL: 'http://localhost:5301',
+    baseURL: 'http://localhost:5302',
     headers: defaultToEmptyObject(),
     params: defaultToEmptyObject(),
     timeout: 10000,

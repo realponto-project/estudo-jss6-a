@@ -3,19 +3,6 @@ const database = require('../../../../../database')
 
 const equipModelDomain = new EquipModelDomain()
 
-const addModel = async (req, res, next) => {
-  const transaction = await database.transaction()
-  try {
-    const equipModel = await equipModelDomain.addModel(req.body, { transaction })
-
-    await transaction.commit()
-    res.json(equipModel)
-  } catch (error) {
-    await transaction.rollback()
-    next(error)
-  }
-}
-
 const addType = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
@@ -43,7 +30,6 @@ const getAllType = async (req, res, next) => {
 }
 
 module.exports = {
-  addModel,
   addType,
   getAllType,
 }

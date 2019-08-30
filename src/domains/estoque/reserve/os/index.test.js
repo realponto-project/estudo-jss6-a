@@ -41,6 +41,7 @@ describe('reserveOsDomain', () => {
       minimumStock: '10',
       mark: 'DC',
       name: 'TAMPA',
+      serial: false,
       responsibleUser: 'modrp',
     }
 
@@ -65,7 +66,7 @@ describe('reserveOsDomain', () => {
     const companyCreated = await companyDomain.add(companyMock)
 
     const entranceMock = {
-      amountAdded: '12',
+      amountAdded: '32',
       stockBase: 'PONTOREAL',
       productId: productCreated.id,
       companyId: companyCreated.id,
@@ -86,6 +87,7 @@ describe('reserveOsDomain', () => {
       name: 'MARCOS BOLADÃO',
       CNH: '01/01/2000',
       plate: 'RST-1234',
+      external: false,
     }
 
     technicianCreated = await technicianDomain.add(technicianMock)
@@ -108,7 +110,6 @@ describe('reserveOsDomain', () => {
     }
     const reserveCreated = await osDomain.add(reserveMock)
 
-    expect(reserveCreated.os).toBe(reserveMock.os)
     expect(reserveCreated.razaoSocial).toBe(reserveMock.razaoSocial)
     expect(reserveCreated.cnpj).toBe(reserveMock.cnpj)
     // expect(reserveCreated.date).toBe(reserveMock.date)
@@ -192,9 +193,9 @@ describe('reserveOsDomain', () => {
       ],
     }
 
-    await osDomain.add(reserveMock)
+    const reserveOsCreated = await osDomain.add(reserveMock)
 
-    const os = await osDomain.getOsByOs('3463846441')
+    const os = await osDomain.getOsByOs(reserveOsCreated.id)
 
     expect(os).toBeTruthy()
   })

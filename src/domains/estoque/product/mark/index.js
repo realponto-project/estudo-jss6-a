@@ -8,7 +8,6 @@ const { FieldValidationError } = require('../../../../helpers/errors')
 
 const Mark = database.model('mark')
 const Manufacturer = database.model('manufacturer')
-const Product = database.model('product')
 // const User = database.model('user')
 
 const manufacturerDomain = new ManufacturerDomain()
@@ -128,7 +127,7 @@ module.exports = class MarkDomain {
   }
 
   async getAll(options = {}) {
-    const { query = null, transaction = null } = options
+    const { transaction = null } = options
 
     const marks = await Mark.findAll({
       attributes: ['mark'],
@@ -139,11 +138,6 @@ module.exports = class MarkDomain {
         {
           model: Manufacturer,
           attributes: ['manufacturer'],
-        },
-        {
-          model: Product,
-          where: { category: query },
-          attributes: [],
         },
       ],
       transaction,

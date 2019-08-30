@@ -9,290 +9,215 @@ const database = require('../../../../../database')
 const { FieldValidationError } = require('../../../../../helpers/errors')
 
 const KitOut = database.model('kitOut')
-const Technician = database.model('technician')
-const KitPartsOut = database.model('kitPartsOut')
-const Product = database.model('product')
-const StockBase = database.model('stockBase')
-const ProductBase = database.model('productBase')
+const KitParts = database.model('kitParts')
 
 module.exports = class KitOutDomain {
   async add(bodyData, options = {}) {
     const { transaction = null } = options
 
+    // const kitOut = R.omit(['id'], bodyData)
+
     const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
-    const bodyHasProp = prop => R.has(prop, bodyData)
 
     const field = {
-      technicianId: false,
-      kitPartsOut: false,
+      reposicao: false,
+      expedicao: false,
+      perda: false,
+      os: false,
+      kitPartId: false,
     }
     const message = {
-      technicianId: false,
-      kitPartsOut: false,
+      reposicao: '',
+      expedicao: '',
+      perda: '',
+      action: '',
+      amount: '',
+      os: '',
+      kitPartId: '',
     }
-
 
     let errors = false
 
-    if (bodyDataNotHasProp('technicianId') || !bodyData.technicianId) {
+    if (bodyDataNotHasProp('reposicao') || !bodyData.reposicao || /\D/.test(bodyData.reposicao)) {
       errors = true
-      field.technicianId = true
-      message.technicianId = 'Por favor o ID do tecnico'
+      field.reposicao = true
+      message.reposicao = 'Ação inválida'
+    }
+
+    if (bodyDataNotHasProp('expedicao') || !bodyData.expedicao || /\D/.test(bodyData.expedicao)) {
+      errors = true
+      field.expedicao = true
+      message.expedicao = 'Ação inválida'
+    }
+
+    if (bodyDataNotHasProp('perda') || !bodyData.perda || /\D/.test(bodyData.perda)) {
+      errors = true
+      field.perda = true
+      message.perda = 'Ação inválida'
+    }
+
+    // if (bodyDataNotHasProp('amount') || !bodyData.amount || /\D/.test(bodyData.amount) || parseInt(bodyData.amount, 10) < 1) {
+    //   errors = true
+    //   field.amount = true
+    //   message.amount = 'não é numero'
+    // }
+
+    if (bodyDataNotHasProp('kitPartId') || !bodyData.kitPartId) {
+      errors = true
+      field.kitPartId = true
+      message.kitPartId = 'Por favor o ID do tecnico'
     } else {
-      const { technicianId } = bodyData
-      const technicianExist = await Technician.findByPk(technicianId, { transaction })
+      const { kitPartId } = bodyData
+      const technicianExist = await KitParts.findByPk(kitPartId, { transaction })
 
       if (!technicianExist) {
         errors = true
-        field.technicianId = true
-        message.technicianId = 'Técnico não encomtrado'
+        field.kitPartId = true
+        message.kitPartId = 'Técnico não encomtrado'
       }
-    }
-
-    if (bodyDataNotHasProp('kitPartsOut') || !bodyData.kitPartsOut) {
-      errors = true
-      field.kitPartsOut = true
-      message.kitPartsOut = 'Ao menos uma peça deve ser associada.'
     }
 
     if (errors) {
       throw new FieldValidationError([{ field, message }])
     }
 
+    const perdaNumber = parseInt(bodyData.perda, 10)
+    const reposicaoNumber = parseInt(bodyData.reposicao, 10)
+    const expedicaoNumber = parseInt(bodyData.expedicao, 10)
+    const { kitPartId } = bodyData
 
-    const kitOutCreated = await KitOut.create({ technicianId: bodyData.technicianId }, { transaction })
+    const kitPart = await KitParts.findByPk(kitPartId, { transaction })
 
-    if (bodyHasProp('kitPartsOut')) {
-      const { kitPartsOut } = bodyData
+    const amount = parseInt(kitPart.amount, 10) + reposicaoNumber - expedicaoNumber - perdaNumber
 
-      const kitPartsOutCreattedPromises = kitPartsOut.map(async (item) => {
-        const kitPartsOutCreatted = {
-          ...item,
-          kitOutId: kitOutCreated.id,
-        }
-
-        await KitPartsOut.create(kitPartsOutCreatted, { transaction })
-
-        const stockBase = await StockBase.findOne({
-          where: { stockBase: item.stockBase },
-          transaction,
-        })
-
-        const productBase = await ProductBase.findOne({
-          where: {
-            productId: item.productId,
-            stockBaseId: stockBase.id,
-          },
-        })
-
-        const productBaseUpdate = {
-          ...productBase,
-          available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
-          reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
-        }
-
-        await productBase.update(productBaseUpdate, { transaction })
-      })
-      await Promise.all(kitPartsOutCreattedPromises)
+    if (amount <= 0) {
+      field.amount = true
+      message.amount = 'quantidade inválida'
+      throw new FieldValidationError([{ field, message }])
     }
 
-    const response = await KitOut.findByPk(kitOutCreated.id, {
-      include: [{
-        model: Product,
-      }],
-      transaction,
-    })
+    const kitPartUpdate = {
+      ...kitPart,
+      amount,
+    }
 
-    return response
+    await kitPart.update(kitPartUpdate, { transaction })
+
+    if (perdaNumber > 0) {
+      const { perda } = bodyData
+
+      const kitOut = {
+        action: 'perda',
+        amount: perda,
+        kitPartId,
+      }
+
+      await KitOut.create(kitOut, { transaction })
+    }
+
+    if (reposicaoNumber > 0) {
+      const { reposicao } = bodyData
+
+      const kitOut = {
+        action: 'reposicao',
+        amount: reposicao,
+        kitPartId,
+      }
+
+      await KitOut.create(kitOut, { transaction })
+    }
+
+    if (expedicaoNumber > 0) {
+      const { expedicao } = bodyData
+
+      if (bodyDataNotHasProp('os') || !bodyData.os || /\D/.test(bodyData.os)) {
+        field.os = true
+        message.os = 'Ação inválida'
+        throw new FieldValidationError([{ field, message }])
+      }
+
+      const { os } = bodyData
+
+      const kitOutReturn = await KitOut.findOne({
+        where: { os },
+        transaction,
+      })
+
+      if (kitOutReturn) {
+        const kitOutUpdate = {
+          ...kitOutReturn,
+          amount: (parseInt(kitOutReturn.amount, 10) + parseInt(expedicao, 10)).toString(),
+        }
+
+        kitOutReturn.update(kitOutUpdate, { transaction })
+      } else {
+        const kitOut = {
+          action: 'expedicao',
+          amount: expedicao,
+          kitPartId,
+          os,
+        }
+        await KitOut.create(kitOut, { transaction })
+      }
+    }
+
+    return 'sucesso'
+
+    // if (expedicaoNumber > 0 && !bodyDataNotHasProp('os') || !bodyData.os) {
+    //   const { expedicao } = bodyData
+
+    //   const kitOut = {
+    //     action: 'expedicao',
+    //     amount: expedicao,
+    //     kitPartId,
+    //   }
+
+    //   await KitOut.create(kitOut, { transaction })
+    // }
+
+    // const kitOutCreated = await KitOut.create(kitOut, { transaction })
+
+    // if (bodyHasProp('kitPartsOut')) {
+    //   const { kitPartsOut } = bodyData
+
+    //   const kitPartsOutCreattedPromises = kitPartsOut.map(async (item) => {
+    //     const kitPartsOutCreatted = {
+    //       ...item,
+    //       kitOutId: kitOutCreated.id,
+    //     }
+
+    //     await KitPartsOut.create(kitPartsOutCreatted, { transaction })
+
+    //     const stockBase = await StockBase.findOne({
+    //       where: { stockBase: item.stockBase },
+    //       transaction,
+    //     })
+
+    //     const productBase = await ProductBase.findOne({
+    //       where: {
+    //         productId: item.productId,
+    //         stockBaseId: stockBase.id,
+    //       },
+    //     })
+
+    //     const productBaseUpdate = {
+    //       ...productBase,
+    //       available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
+    //       reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
+    //     }
+
+    //     await productBase.update(productBaseUpdate, { transaction })
+    //   })
+    //   await Promise.all(kitPartsOutCreattedPromises)
+    // }
+
+    // const response = await KitOut.findByPk(kitOutCreated.id, {
+    //   // include: [{
+    //   //   model: Product,
+    //   // }],
+    //   transaction,
+    // })
+
+    // return response
   }
-
-  // async getAll(options = {}) {
-  //   const inicialOrder = {
-  //     field: 'createdAt',
-  //     acendent: true,
-  //     direction: 'DESC',
-  //   }
-
-  //   const { query = null, transaction = null } = options
-
-  //   const newQuery = Object.assign({}, query)
-  //   const newOrder = (query && query.order) ? query.order : inicialOrder
-
-  //   if (newOrder.acendent) {
-  //     newOrder.direction = 'DESC'
-  //   } else {
-  //     newOrder.direction = 'ASC'
-  //   }
-
-  //   const {
-  //     getWhere,
-  //     limit,
-  //     offset,
-  //     pageResponse,
-  //   } = formatQuery(newQuery)
-
-  //   console.log('rows')
-
-
-  //   const kits = await Kit.findAndCountAll({
-  //     where: getWhere('kit'),
-  //     include: [
-  //       {
-  //         model: Technician,
-  //       },
-  //       {
-  //         model: Product,
-  //       },
-  //     ],
-  //     order: [
-  //       [newOrder.field, newOrder.direction],
-  //     ],
-  //     limit,
-  //     offset,
-  //     transaction,
-  //   })
-
-  //   const { rows } = kits
-
-  //   console.log(JSON.parse(JSON.stringify(rows[0].products)))
-
-  //   if (rows.length === 0) {
-  //     return {
-  //       page: null,
-  //       show: 0,
-  //       count: kits.count,
-  //       rows: [],
-  //     }
-  //   }
-
-  //   // const formatDateFunct = (date) => {
-  //   //   moment.locale('pt-br')
-  //   //   const formatDate = moment(date).format('L')
-  //   //   const formatHours = moment(date).format('LT')
-  //   //   const dateformated = `${formatDate} ${formatHours}`
-  //   //   return dateformated
-  //   // }
-
-  //   const formatData = R.map((kit) => {
-  //     const resp = {
-  //       id: kit.id,
-  //       // cnpj: kit.cnpj,
-  //       // razaoSocial: kit.razaoSocial,
-  //       // createdAt: formatDateFunct(kit.createdAt),
-  //       // updatedAt: formatDateFunct(kit.updatedAt),
-  //       // nameContact: kit.nameContact,
-  //       // telphone: kit.telphone,
-  //       // street: kit.street,
-  //       // number: kit.number,
-  //       // city: kit.city,
-  //       // state: kit.state,
-  //       // neighborhood: kit.neighborhood,
-  //     }
-  //     return resp
-  //   })
-
-  //   const kitsList = formatData(rows)
-
-  //   let show = limit
-  //   if (kits.count < show) {
-  //     show = kits.count
-  //   }
-
-
-  //   const response = {
-  //     page: pageResponse,
-  //     show,
-  //     count: kits.count,
-  //     rows: kitsList,
-  //   }
-  //   return response
-  // }
-
-  // async create(bodyData, options = {}) {
-  //   const { transaction = null } = options
-
-  //   const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
-  //   const bodyHasProp = prop => R.has(prop, bodyData)
-
-  //   const field = {
-  //     kitPartsOut: false,
-  //   }
-  //   const message = {
-  //     kitPartsOut: false,
-  //   }
-
-
-  //   let errors = false
-
-  //   if (bodyDataNotHasProp('technicianId') || !bodyData.technicianId) {
-  //     errors = true
-  //     field.technicianId = true
-  //     message.technicianId = 'Por favor o ID do tecnico'
-  //   } else {
-  //     const { technicianId } = bodyData
-  //     const technicianExist = await Technician.findByPk(technicianId, { transaction })
-
-  //     if (!technicianExist) {
-  //       errors = true
-  //       field.technicianId = true
-  //       message.technicianId = 'Técnico não encomtrado'
-  //     }
-  //   }
-
-  //   if (bodyDataNotHasProp('kitPartsOut') || !bodyData.kitPartsOut) {
-  //     errors = true
-  //     field.kitPartsOut = true
-  //     message.kitPartsOut = 'Ao menos uma peça deve ser associada.'
-  //   }
-
-  //   if (errors) {
-  //     throw new FieldValidationError([{ field, message }])
-  //   }
-
-
-  //   const kitCreated = await Kit.create({ technicianId: bodyData.technicianId }, { transaction })
-
-  //   if (bodyHasProp('kitPartsOut')) {
-  //     const { kitPartsOut } = bodyData
-
-  //     const kitPartsOutCreattedPromises = kitPartsOut.map(async (item) => {
-  //       const kitPartsOutCreatted = {
-  //         ...item,
-  //         kitId: kitCreated.id,
-  //       }
-
-  //       await KitPartsOut.create(kitPartsOutCreatted, { transaction })
-
-  //       const stockBase = await StockBase.findOne({
-  //         where: { stockBase: item.stockBase },
-  //         transaction,
-  //       })
-
-  //       const productBase = await ProductBase.findOne({
-  //         where: {
-  //           productId: item.productId,
-  //           stockBaseId: stockBase.id,
-  //         },
-  //       })
-
-  //       const productBaseUpdate = {
-  //         ...productBase,
-  //         available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
-  //         reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
-  //       }
-
-  //       await productBase.update(productBaseUpdate, { transaction })
-  //     })
-  //     await Promise.all(kitPartsOutCreattedPromises)
-  //   }
-
-  //   const response = await Kit.findByPk(kitCreated.id, {
-  //     include: [{
-  //       model: Product,
-  //     }],
-  //     transaction,
-  //   })
-
-  //   return response
-  // }
 }

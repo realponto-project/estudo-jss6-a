@@ -14,8 +14,6 @@ const KitParts = database.model('kitParts')
 const Product = database.model('product')
 const StockBase = database.model('stockBase')
 const ProductBase = database.model('productBase')
-const Part = database.model('part')
-const EquipModel = database.model('equipModel')
 
 module.exports = class KitDomain {
   async add(bodyData, options = {}) {
@@ -43,39 +41,45 @@ module.exports = class KitDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
-    const technicial = await Technician.findAll({ transaction })
+    const technicial = await Technician.findAll({
+      where: { external: true },
+      transaction,
+    })
 
-    console.log(JSON.parse(JSON.stringify(technicial)))
+    // console.log(JSON.parse(JSON.stringify(technicial)))
 
     const oldKit = await Kit.findAll({ transaction })
 
-    console.log(JSON.parse(JSON.stringify(oldKit)))
+    // console.log(JSON.parse(JSON.stringify(oldKit)))
 
-    if (oldKit) {
+    if (oldKit.length > 0) {
       const oldKitDelete = oldKit.map(async (itemOldKit) => {
         const oldKitParts = await KitParts.findAll({
           where: { kitId: itemOldKit.id },
-          attributes: ['id', 'productId', 'amount', 'stockBaseId'],
+          attributes: ['id', 'amount', 'productBaseId'],
           transaction,
         })
 
         const kitPartsDeletePromises = oldKitParts.map(async (item) => {
-          const productBase = await ProductBase.findOne({
-            where: {
-              productId: item.productId,
-              stockBaseId: item.stockBaseId,
-            },
-          })
+          const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) + parseInt(item.amount, 10)).toString(),
-            reserved: (parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)).toString(),
+            available: (parseInt(productBase.available, 10) + (parseInt(item.amount, 10) * technicial.length)).toString(),
+            reserved: (parseInt(productBase.reserved, 10) - (parseInt(item.amount, 10) * technicial.length)).toString(),
           }
 
+          // console.log(JSON.parse(JSON.stringify(productBase)))
+
           await productBase.update(productBaseUpdate, { transaction })
+
+          // const productBase1 = await ProductBase.findByPk(item.productBaseId, { transaction })
+
+          // console.log(JSON.parse(JSON.stringify(productBase1)))
+
           await item.destroy({ transaction })
         })
+
         await Promise.all(kitPartsDeletePromises)
 
         await itemOldKit.destroy({ transaction })
@@ -89,21 +93,11 @@ module.exports = class KitDomain {
       if (bodyHasProp('kitParts')) {
         const { kitParts } = bodyData
 
-        // const technicial = await Technician.findAll({ transaction })
-
         const kitPartsCreattedPromises = kitParts.map(async (item) => {
           const stockBase = await StockBase.findOne({
             where: { stockBase: item.stockBase },
             transaction,
           })
-
-          const kitPartsCreatted = {
-            ...item,
-            kitId: kitCreated.id,
-            stockBaseId: stockBase.id,
-          }
-
-          await KitParts.create(kitPartsCreatted, { transaction })
 
           const productBase = await ProductBase.findOne({
             where: {
@@ -112,11 +106,18 @@ module.exports = class KitDomain {
             },
           })
 
+          const kitPartsCreatted = {
+            amount: item.amount,
+            kitId: kitCreated.id,
+            productBaseId: productBase.id,
+          }
+
+          await KitParts.create(kitPartsCreatted, { transaction })
 
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
-            reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
+            available: (parseInt(productBase.available, 10) - (parseInt(item.amount, 10) * technicial.length)).toString(),
+            reserved: (parseInt(productBase.reserved, 10) + (parseInt(item.amount, 10) * technicial.length)).toString(),
           }
 
           await productBase.update(productBaseUpdate, { transaction })
@@ -167,31 +168,26 @@ module.exports = class KitDomain {
 
     const entrances = await KitParts.findAndCountAll({
       // where: getWhere('kit'),
-      // include: [
-      //   {
-      //     model: Product,
-      //     // where: getWhere('product'),
-      //     include: [
-      //       // {
-      //       //   model: Mark,
-      //       //   include: [{
-      //       //     model: Manufacturer,
-      //       //   }],
-      //       // },
-      //       {
-      //         model: Part,
-      //         // where: getWhere('part'),
-      //       },
-      //       {
-      //         model: EquipModel,
-      //         // where: getWhere('equipModel'),
-      //       },
-      //     ],
-      //   },
-      //   {
-      //     model: StockBase,
-      //   },
-      // ],
+      include: [
+        {
+          model: ProductBase,
+          include: [
+            {
+              model: Product,
+            },
+          ],
+        },
+        {
+          model: Kit,
+          include: [
+            {
+              model: Technician,
+              where: getWhere('technician'),
+            },
+          ],
+          required: true,
+        },
+      ],
       order: [
         [newOrder.field, newOrder.direction],
       ],
@@ -237,7 +233,7 @@ module.exports = class KitDomain {
         // mark: entrance.product.mark.mark,
         // manufacturer: entrance.product.mark.manufacturer.manufacturer,
         // // eslint-disable-next-line max-len
-        // name: entrance.product.partId ? entrance.product.part.name : entrance.product.equipModel.name,
+        name: entrance.productBase.product.name,
         // createdAt: formatDateFunct(entrance.createdAt),
       }
       return resp
@@ -261,7 +257,7 @@ module.exports = class KitDomain {
       rows: entrancesList,
     }
 
-    console.log(response)
+    // console.log(response)
 
     return response
   }

@@ -34,5 +34,11 @@ module.exports = (sequelize) => {
     },
   })
 
+  osParts.associate = (models) => {
+    // osParts.belongsToMany(models.product, { through: 'osParts' })
+    osParts.belongsTo(models.product)
+    osParts.belongsTo(models.os)
+  }
+
   return osParts
 }

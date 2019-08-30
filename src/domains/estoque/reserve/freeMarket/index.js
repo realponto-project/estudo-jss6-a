@@ -11,8 +11,6 @@ const database = require('../../../../database')
 
 const { FieldValidationError } = require('../../../../helpers/errors')
 
-// const Kit = database.model('kit')
-const EquipModel = database.model('equipModel')
 const Equip = database.model('equip')
 const Product = database.model('product')
 const StockBase = database.model('stockBase')
@@ -149,16 +147,12 @@ module.exports = class FreeMarketDomain {
           },
           include: [{
             model: Product,
-            attributes: ['equipModelId'],
-            include: [{
-              model: EquipModel,
-              attributes: ['serial'],
-            }],
+            attributes: ['serial'],
           }],
           transaction,
         })
 
-        if (productBase.product.equipModelId && productBase.product.equipModel.serial) {
+        if (productBase.product.serial) {
           const { serialNumberArray } = item
 
           if (serialNumberArray.length > 0) {

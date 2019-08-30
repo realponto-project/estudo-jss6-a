@@ -46,7 +46,7 @@ describe('MarkDomain', () => {
 
     await productDomain.add(productMock)
 
-    const cars = await markDomain.getAll({ query: 'peca' })
+    const cars = await markDomain.getAll()
 
     expect(cars.length > 0).toBe(true)
   })
