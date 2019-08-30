@@ -36,6 +36,7 @@ describe('technicianController', () => {
       name: 'MATHEUS CABEÇA DE FILTRO',
       CNH: '01/01/2000',
       plate: 'XYZ-9876',
+      external: false,
     }
 
     const response = await request().post('/api/technician', technicianMock, { headers })

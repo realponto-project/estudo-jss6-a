@@ -1,5 +1,9 @@
 const request = require('../../../helpers/request')
 
+const database = require('../../../database')
+
+const KitParts = database.model('kitParts')
+
 // const database = require('../../../database')
 // const { FieldValidationError } = require('../../../helpers/errors')
 
@@ -39,6 +43,7 @@ describe('reserveController', () => {
       minimumStock: '12',
       mark: 'MI',
       name: 'BLOCO',
+      serial: false,
       responsibleUser: 'modrp',
     }
 
@@ -84,6 +89,7 @@ describe('reserveController', () => {
       name: 'EU MESMO',
       CNH: '01/01/2000',
       plate: 'XYZ-1998',
+      external: true,
     }
 
     technician = await request().post('/api/technician', technicianMock, { headers })
@@ -110,7 +116,6 @@ describe('reserveController', () => {
     const { body, statusCode } = response
 
     expect(statusCode).toBe(200)
-    expect(body.os).toBe(reserveMock.os)
     expect(body.razaoSocial).toBe(reserveMock.razaoSocial)
     expect(body.cnpj).toBe(reserveMock.cnpj)
     expect(body.products[0].category).toBe(product.body.category)
@@ -222,9 +227,9 @@ describe('reserveController', () => {
       ],
     }
 
-    await request().post('/api/reserve/OS', reserveMock, { headers })
+    const reserveOsCreated = await request().post('/api/reserve/OS', reserveMock, { headers })
 
-    const response = await request().get('/api/reserve/getOsByOs', { headers, params: { os: '6846384867' } })
+    const response = await request().get('/api/reserve/getOsByOs', { headers, params: { os: reserveOsCreated.body.id } })
 
     const { body, statusCode } = response
 
@@ -252,24 +257,24 @@ describe('reserveController', () => {
     expect(body.length > 0).toBe(true)
   })
 
-  // test('create reserva kitOut', async () => {
-  //   const reserveMock = {
-  //     kitPartsOut: [{
-  //       amount: '2',
-  //       productId: product.body.id,
-  //       stockBase: 'REALPONTO',
-  //     }],
-  //     technicianId: technician.body.id,
-  //   }
+  test('create reserva kitOut', async () => {
+    const kitParts = await KitParts.findOne()
 
-  //   const response = await request().post('/api/reserve/kitOut', reserveMock, { headers })
+    const reserveMock = {
+      reposicao: '3',
+      expedicao: '2',
+      perda: '1',
+      os: '945682',
+      kitPartId: kitParts.id,
+    }
 
-  //   const { body, statusCode } = response
+    const response = await request().post('/api/reserve/kitOut', reserveMock, { headers })
 
-  //   expect(statusCode).toBe(200)
-  //   expect(body.technicianId).toBeTruthy()
-  //   expect(body.products.length > 0).toBe(true)
-  // })
+    const { body, statusCode } = response
+
+    expect(statusCode).toBe(200)
+    expect(body).toBeTruthy()
+  })
 
   test('create reserva mercado livre', async () => {
     const reserveMock = {

@@ -49,6 +49,7 @@ describe('stockDomain', () => {
       minimumStock: '10',
       mark: 'MARCA X',
       name: 'FONT 3 V',
+      serial: false,
       responsibleUser: 'modrp',
     }
 

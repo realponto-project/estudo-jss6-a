@@ -53,6 +53,7 @@ describe('entranceDomain', () => {
       minimumStock: '10',
       mark: 'DELL',
       name: 'FONT 12 V',
+      serial: false,
       responsibleUser: 'modrp',
     }
 

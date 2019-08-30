@@ -1,64 +1,67 @@
 const R = require('ramda')
 const moment = require('moment')
 
-const PartDomain = require('./part')
-const EquipModelDomain = require('./equip/equipModel')
-
 const formatQuery = require('../../../helpers/lazyLoad')
 const database = require('../../../database')
 
 const { FieldValidationError } = require('../../../helpers/errors')
 
-const partDomain = new PartDomain()
-const equipModelDomain = new EquipModelDomain()
-
-
-const EquipModel = database.model('equipModel')
 // // const EquipMark = database.model('equipMark')
+// const Type = database.model('type')
 const EquipType = database.model('equipType')
 const Mark = database.model('mark')
 const Product = database.model('product')
-const Part = database.model('part')
 const Manufacturer = database.model('manufacturer')
 
 module.exports = class ProductDomain {
   async add(bodyData, options = {}) {
     const { transaction = null } = options
 
-    const product = R.omit(['id', 'name', 'mark'], bodyData)
+    const product = R.omit(['id', 'type', 'mark'], bodyData)
 
     const productNotHasProp = prop => R.not(R.has(prop, product))
     const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
     // const productHasProp = prop => R.has(prop, product)
 
     const field = {
-      category: false,
-      mark: false,
-      description: false,
-      SKU: false,
-      minimumStock: false,
-      markId: false,
-      equipModelId: false,
       name: false,
+      category: false,
+      SKU: false,
+      serial: false,
+      minimumStock: false,
+      mark: false,
       type: false,
-      partId: false,
-      // costPrice: false,
-      // salePrice: false,
     }
     const message = {
-      category: '',
-      mark: '',
-      description: '',
-      SKU: '',
-      minimumStock: '',
-      markId: '',
-      equipModelId: '',
-      partId: '',
       name: '',
+      category: '',
+      SKU: '',
+      serial: '',
+      minimumStock: '',
+      mark: '',
       type: '',
     }
 
     let errors = false
+
+    if (productNotHasProp('name') || !product.name) {
+      errors = true
+      field.name = true
+      message.name = 'Informe o nome.'
+    } else {
+      const { name } = product
+
+      const productHasExist = await Product.findOne({
+        where: { name },
+        transaction,
+      })
+
+      if (productHasExist) {
+        errors = true
+        field.name = true
+        message.name = 'Nome já cadastrado.'
+      }
+    }
 
     if (productNotHasProp('category')) {
       errors = true
@@ -70,6 +73,35 @@ module.exports = class ProductDomain {
       message.category = 'categoria inválida'
 
       throw new FieldValidationError([{ field, message }])
+    }
+
+    if (productNotHasProp('SKU') || !product.SKU) {
+      errors = true
+      field.codigo = true
+      message.codigo = 'Informe o código.'
+    } else {
+      const { SKU } = product
+
+      const productHasExist = await Product.findOne({
+        where: { SKU },
+        transaction,
+      })
+
+      if (productHasExist) {
+        errors = true
+        field.name = true
+        message.name = 'Nome já cadastrado.'
+      }
+    }
+
+    if (productNotHasProp('minimumStock') || !product.minimumStock) {
+      errors = true
+      field.quantMin = true
+      message.quantMin = 'Por favor informe a quantidade'
+    } else if (product.minimumStock !== product.minimumStock.replace(/\D/gi, '')) {
+      errors = true
+      field.quantMin = true
+      message.quantMin = 'número invalido.'
     }
 
     if (bodyDataNotHasProp('mark') || !bodyData.mark) {
@@ -91,112 +123,29 @@ module.exports = class ProductDomain {
       }
     }
 
-    if (productNotHasProp('SKU') || !product.SKU) {
-      errors = true
-      field.codigo = true
-      message.codigo = 'Informe o código.'
-    }
-
-    if (productNotHasProp('minimumStock') || !product.minimumStock) {
-      errors = true
-      field.quantMin = true
-      message.quantMin = 'Por favor informe a quantidade'
-    } else if (product.minimumStock !== product.minimumStock.replace(/\D/gi, '')) {
-      errors = true
-      field.quantMin = true
-      message.quantMin = 'número invalido.'
-    }
-
-    if (bodyDataNotHasProp('name') || !bodyData.name) {
-      errors = true
-      field.item = true
-      message.item = 'Informe o nome.'
-    }
-
-    let partCreated = null
-
-    if (product.category === 'peca') {
-      const partReturned = await Product.findOne({
-        include: [
-          {
-            model: Mark,
-            where: { mark: bodyData.mark },
-          },
-          {
-            model: Part,
-            where: { name: bodyData.name },
-          },
-        ],
-        transaction,
-      })
-
-      if (partReturned) {
+    if (bodyData.category === 'equipamento') {
+      if (productNotHasProp('serial') || typeof product.serial !== 'boolean') {
         errors = true
-        field.item = true
-        message.item = 'Peça já existe.'
-      } else {
-        const part = {
-          name: bodyData.name,
-          responsibleUser: bodyData.responsibleUser,
-        }
-
-        partCreated = await partDomain.add(part)
-
-        if (!partCreated) {
-          errors = true
-          field.partId = true
-          message.partId = 'erro ao cadastrar peça.'
-        }
+        field.quantMin = true
+        message.quantMin = 'Informe se tem numero de série'
       }
-    }
 
-    let equipModelCreated = null
-
-    if (product.category === 'equipamento') {
-      const equipModelReturned = await Product.findOne({
-        include: [
-          {
-            model: Mark,
-            where: { mark: bodyData.mark },
-          },
-          {
-            model: EquipModel,
-            where: { name: bodyData.name },
-            include: [{
-              model: EquipType,
-              where: { type: product.type },
-            }],
-          },
-        ],
-        transaction,
-      })
-
-      if (equipModelReturned) {
+      if (bodyDataNotHasProp('type') || !bodyData.type) {
         errors = true
-        field.item = true
-        message.name = 'Este equipamento já está cadastrado.'
+        field.type = true
+        message.type = 'Informe o tipo.'
       } else {
-        const { type } = bodyData
+        const equipTypeHasExist = await EquipType.findOne({
+          where: { type: bodyData.type },
+          transaction,
+        })
 
-        const typeExist = await EquipType.findOne({ where: { type }, transaction })
-
-        if (!typeExist) {
-          field.type = true
-          message.type = 'tipo de equipamento não esta cadastrado.'
-          throw new FieldValidationError([{ field, message }])
-        }
-
-        const equipModel = {
-          equipTypeId: typeExist.id,
-          name: bodyData.name,
-          serial: bodyData.serial,
-          responsibleUser: bodyData.responsibleUser,
-        }
-
-        equipModelCreated = await equipModelDomain.addModel(equipModel)
-
-        if (!equipModelCreated) {
+        if (!equipTypeHasExist) {
           errors = true
+          field.type = true
+          message.type = 'Selecione uma marca'
+        } else {
+          product.equipTypeId = equipTypeHasExist.id
         }
       }
     }
@@ -205,28 +154,13 @@ module.exports = class ProductDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
-    product.partId = partCreated ? partCreated.id : null
-    product.equipModelId = equipModelCreated ? equipModelCreated.id : null
-
     const productCreated = await Product.create(product, { transaction })
 
-    const includes = [{ model: Mark }]
-
-    if (product.category === 'peca') {
-      includes.push({
-        model: Part,
-      })
-    }
-
-    if (product.category === 'equipamento') {
-      includes.push({
-        model: EquipModel,
-        include: [{ model: EquipType }],
-      })
-    }
-
     const response = await Product.findByPk(productCreated.id, {
-      include: includes,
+      include: [
+        { model: Mark },
+        { model: EquipType },
+      ],
       transaction,
     })
 
@@ -267,12 +201,6 @@ module.exports = class ProductDomain {
             model: Manufacturer,
           }],
         },
-        {
-          model: Part,
-        },
-        {
-          model: EquipModel,
-        },
       ],
       order: [
         [newOrder.field, newOrder.direction],
@@ -311,7 +239,7 @@ module.exports = class ProductDomain {
         amount: product.amount,
         mark: product.mark.mark,
         manufacturer: product.mark.manufacturer.manufacturer,
-        name: product.partId ? product.part.name : product.equipModel.name,
+        name: product.name,
         createdAt: formatDateFunct(product.createdAt),
         updatedAt: formatDateFunct(product.updatedAt),
       }
@@ -340,24 +268,14 @@ module.exports = class ProductDomain {
     const { transaction = null } = options
 
     const products = await Product.findAll({
-      attributes: ['id'],
-      include: [
-        {
-          model: Part,
-          attributes: ['name'],
-        },
-        {
-          model: EquipModel,
-          attributes: ['name', 'serial'],
-        },
-      ],
+      attributes: ['id', 'name', 'serial'],
       transaction,
     })
 
     const response = products.map(item => ({
       id: item.id,
-      name: R.prop('name', item.part) ? R.prop('name', item.part) : R.prop('name', item.equipModel),
-      serial: item.equipModel ? item.equipModel.serial : false,
+      name: item.name,
+      serial: item.serial,
     }))
 
     return response

@@ -34,6 +34,7 @@ describe('kitDomain', () => {
       name: 'KLEITINHO DA MEIOTA',
       CNH: '01/01/2000',
       plate: 'RST-4355',
+      external: true,
     }
 
     await technicianDomain.add(technicianMock)
@@ -47,12 +48,13 @@ describe('kitDomain', () => {
     await markDomain.add(mark)
 
     const productMock = {
+      name: 'PLACA',
       category: 'peca',
       SKU: 'PC-00018',
       description: '',
       minimumStock: '10',
       mark: 'HONDA',
-      name: 'PLACA',
+      serial: false,
       responsibleUser: 'modrp',
     }
 

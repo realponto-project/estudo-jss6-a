@@ -39,6 +39,7 @@ describe('kitOutDomain', () => {
       name: 'NARUTO DA SUL',
       CNH: '01/01/2000',
       plate: 'RST-4444',
+      external: true,
     }
 
     await technicianDomain.add(technicianMock)
@@ -53,11 +54,12 @@ describe('kitOutDomain', () => {
 
     const productMock = {
       category: 'peca',
-      SKU: 'PC-00018',
+      SKU: 'PC-00019',
       description: '',
       minimumStock: '10',
       mark: 'KONOHA',
-      name: 'PLACA',
+      name: 'LED',
+      serial: false,
       responsibleUser: 'modrp',
     }
 
@@ -104,29 +106,26 @@ describe('kitOutDomain', () => {
     kitParts = await KitParts.findOne({ transaction: null })
   })
 
-  test('teste', () => {
-    expect(true).toBe(true)
+  test('reserva kitOut', async () => {
+    // const reserveMock = {
+    //   kitPartsOut: [{
+    //     amount: '2',
+    //     productId: productCreated.id,
+    //     stockBase: 'PONTOREAL',
+    //   }],
+    //   technicianId: technicianCreated.id,
+    // }
+
+    const kitOutMock = {
+      reposicao: '3',
+      expedicao: '2',
+      perda: '1',
+      os: '945682',
+      kitPartId: kitParts.id,
+    }
+
+    const kitOutCreated = await kitOutDomain.add(kitOutMock)
+
+    expect(kitOutCreated).toBeTruthy()
   })
-
-  // test('reserva kitOut', async () => {
-  //   // const reserveMock = {
-  //   //   kitPartsOut: [{
-  //   //     amount: '2',
-  //   //     productId: productCreated.id,
-  //   //     stockBase: 'PONTOREAL',
-  //   //   }],
-  //   //   technicianId: technicianCreated.id,
-  //   // }
-
-  //   const kitOutMock = {
-  //     action: 'perda',
-  //     amount: '2',
-  //     // os: false,
-  //     kitPartId: kitParts.id,
-  //   }
-
-  //   const kitOutCreated = await kitOutDomain.add(kitOutMock)
-
-  //   expect(kitOutCreated).toBeTruthy()
-  // })
 })

@@ -14,8 +14,6 @@ const KitParts = database.model('kitParts')
 const Product = database.model('product')
 const StockBase = database.model('stockBase')
 const ProductBase = database.model('productBase')
-const Part = database.model('part')
-const EquipModel = database.model('equipModel')
 
 module.exports = class KitDomain {
   async add(bodyData, options = {}) {
@@ -43,7 +41,10 @@ module.exports = class KitDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
-    const technicial = await Technician.findAll({ transaction })
+    const technicial = await Technician.findAll({
+      where: { external: true },
+      transaction,
+    })
 
     // console.log(JSON.parse(JSON.stringify(technicial)))
 
@@ -51,7 +52,7 @@ module.exports = class KitDomain {
 
     // console.log(JSON.parse(JSON.stringify(oldKit)))
 
-    if (oldKit) {
+    if (oldKit.length > 0) {
       const oldKitDelete = oldKit.map(async (itemOldKit) => {
         const oldKitParts = await KitParts.findAll({
           where: { kitId: itemOldKit.id },
@@ -64,13 +65,21 @@ module.exports = class KitDomain {
 
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) + parseInt(item.amount, 10)).toString(),
-            reserved: (parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)).toString(),
+            available: (parseInt(productBase.available, 10) + (parseInt(item.amount, 10) * technicial.length)).toString(),
+            reserved: (parseInt(productBase.reserved, 10) - (parseInt(item.amount, 10) * technicial.length)).toString(),
           }
 
+          // console.log(JSON.parse(JSON.stringify(productBase)))
+
           await productBase.update(productBaseUpdate, { transaction })
+
+          // const productBase1 = await ProductBase.findByPk(item.productBaseId, { transaction })
+
+          // console.log(JSON.parse(JSON.stringify(productBase1)))
+
           await item.destroy({ transaction })
         })
+
         await Promise.all(kitPartsDeletePromises)
 
         await itemOldKit.destroy({ transaction })
@@ -83,8 +92,6 @@ module.exports = class KitDomain {
 
       if (bodyHasProp('kitParts')) {
         const { kitParts } = bodyData
-
-        // const technicial = await Technician.findAll({ transaction })
 
         const kitPartsCreattedPromises = kitParts.map(async (item) => {
           const stockBase = await StockBase.findOne({
@@ -109,8 +116,8 @@ module.exports = class KitDomain {
 
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
-            reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
+            available: (parseInt(productBase.available, 10) - (parseInt(item.amount, 10) * technicial.length)).toString(),
+            reserved: (parseInt(productBase.reserved, 10) + (parseInt(item.amount, 10) * technicial.length)).toString(),
           }
 
           await productBase.update(productBaseUpdate, { transaction })
@@ -167,14 +174,6 @@ module.exports = class KitDomain {
           include: [
             {
               model: Product,
-              include: [
-                {
-                  model: Part,
-                },
-                {
-                  model: EquipModel,
-                },
-              ],
             },
           ],
         },
@@ -234,7 +233,7 @@ module.exports = class KitDomain {
         // mark: entrance.product.mark.mark,
         // manufacturer: entrance.product.mark.manufacturer.manufacturer,
         // // eslint-disable-next-line max-len
-        name: entrance.productBase.product.partId ? entrance.productBase.product.part.name : entrance.productBase.product.equipModel.name,
+        name: entrance.productBase.product.name,
         // createdAt: formatDateFunct(entrance.createdAt),
       }
       return resp

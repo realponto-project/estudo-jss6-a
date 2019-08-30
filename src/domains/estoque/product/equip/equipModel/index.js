@@ -7,7 +7,7 @@ const { FieldValidationError } = require('../../../../../helpers/errors')
 
 const EquipType = database.model('equipType')
 // const EquipMark = database.model('mark')
-const EquipModel = database.model('equipModel')
+// const EquipModel = database.model('equipModel')
 const User = database.model('user')
 
 module.exports = class EquipModelDomain {
@@ -104,95 +104,95 @@ module.exports = class EquipModelDomain {
   }
 
 
-  async addModel(bodyData, options = {}) {
-    const { transaction = null } = options
+  // async addModel(bodyData, options = {}) {
+  //   const { transaction = null } = options
 
-    const equipModel = R.omit(['id'], bodyData)
+  //   const equipModel = R.omit(['id'], bodyData)
 
-    const equipModelNotHasProp = prop => R.not(R.has(prop, bodyData))
+  //   const equipModelNotHasProp = prop => R.not(R.has(prop, bodyData))
 
-    const field = {
-      equipTypeId: false,
-      item: false,
-      description: false,
-      serial: true,
-      responsibleUser: false,
-    }
-    const message = {
-      equipTypeId: '',
-      item: '',
-      description: '',
-      serial: '',
-      responsibleUser: '',
-    }
+  //   const field = {
+  //     equipTypeId: false,
+  //     item: false,
+  //     description: false,
+  //     serial: true,
+  //     responsibleUser: false,
+  //   }
+  //   const message = {
+  //     equipTypeId: '',
+  //     item: '',
+  //     description: '',
+  //     serial: '',
+  //     responsibleUser: '',
+  //   }
 
-    let errors = false
+  //   let errors = false
 
 
-    if (equipModelNotHasProp('equipTypeId') || !equipModel.equipTypeId) {
-      errors = true
-      field.equipTypeId = true
-      message.equipTypeId = 'Por favor informar a marca do equipamento.'
-    } else {
-      const equipModelHasExist = await EquipType.findByPk(equipModel.equipTypeId, { transaction })
+  //   if (equipModelNotHasProp('equipTypeId') || !equipModel.equipTypeId) {
+  //     errors = true
+  //     field.equipTypeId = true
+  //     message.equipTypeId = 'Por favor informar a marca do equipamento.'
+  //   } else {
+  //    const equipModelHasExist = await EquipType.findByPk(equipModel.equipTypeId, { transaction })
 
-      if (!equipModelHasExist) {
-        errors = true
-        field.equipTypeId = true
-        message.equipTypeId = 'este tipo de equipamento não consta em nosso sistema.'
-      }
-    }
+  //     if (!equipModelHasExist) {
+  //       errors = true
+  //       field.equipTypeId = true
+  //       message.equipTypeId = 'este tipo de equipamento não consta em nosso sistema.'
+  //     }
+  //   }
 
-    if (equipModelNotHasProp('name') || !equipModel.name) {
-      errors = true
-      field.item = true
-      message.item = 'Por favor informar o modelo do equipamento.'
-    }
+  //   if (equipModelNotHasProp('name') || !equipModel.name) {
+  //     errors = true
+  //     field.item = true
+  //     message.item = 'Por favor informar o modelo do equipamento.'
+  //   }
 
-    if (equipModelNotHasProp('responsibleUser')) {
-      errors = true
-      field.responsibleUser = true
-      message.responsibleUser = 'username não está sendo passado.'
-    } else if (bodyData.responsibleUser) {
-      const { responsibleUser } = bodyData
+  //   if (equipModelNotHasProp('responsibleUser')) {
+  //     errors = true
+  //     field.responsibleUser = true
+  //     message.responsibleUser = 'username não está sendo passado.'
+  //   } else if (bodyData.responsibleUser) {
+  //     const { responsibleUser } = bodyData
 
-      const user = await User.findOne({
-        where: { username: responsibleUser },
-        transaction,
-      })
+  //     const user = await User.findOne({
+  //       where: { username: responsibleUser },
+  //       transaction,
+  //     })
 
-      if (!user) {
-        errors = true
-        field.responsibleUser = true
-        message.responsibleUser = 'username inválido.'
-      }
-    } else {
-      errors = true
-      field.responsibleUser = true
-      message.responsibleUser = 'username não pode ser nulo.'
-    }
+  //     if (!user) {
+  //       errors = true
+  //       field.responsibleUser = true
+  //       message.responsibleUser = 'username inválido.'
+  //     }
+  //   } else {
+  //     errors = true
+  //     field.responsibleUser = true
+  //     message.responsibleUser = 'username não pode ser nulo.'
+  //   }
 
-    if (equipModelNotHasProp('serial') || typeof equipModel.serial !== 'boolean') {
-      errors = true
-      field.serial = true
-      message.serial = 'Necessário informar se tem numero de serie.'
-    }
+  //   if (equipModelNotHasProp('serial') || typeof equipModel.serial !== 'boolean') {
+  //     errors = true
+  //     field.serial = true
+  //     message.serial = 'Necessário informar se tem numero de serie.'
+  //   }
 
-    if (errors) {
-      throw new FieldValidationError([{ field, message }])
-    }
+  //   if (errors) {
+  //     throw new FieldValidationError([{ field, message }])
+  //   }
 
-    const equipModelCreated = await EquipModel.create(equipModel, { transaction })
+  //   const equipModelCreated = await EquipModel.create(equipModel, { transaction })
 
-    const response = await EquipModel.findByPk(equipModelCreated.id, {
-      include: [{
-        model: EquipType,
-      }],
-      transaction,
-    })
+  //   const response = await EquipModel.findByPk(equipModelCreated.id, {
+  //     include: [{
+  //       model: EquipType,
+  //     }],
+  //     transaction,
+  //   })
 
-    return response
-  }
+  //   return response
+  // }
 
   // async getAll(options = {}) {
   //   const inicialOrder = {

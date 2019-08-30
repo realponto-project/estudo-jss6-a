@@ -34,24 +34,6 @@ describe('equipModelController', () => {
 
     expect(response.statusCode).toBe(200)
     expect(response.body.type).toBe(equipTypeMock.type)
-
-    const equipModelMock = {
-      equipTypeId: response.body.id,
-      name: 'VEGAS',
-      description: '',
-      serial: true,
-      responsibleUser: 'modrp',
-    }
-
-    const resposta = await request().post('/api/equipModel/addModel', equipModelMock, { headers })
-
-    const { body, statusCode } = resposta
-
-    expect(statusCode).toBe(200)
-    expect(body.name).toBe(equipModelMock.name)
-    expect(body.description).toBe(equipModelMock.description)
-    expect(body.responsibleUser).toBe(equipModelMock.responsibleUser)
-    expect(body.equipTypeId).toBe(equipModelMock.equipTypeId)
   })
 
   test('getAllTypes', async () => {

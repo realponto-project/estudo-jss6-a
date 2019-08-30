@@ -9,11 +9,7 @@ const database = require('../../../../../database')
 const { FieldValidationError } = require('../../../../../helpers/errors')
 
 const KitOut = database.model('kitOut')
-const Technician = database.model('technician')
-const KitPartsOut = database.model('kitPartsOut')
-const Product = database.model('product')
 const KitParts = database.model('kitParts')
-const ProductBase = database.model('productBase')
 
 module.exports = class KitOutDomain {
   async add(bodyData, options = {}) {
@@ -88,8 +84,24 @@ module.exports = class KitOutDomain {
     const perdaNumber = parseInt(bodyData.perda, 10)
     const reposicaoNumber = parseInt(bodyData.reposicao, 10)
     const expedicaoNumber = parseInt(bodyData.expedicao, 10)
-
     const { kitPartId } = bodyData
+
+    const kitPart = await KitParts.findByPk(kitPartId, { transaction })
+
+    const amount = parseInt(kitPart.amount, 10) + reposicaoNumber - expedicaoNumber - perdaNumber
+
+    if (amount <= 0) {
+      field.amount = true
+      message.amount = 'quantidade inválida'
+      throw new FieldValidationError([{ field, message }])
+    }
+
+    const kitPartUpdate = {
+      ...kitPart,
+      amount,
+    }
+
+    await kitPart.update(kitPartUpdate, { transaction })
 
     if (perdaNumber > 0) {
       const { perda } = bodyData
@@ -114,6 +126,42 @@ module.exports = class KitOutDomain {
 
       await KitOut.create(kitOut, { transaction })
     }
+
+    if (expedicaoNumber > 0) {
+      const { expedicao } = bodyData
+
+      if (bodyDataNotHasProp('os') || !bodyData.os || /\D/.test(bodyData.os)) {
+        field.os = true
+        message.os = 'Ação inválida'
+        throw new FieldValidationError([{ field, message }])
+      }
+
+      const { os } = bodyData
+
+      const kitOutReturn = await KitOut.findOne({
+        where: { os },
+        transaction,
+      })
+
+      if (kitOutReturn) {
+        const kitOutUpdate = {
+          ...kitOutReturn,
+          amount: (parseInt(kitOutReturn.amount, 10) + parseInt(expedicao, 10)).toString(),
+        }
+
+        kitOutReturn.update(kitOutUpdate, { transaction })
+      } else {
+        const kitOut = {
+          action: 'expedicao',
+          amount: expedicao,
+          kitPartId,
+          os,
+        }
+        await KitOut.create(kitOut, { transaction })
+      }
+    }
+
+    return 'sucesso'
 
     // if (expedicaoNumber > 0 && !bodyDataNotHasProp('os') || !bodyData.os) {
     //   const { expedicao } = bodyData

@@ -98,7 +98,7 @@ describe('freeMarketDomain', () => {
       freeMarketParts: [
         {
           productId: productCreated.id,
-          amount: '5',
+          amount: '1',
           stockBase: 'PONTOREAL',
           serialNumberArray: ['123456789'],
         },

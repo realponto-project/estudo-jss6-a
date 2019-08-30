@@ -85,6 +85,9 @@ module.exports = class CarDomain {
 
     const cars = await Car.findAll({
       attributes: ['model', 'plate'],
+      order: [
+        ['model', 'ASC'],
+      ],
       transaction,
     })
 

@@ -3,6 +3,5 @@ const equipModelController = require('../../../controllers/estoque/product/equip
 
 router.post('/addType', equipModelController.addType)
 router.get('/getAllType', equipModelController.getAllType)
-router.post('/addModel', equipModelController.addModel)
 
 module.exports = router

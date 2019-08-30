@@ -45,6 +45,7 @@ describe('productController', () => {
       minimumStock: '12',
       mark: 'LSD',
       name: 'BALA',
+      serial: false,
       responsibleUser: 'modrp',
     }
 

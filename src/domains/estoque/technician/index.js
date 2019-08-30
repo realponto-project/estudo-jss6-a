@@ -10,6 +10,8 @@ const { FieldValidationError } = require('../../../helpers/errors')
 // const Manufacturer = database.model('manufacturer')
 const Car = database.model('car')
 const Technician = database.model('technician')
+const Kit = database.model('kit')
+const KitParts = database.model('kitParts')
 
 module.exports = class TechnicianDomain {
   async add(bodyData, options = {}) {
@@ -85,6 +87,12 @@ module.exports = class TechnicianDomain {
       }
     }
 
+    if (technicianNotHasProp('external') || typeof technician.external !== 'boolean') {
+      errors = true
+      field.external = true
+      message.external = 'Informar se é externo'
+    }
+
     if (errors) {
       throw new FieldValidationError([{ field, message }])
     }
@@ -99,7 +107,35 @@ module.exports = class TechnicianDomain {
     const technicianCreated = await Technician.create(technician, { transaction })
 
     await car.addTechnician(technicianCreated, { transaction })
-    // await technicianCreated.addCar(car, { transaction })
+
+    // if (technician.external) {
+    //   const kit = await Kit.findOne({ transaction })
+
+    //   console.log(JSON.parse(JSON.stringify(kit)))
+
+    //   const kitParts = await KitParts.findAll({
+    //     where: { kitId: kit.id },
+    //     transaction,
+    //   })
+
+    //   console.log(JSON.parse(JSON.stringify(kitParts)))
+
+    //   const kitCreated = await Kit.create({ technicianId: technicianCreated.id }, { transaction })
+
+    //   const kitPartsPromise = kitParts.map(async (item) => {
+    //     const kitPart = {
+    //       kitId: kitCreated.id,
+    //       productBaseId: item.productBaseId,
+    //       amount: '0',
+    //     }
+
+    //     await KitParts.create(kitPart, { transaction })
+    //   })
+
+    //   console.log(JSON.parse(JSON.stringify(kitCreated)))
+
+    //   await Promise.all(kitPartsPromise)
+    // }
 
     const response = await Technician.findByPk(technicianCreated.id, {
       include: [{
@@ -197,6 +233,7 @@ module.exports = class TechnicianDomain {
     const { transaction = null } = options
 
     const technician = await Technician.findAll({
+      where: { external: true },
       attributes: ['id', 'name'],
       order: [
         ['name', 'ASC'],

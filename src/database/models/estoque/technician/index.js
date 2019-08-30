@@ -17,6 +17,11 @@ module.exports = (sequelize) => {
       type: Sequelize.STRING,
       allowNull: true,
     },
+
+    external: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: true,
+    },
   })
 
   technician.associate = (models) => {

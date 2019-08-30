@@ -2,7 +2,7 @@ const R = require('ramda')
 const moment = require('moment')
 const Sequelize = require('sequelize')
 
-const { Op: operators } = Sequelize
+// const { Op: operators } = Sequelize
 
 const formatQuery = require('../../../helpers/lazyLoad')
 const database = require('../../../database')
@@ -16,8 +16,8 @@ const Product = database.model('product')
 const User = database.model('user')
 const Mark = database.model('mark')
 const Manufacturer = database.model('manufacturer')
-const Part = database.model('part')
-const EquipModel = database.model('equipModel')
+// const Part = database.model('part')
+// const EquipModel = database.model('equipModel')
 const StockBase = database.model('stockBase')
 const ProductBase = database.model('productBase')
 const Equip = database.model('equip')
@@ -117,7 +117,6 @@ module.exports = class TechnicianDomain {
     }
 
     const product = await Product.findByPk(entrance.productId, {
-      include: [{ model: EquipModel }],
       transaction,
     })
 
@@ -127,7 +126,7 @@ module.exports = class TechnicianDomain {
       message.productId = 'Produto não encontrado'
     }
 
-    if (product.equipModel && product.equipModel.serial) {
+    if (product.serial) {
       if (entranceNotHasProp('serialNumbers') || entrance.serialNumbers.length === 0) {
         errors = true
         field.serialNumbers = true
@@ -202,7 +201,7 @@ module.exports = class TechnicianDomain {
       transaction,
     })
 
-    if (product.equipModel && product.equipModel.serial) {
+    if (product.serial) {
       const { serialNumbers } = entrance
 
       const serialNumbersFindPromises = serialNumbers.map(async (item) => {
@@ -287,6 +286,7 @@ module.exports = class TechnicianDomain {
         { model: Company },
         {
           model: Product,
+          where: getWhere('product'),
           // where: { include: [{ model: Part, where: { name: 'FONT 3 V' } }] },
           // where: getWhere('product'),
           include: [
@@ -295,30 +295,6 @@ module.exports = class TechnicianDomain {
               include: [{
                 model: Manufacturer,
               }],
-            },
-            {
-              // model: Part || EquipModel,
-              model: Part,
-              // where: { name: 'FONT 3 V' },
-              // where: getWhere('part'),
-              // where: { [operators.or]: [getWhere('part')] },
-              // having: {
-              //   required: true,
-              // },
-              // on: {
-              // },
-              // required: false,
-            },
-            {
-              model: EquipModel,
-              // where: {},
-              // where: getWhere('equipModel'),
-              // having: {
-              //   required: true,
-              // },
-              // where: getWhere('equipModel'),
-              // or: false,
-              // required: false,
             },
           ],
           // or: true,
@@ -371,7 +347,7 @@ module.exports = class TechnicianDomain {
           mark: entrance.product.mark.mark,
           manufacturer: entrance.product.mark.manufacturer.manufacturer,
           // eslint-disable-next-line max-len
-          name: entrance.product.partId ? entrance.product.part.name : entrance.product.equipModel.name,
+          name: entrance.product.name,
           createdAt: formatDateFunct(entrance.createdAt),
         }
         // console.log(JSON.parse(JSON.stringify(entrance.product)))

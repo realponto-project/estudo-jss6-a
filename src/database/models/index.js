@@ -12,7 +12,6 @@ const car = require('./estoque/technician/car')
 const entrance = require('./estoque/entrance')
 const equip = require('./estoque/product/equip')
 const equipType = require('./estoque/product/equip/equipType')
-const equipModel = require('./estoque/product/equip/equipModel')
 const freeMarket = require('./estoque/reserve/freeMarket')
 const freeMarketParts = require('./estoque/reserve/freeMarketParts')
 const kit = require('./estoque/reserve/kit')
@@ -20,7 +19,6 @@ const kitOut = require('./estoque/reserve/kitOut')
 const kitParts = require('./estoque/reserve/kitParts')
 const kitPartsOut = require('./estoque/reserve/kitPartsOut')
 const product = require('./estoque/product')
-const part = require('./estoque/product/part')
 const manufacturer = require('./estoque/product/manufacturer')
 const mark = require('./estoque/product/mark')
 const os = require('./estoque/reserve/os')
@@ -51,7 +49,6 @@ module.exports = [
   entrance,
   equip,
   equipType,
-  equipModel,
   freeMarket,
   freeMarketParts,
   kit,
@@ -59,7 +56,6 @@ module.exports = [
   kitParts,
   kitPartsOut,
   product,
-  part,
   mark,
   manufacturer,
   os,

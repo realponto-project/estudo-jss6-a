@@ -7,18 +7,18 @@ const { FieldValidationError } = require('../../../../../helpers/errors')
 const equipModelDomain = new EquipModelDomain()
 
 describe('equipModelDomain', () => {
-  let equipTypeMockBefore = null
-  let equipTypeCreatedBefore = null
-  // let equipMarkMock = null
+  // let equipTypeMockBefore = null
+  // let equipTypeCreatedBefore = null
+  // // let equipMarkMock = null
 
-  beforeAll(async () => {
-    equipTypeMockBefore = {
-      type: 'RELOGO DE PONTO',
-      responsibleUser: 'modrp',
-    }
+  // beforeAll(async () => {
+  //   equipTypeMockBefore = {
+  //     type: 'RELOGO DE PONTO',
+  //     responsibleUser: 'modrp',
+  //   }
 
-    equipTypeCreatedBefore = await equipModelDomain.addType(equipTypeMockBefore)
-  })
+  //   equipTypeCreatedBefore = await equipModelDomain.addType(equipTypeMockBefore)
+  // })
 
 
   test('create equipType', async () => {
@@ -42,27 +42,27 @@ describe('equipModelDomain', () => {
     expect(equipTypes.length > 0).toBe(true)
   })
 
-  test('create equipModel', async () => {
-    const equipModelMock = {
-      equipTypeId: equipTypeCreatedBefore.id,
-      name: 'PLUS',
-      description: '',
-      serial: true,
-      responsibleUser: 'modrp',
-    }
+  // test('create equipModel', async () => {
+  //   const equipModelMock = {
+  //     equipTypeId: equipTypeCreatedBefore.id,
+  //     name: 'PLUS',
+  //     description: '',
+  //     serial: true,
+  //     responsibleUser: 'modrp',
+  //   }
 
-    const equipModelCreated = await equipModelDomain.addModel(equipModelMock)
+  //   const equipModelCreated = await equipModelDomain.addModel(equipModelMock)
 
 
-    expect(equipModelCreated.name).toBe(equipModelMock.name)
-    expect(equipModelCreated.description).toBe(equipModelMock.description)
-    expect(equipModelCreated.responsibleUser).toBe(equipModelMock.responsibleUser)
-    expect(equipModelCreated.equipType.id).toBe(equipModelMock.equipTypeId)
-    expect(equipModelCreated.serial).toBe(true)
+  //   expect(equipModelCreated.name).toBe(equipModelMock.name)
+  //   expect(equipModelCreated.description).toBe(equipModelMock.description)
+  //   expect(equipModelCreated.responsibleUser).toBe(equipModelMock.responsibleUser)
+  //   expect(equipModelCreated.equipType.id).toBe(equipModelMock.equipTypeId)
+  //   expect(equipModelCreated.serial).toBe(true)
 
-    await expect(equipModelDomain.addType(equipModelMock))
-      .rejects.toThrowError(new FieldValidationError())
-  })
+  //   await expect(equipModelDomain.addType(equipModelMock))
+  //     .rejects.toThrowError(new FieldValidationError())
+  // })
 
 
   // test('create', async () => {

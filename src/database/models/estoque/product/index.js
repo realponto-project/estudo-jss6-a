@@ -8,6 +8,11 @@ module.exports = (sequelize) => {
       primaryKey: true,
     },
 
+    name: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+
     category: {
       type: Sequelize.ENUM(['peca', 'equipamento', 'outros']),
       allowNull: false,
@@ -23,15 +28,10 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
 
-    // costPrice: {
-    //   type: Sequelize.STRING,
-    //   allowNull: false,
-    // },
-
-    // salePrice: {
-    //   type: Sequelize.STRING,
-    //   allowNull: false,
-    // },
+    serial: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false,
+    },
 
     minimumStock: {
       type: Sequelize.STRING,
@@ -46,17 +46,25 @@ module.exports = (sequelize) => {
       },
     })
 
-    product.belongsTo(models.part, {
-      foreignKey: {
-        allowNull: true,
-      },
+    // product.belongsTo(models.part, {
+    //   foreignKey: {
+    //     allowNull: true,
+    //   },
+    // })
+
+    // product.belongsTo(models.equipModel, {
+    //   foreignKey: {
+    //     allowNull: true,
+    //   },
+    // })
+
+    product.belongsTo(models.equipType)
+
+    product.belongsToMany(models.product, {
+      as: 'productToMany',
+      through: 'productProduct',
     })
 
-    product.belongsTo(models.equipModel, {
-      foreignKey: {
-        allowNull: true,
-      },
-    })
     product.belongsToMany(models.stockBase, { through: 'productBase' })
   }
 
