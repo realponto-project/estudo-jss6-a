@@ -107,4 +107,9 @@ describe('freeMarketDomain', () => {
 
     await freeMarketDomain.add(freeMarketMock)
   })
+
+  test('getAll', async () => {
+    const freeMarketList = await freeMarketDomain.getAll()
+    expect(freeMarketList.rows.length > 0).toBeTruthy()
+  })
 })

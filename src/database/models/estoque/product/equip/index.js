@@ -83,6 +83,11 @@ module.exports = (sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
+
+    reserved: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false,
+    },
   })
 
   equip.associate = (models) => {
@@ -91,6 +96,7 @@ module.exports = (sequelize) => {
         allowNull: false,
       },
     })
+    equip.belongsTo(models.osParts)
   }
 
   return equip

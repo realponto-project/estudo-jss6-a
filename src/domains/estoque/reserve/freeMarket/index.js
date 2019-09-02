@@ -6,7 +6,7 @@ const R = require('ramda')
 const Cnpj = require('@fnando/cnpj/dist/node')
 const Cpf = require('@fnando/cpf/dist/node')
 
-// const formatQuery = require('../../../../helpers/lazyLoad')
+const formatQuery = require('../../../../helpers/lazyLoad')
 const database = require('../../../../database')
 
 const { FieldValidationError } = require('../../../../helpers/errors')
@@ -192,6 +192,100 @@ module.exports = class FreeMarketDomain {
       }],
       transaction,
     })
+
+    return response
+  }
+
+  async getAll(options = {}) {
+    const inicialOrder = {
+      field: 'createdAt',
+      acendent: true,
+      direction: 'DESC',
+    }
+
+    const { query = null, transaction = null } = options
+
+    const newQuery = Object.assign({}, query)
+    const newOrder = (query && query.order) ? query.order : inicialOrder
+
+    if (newOrder.acendent) {
+      newOrder.direction = 'DESC'
+    } else {
+      newOrder.direction = 'ASC'
+    }
+
+    const {
+      getWhere,
+      limit,
+      offset,
+      pageResponse,
+    } = formatQuery(newQuery)
+
+    const freeMarket = await FreeMarket.findAndCountAll({
+      where: getWhere('freeMarket'),
+      // include: [
+      //   {
+      //     model: Technician,
+      //     where: getWhere('technician'),
+      //   },
+      //   {
+      //     model: Product,
+      //     required,
+      //   },
+      // ],
+      order: [
+        [newOrder.field, newOrder.direction],
+      ],
+      limit,
+      offset,
+      transaction,
+    })
+
+    // console.log(JSON.parse(JSON.stringify(os)))
+
+    const { rows } = freeMarket
+
+    if (rows.length === 0) {
+      return {
+        page: null,
+        show: 0,
+        count: freeMarket.count,
+        rows: [],
+      }
+    }
+
+    // const formatDateFunct = (date) => {
+    //   moment.locale('pt-br')
+    //   const formatDate = moment(date).format('L')
+    //   const formatHours = moment(date).format('LT')
+    //   const dateformated = `${formatDate} ${formatHours}`
+    //   return dateformated
+    // }
+
+    const formatData = R.map(async (item) => {
+      const resp = {
+        id: item.id,
+        // razaoSocial: item.razaoSocial,
+      }
+      return resp
+    })
+
+    const freeMarketList = await Promise.all(formatData(rows))
+
+    let show = limit
+    if (freeMarket.count < show) {
+      show = freeMarket.count
+    }
+
+
+    const response = {
+      page: pageResponse,
+      show,
+      count: freeMarket.count,
+      rows: freeMarketList,
+    }
+
+    // console.log(response)
 
     return response
   }

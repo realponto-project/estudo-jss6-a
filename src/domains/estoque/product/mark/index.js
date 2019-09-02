@@ -37,8 +37,8 @@ module.exports = class MarkDomain {
 
     if (markNotHasProp('mark') || !mark.mark) {
       errors = true
-      field.mark = true
-      message.mark = 'Por favor informar a marca do markamento.'
+      field.newMarca = true
+      message.newMarca = 'Por favor informar a marca do markamento.'
     }
 
     if (bodyDataNotHasProp('manufacturer') || !bodyData.manufacturer) {
@@ -101,8 +101,8 @@ module.exports = class MarkDomain {
 
     if (markHasExist) {
       errors = true
-      field.mark = true
-      message.mark = 'Marca já está cadastrada.'
+      field.newMarca = true
+      message.newMarca = 'Marca já está cadastrada.'
     }
 
     // console.log(field)

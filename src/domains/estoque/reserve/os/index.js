@@ -16,7 +16,7 @@ const Product = database.model('product')
 const ProductBase = database.model('productBase')
 const StockBase = database.model('stockBase')
 const Technician = database.model('technician')
-// const Equip = database.model('equip')
+const Equip = database.model('equip')
 
 module.exports = class OsDomain {
   async add(bodyData, options = {}) {
@@ -119,9 +119,7 @@ module.exports = class OsDomain {
           oId: reserveCreated.id,
         }
 
-        console.log(osPartsCreatted)
-
-        await OsParts.create(osPartsCreatted, { transaction })
+        const osPartCreated = await OsParts.create(osPartsCreatted, { transaction })
 
         const stockBase = await StockBase.findOne({
           where: { stockBase: item.stockBase },
@@ -133,47 +131,57 @@ module.exports = class OsDomain {
             productId: item.productId,
             stockBaseId: stockBase.id,
           },
+          include: [{
+            model: Product,
+            attributes: ['serial'],
+          }],
           transaction,
         })
 
-        // const productBase = await ProductBase.findOne({
-        //   where: {
-        //     productId: item.productId,
-        //     stockBaseId: stockBase.id,
-        //   },
-        //   include: [{
-        //     model: Product,
-        //     attributes: ['equipModelId'],
-        //     include: [{
-        //       model: EquipModel,
-        //       attributes: ['serial'],
-        //     }],
-        //   }],
-        //   transaction,
-        // })
+        if (!productBase) {
+          field.peca = true
+          message.peca = 'produto não oconst a na base de dados'
+          throw new FieldValidationError([{ field, message }])
+        }
+        // console.log(JSON.parse(JSON.stringify(productBase)))
 
-        // if (productBase.product.equipModelId && productBase.product.equipModel.serial) {
-        //   const { serialNumberArray } = item
+        if (productBase.product.serial) {
+          const { serialNumberArray } = item
 
-        //   if (serialNumberArray.length > 0) {
-        //     serialNumberArray.map(async (serialNumber) => {
-        //       const equip = await Equip.findOne({
-        //         where: {
-        //           serialNumber,
-        //           productBaseId: productBase.id,
-        //         },
-        //       })
+          if (serialNumberArray.length > 0) {
+            await serialNumberArray.map(async (serialNumber) => {
+              const equip = await Equip.findOne({
+                where: {
+                  serialNumber,
+                  reserved: false,
+                  productBaseId: productBase.id,
+                },
+                transaction,
+              })
 
-        //       if (!equip) {
-        //         field.serialNumber = true
-        //         message.serialNumber = 'este equipamento não esta cadastrado nessa base de estoque'
-        //         throw new FieldValidationError([{ field, message }])
-        //       }
-
-        //       await equip.destroy({ transaction })
-        //     })
-        //   }
-        // }
+              if (!equip) {
+                errors = true
+                field.serialNumber = true
+                message.serialNumber = 'este equipamento não esta cadastrado nessa base de estoque'
+                throw new FieldValidationError([{ field, message }])
+              }
+            })
+            await serialNumberArray.map(async (serialNumber) => {
+              const equip = await Equip.findOne({
+                where: {
+                  serialNumber,
+                  reserved: false,
+                  productBaseId: productBase.id,
+                },
+              })
+              await equip.update({
+                ...equip,
+                // osPartId: osPartCreated.id,
+                reserved: true,
+              }, { transaction })
+            })
+          }
+        }
 
         const productBaseUpdate = {
           ...productBase,
@@ -183,7 +191,19 @@ module.exports = class OsDomain {
 
         await productBase.update(productBaseUpdate, { transaction })
       })
+      // await Promise.all(osPartsCreattedPromises).then(() => {
+      //   console.log('sucesso')
+      // })
+      //   .catch(() => {
+      //     errors = true
+      //     console.log('erro')
+      //     return { erro: 'errorrr' }
+      //   })
       await Promise.all(osPartsCreattedPromises)
+    }
+
+    if (errors) {
+      throw new FieldValidationError([{ field, message }])
     }
 
     const response = await Os.findByPk(reserveCreated.id, {
@@ -197,6 +217,8 @@ module.exports = class OsDomain {
       ],
       transaction,
     })
+
+    // console.log(JSON.parse(JSON.stringify(response)))
 
     return response
   }
@@ -310,7 +332,7 @@ module.exports = class OsDomain {
         transaction,
       })
 
-      console.log(JSON.parse(JSON.stringify(osPartsAll)))
+      // console.log(JSON.parse(JSON.stringify(osPartsAll)))
 
       const osPartsUpdatePromises = osParts.map(async (item) => {
         if (R.prop('id', item)) {
@@ -359,8 +381,8 @@ module.exports = class OsDomain {
             ...item,
             oId: bodyData.id,
           }
-          
-          console.log(osPartsCreatted)
+
+          // console.log(osPartsCreatted)
 
           await OsParts.create(osPartsCreatted, { transaction })
 

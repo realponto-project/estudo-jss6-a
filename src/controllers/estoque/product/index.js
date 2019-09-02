@@ -51,9 +51,23 @@ const getAllNames = async (req, res, next) => {
   }
 }
 
+const getProductByStockBase = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const { stockBase } = req.query
+    const products = await productDomain.getProductByStockBase(stockBase)
+
+    await transaction.commit()
+    res.json(products)
+  } catch (error) {
+    await transaction.rollback()
+    next()
+  }
+}
 
 module.exports = {
   add,
   getAll,
   getAllNames,
+  getProductByStockBase,
 }

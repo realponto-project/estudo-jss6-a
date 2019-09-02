@@ -126,6 +126,28 @@ const addFreeMarket = async (req, res, next) => {
   }
 }
 
+const getAllFreeMarket = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    let query
+    if (R.has('query', req)) {
+      if (R.has('query', req.query)) {
+        query = JSON.parse(req.query.query)
+      }
+    }
+
+    const FreeMarket = await freeMarketDomain.getAll({ query, transaction })
+
+    // console.log(kits)
+
+    await transaction.commit()
+    res.json(FreeMarket)
+  } catch (error) {
+    await transaction.rollback()
+    next()
+  }
+}
+
 const getAllOs = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
@@ -169,6 +191,7 @@ module.exports = {
   getAllKit,
   addKitOut,
   addFreeMarket,
+  getAllFreeMarket,
   getAllOs,
   getOsByOs,
 //   getAll,

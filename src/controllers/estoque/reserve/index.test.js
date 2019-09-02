@@ -305,4 +305,16 @@ describe('reserveController', () => {
     expect(body.zipCode).toBe(reserveMock.zipCode)
     expect(body.products.length > 0).toBe(true)
   })
+
+  test('getAllKit', async () => {
+    const response = await request().get('/api/reserve/freeMarket', { headers })
+
+    const { statusCode } = response
+
+    expect(statusCode).toBe(200)
+    // expect(body.count).toBeTruthy()
+    // expect(body.page).toBeTruthy()
+    // expect(body.show).toBeTruthy()
+    // expect(body.rows).toBeTruthy()
+  })
 })
