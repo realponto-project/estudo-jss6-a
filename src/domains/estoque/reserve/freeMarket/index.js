@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 const R = require('ramda')
-// const moment = require('moment')
+const moment = require('moment')
 // const axios = require('axios')
 
 const Cnpj = require('@fnando/cnpj/dist/node')
@@ -121,6 +121,8 @@ module.exports = class FreeMarketDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
+    freeMarket.zipCode = freeMarket.zipCode.replace(/\D/ig, '')
+    freeMarket.cnpjOrCpf = freeMarket.cnpjOrCpf.replace(/\D/ig, '')
 
     const freeMarketCreated = await FreeMarket.create(freeMarket, { transaction })
 
@@ -135,16 +137,10 @@ module.exports = class FreeMarketDomain {
 
         await FreeMarketParts.create(freeMarketPartsCreatted, { transaction })
 
-        const stockBase = await StockBase.findOne({
-          where: { stockBase: item.stockBase },
-          transaction,
-        })
+        console.log(freeMarketParts)
 
-        const productBase = await ProductBase.findOne({
-          where: {
-            productId: item.productId,
-            stockBaseId: stockBase.id,
-          },
+
+        const productBase = await ProductBase.findByPk(item.productBaseId, {
           include: [{
             model: Product,
             attributes: ['serial'],
@@ -152,11 +148,13 @@ module.exports = class FreeMarketDomain {
           transaction,
         })
 
+        console.log(JSON.parse(JSON.stringify(productBase)))
+
         if (productBase.product.serial) {
           const { serialNumberArray } = item
 
           if (serialNumberArray.length > 0) {
-            serialNumberArray.map(async (serialNumber) => {
+            await serialNumberArray.map(async (serialNumber) => {
               const equip = await Equip.findOne({
                 where: {
                   serialNumber,
@@ -169,8 +167,20 @@ module.exports = class FreeMarketDomain {
                 message.serialNumber = 'este equipamento não esta cadastrado nessa base de estoque'
                 throw new FieldValidationError([{ field, message }])
               }
-
-              await equip.destroy({ transaction })
+            })
+            await serialNumberArray.map(async (serialNumber) => {
+              const equip = await Equip.findOne({
+                where: {
+                  serialNumber,
+                  reserved: false,
+                  productBaseId: productBase.id,
+                },
+              })
+              await equip.update({
+                ...equip,
+                // osPartId: osPartCreated.id,
+                reserved: true,
+              }, { transaction })
             })
           }
         }
@@ -188,7 +198,7 @@ module.exports = class FreeMarketDomain {
 
     const response = await FreeMarket.findByPk(freeMarketCreated.id, {
       include: [{
-        model: Product,
+        model: ProductBase,
       }],
       transaction,
     })
@@ -254,18 +264,20 @@ module.exports = class FreeMarketDomain {
       }
     }
 
-    // const formatDateFunct = (date) => {
-    //   moment.locale('pt-br')
-    //   const formatDate = moment(date).format('L')
-    //   const formatHours = moment(date).format('LT')
-    //   const dateformated = `${formatDate} ${formatHours}`
-    //   return dateformated
-    // }
+    const formatDateFunct = (date) => {moment.locale('pt-br')
+      const formatDate = moment(date).format('L')
+      const formatHours = moment(date).format('LT')
+      const dateformated = `${formatDate} ${formatHours}`
+      return dateformated
+    }
 
     const formatData = R.map(async (item) => {
       const resp = {
         id: item.id,
-        // razaoSocial: item.razaoSocial,
+        trackingCode: item.trackingCode,
+        name: item.name,
+        zipCode: item.zipCode,
+        createdAt: formatDateFunct(item.createdAt),
       }
       return resp
     })

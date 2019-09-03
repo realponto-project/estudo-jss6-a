@@ -287,7 +287,7 @@ module.exports = class ProductDomain {
     const { transaction = null } = options
 
     const productBase = await ProductBase.findAll({
-      attributes: ['stockBaseId', 'productId'],
+      attributes: ['id', 'stockBaseId', 'productId', 'available'],
       include: [
         {
           model: StockBase,
@@ -296,14 +296,17 @@ module.exports = class ProductDomain {
         },
         {
           model: Product,
-          attributes: ['id', 'name', 'serial'],
+          attributes: ['name', 'serial'],
         },
       ],
       transaction,
     })
 
+    // console.log(JSON.parse(JSON.stringify(productBase)))
+
     const response = productBase.map(item => ({
-      id: item.product.id,
+      id: item.id,
+      available: item.available,
       name: item.product.name,
       serial: item.product.serial,
     }))

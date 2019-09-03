@@ -8,6 +8,7 @@ const ProductDomain = require('../../product')
 const CompanyDomain = require('../../../general/company')
 const EntranceDomain = require('../../entrance')
 
+const database = require('../../../../database')
 // const { FieldValidationError } = require('../../../helpers/errors')
 
 const kitDomain = new KitDomain()
@@ -18,8 +19,12 @@ const productDomain = new ProductDomain()
 const companyDomain = new CompanyDomain()
 const entranceDomain = new EntranceDomain()
 
+const ProductBase = database.model('productBase')
+const StockBase = database.model('stockBase')
+
 describe('kitDomain', () => {
   let productCreated = null
+  let productBase = null
 
   beforeAll(async () => {
     const carMock = {
@@ -87,15 +92,24 @@ describe('kitDomain', () => {
     }
 
     await entranceDomain.add(entranceMock)
+
+    productBase = await ProductBase.findOne({
+      where: {
+        productId: productCreated.id,
+      },
+      include: [{ model: StockBase, where: { stockBase: 'REALPONTO' } }],
+      transacition: null,
+    })
   })
 
   test('reserva kit', async () => {
     const reserveMock = {
-      kitParts: [{
-        amount: '1',
-        productId: productCreated.id,
-        stockBase: 'PONTOREAL',
-      }],
+      kitParts: [
+        {
+          productBaseId: productBase.id,
+          amount: '5',
+        },
+      ],
     }
 
     await kitDomain.add(reserveMock)

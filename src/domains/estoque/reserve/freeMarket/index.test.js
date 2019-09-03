@@ -9,6 +9,7 @@ const CompanyDomain = require('../../../general/company')
 const EntranceDomain = require('../../entrance')
 const EquipModelDomain = require('../../product/equip/equipModel')
 
+const database = require('../../../../database')
 // // const { FieldValidationError } = require('../../../helpers/errors')
 
 // const kitDomain = new KitDomain()
@@ -21,8 +22,12 @@ const entranceDomain = new EntranceDomain()
 const freeMarketDomain = new FreeMarketDomain()
 const equipModelDomain = new EquipModelDomain()
 
+const ProductBase = database.model('productBase')
+const StockBase = database.model('stockBase')
+
 describe('freeMarketDomain', () => {
   let productCreated = null
+  let productBase = null
 
   beforeAll(async () => {
     const mark = {
@@ -74,7 +79,7 @@ describe('freeMarketDomain', () => {
 
     const entranceMock = {
       amountAdded: '2',
-      stockBase: 'PONTOREAL',
+      stockBase: 'REALPONTO',
       productId: productCreated.id,
       companyId: companyCreated.id,
       responsibleUser: 'modrp',
@@ -82,6 +87,14 @@ describe('freeMarketDomain', () => {
     }
 
     await entranceDomain.add(entranceMock)
+
+    productBase = await ProductBase.findOne({
+      where: {
+        productId: productCreated.id,
+      },
+      include: [{ model: StockBase, where: { stockBase: 'REALPONTO' } }],
+      transacition: null,
+    })
   })
 
   test('test', async () => {
@@ -97,9 +110,8 @@ describe('freeMarketDomain', () => {
       cnpjOrCpf: '46700988888',
       freeMarketParts: [
         {
-          productId: productCreated.id,
+          productBaseId: productBase.id,
           amount: '1',
-          stockBase: 'PONTOREAL',
           serialNumberArray: ['123456789'],
         },
       ],

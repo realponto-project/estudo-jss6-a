@@ -64,7 +64,7 @@ module.exports = (sequelize) => {
   })
 
   freeMarket.associate = (models) => {
-    freeMarket.belongsToMany(models.product, { through: 'freeMarketParts' })
+    freeMarket.belongsToMany(models.productBase, { through: 'freeMarketParts' })
   }
 
   return freeMarket

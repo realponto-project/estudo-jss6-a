@@ -110,27 +110,13 @@ module.exports = class OsDomain {
 
     const reserveCreated = await Os.create(reserve, { transaction })
 
+    console.log(bodyData)
+
     if (bodyHasProp('osParts')) {
       const { osParts } = bodyData
 
       const osPartsCreattedPromises = osParts.map(async (item) => {
-        const osPartsCreatted = {
-          ...item,
-          oId: reserveCreated.id,
-        }
-
-        const osPartCreated = await OsParts.create(osPartsCreatted, { transaction })
-
-        const stockBase = await StockBase.findOne({
-          where: { stockBase: item.stockBase },
-          transaction,
-        })
-
-        const productBase = await ProductBase.findOne({
-          where: {
-            productId: item.productId,
-            stockBaseId: stockBase.id,
-          },
+        const productBase = await ProductBase.findByPk(item.productBaseId, {
           include: [{
             model: Product,
             attributes: ['serial'],
@@ -138,12 +124,19 @@ module.exports = class OsDomain {
           transaction,
         })
 
+        const osPartsCreatted = {
+          ...item,
+          oId: reserveCreated.id,
+        }
+
         if (!productBase) {
           field.peca = true
           message.peca = 'produto não oconst a na base de dados'
           throw new FieldValidationError([{ field, message }])
         }
         // console.log(JSON.parse(JSON.stringify(productBase)))
+
+        const osPartCreated = await OsParts.create(osPartsCreatted, { transaction })
 
         if (productBase.product.serial) {
           const { serialNumberArray } = item
@@ -209,7 +202,10 @@ module.exports = class OsDomain {
     const response = await Os.findByPk(reserveCreated.id, {
       include: [
         {
-          model: Product,
+          model: ProductBase,
+          include: [{
+            model: Product,
+          }],
         },
         {
           model: Technician,
@@ -244,17 +240,7 @@ module.exports = class OsDomain {
       })
 
       const osPartsPromise = osParts.map(async (item) => {
-        const stockBase = await StockBase.findOne({
-          where: { stockBase: item.stockBase },
-          transaction,
-        })
-
-        const productBase = await ProductBase.findOne({
-          where: {
-            productId: item.productId,
-            stockBaseId: stockBase.id,
-          },
-        })
+        const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
         const productBaseUpdate = {
           ...productBase,
@@ -348,18 +334,7 @@ module.exports = class OsDomain {
           // console.log(JSON.parse(JSON.stringify(osPartsReturn)))
 
           // osPartsReturn.filter((id) => id === )
-
-          const stockBase = await StockBase.findOne({
-            where: { stockBase: osPartsReturn.stockBase },
-            transaction,
-          })
-
-          const productBase = await ProductBase.findOne({
-            where: {
-              productId: osPartsReturn.productId,
-              stockBaseId: stockBase.id,
-            },
-          })
+          const productBase = await ProductBase.findByPk(osPartsReturn.productBaseId, { transaction })
 
           // console.log(JSON.parse(JSON.stringify(productBase)))
 
@@ -386,19 +361,7 @@ module.exports = class OsDomain {
 
           await OsParts.create(osPartsCreatted, { transaction })
 
-
-          const stockBase = await StockBase.findOne({
-            where: { stockBase: item.stockBase },
-            transaction,
-          })
-
-          const productBase = await ProductBase.findOne({
-            where: {
-              productId: item.productId,
-              stockBaseId: stockBase.id,
-            },
-            transaction,
-          })
+          const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
           const productBaseUpdate = {
             ...productBase,
@@ -411,23 +374,13 @@ module.exports = class OsDomain {
       })
       await Promise.all(osPartsUpdatePromises)
 
-      console.log(JSON.parse(JSON.stringify(osPartsAll)))
+      // console.log(JSON.parse(JSON.stringify(osPartsAll)))
 
       if (osPartsAll.length > 0) {
         const osPartsdeletePromises = osPartsAll.map(async (item) => {
           const osPartDelete = await OsParts.findByPk(item.id, { transaction })
 
-          const stockBase = await StockBase.findOne({
-            where: { stockBase: osPartDelete.stockBase },
-            transaction,
-          })
-
-          const productBase = await ProductBase.findOne({
-            where: {
-              productId: osPartDelete.productId,
-              stockBaseId: stockBase.id,
-            },
-          })
+          const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
           const productBaseUpdate = {
             ...productBase,
@@ -493,9 +446,16 @@ module.exports = class OsDomain {
           where: getWhere('technician'),
         },
         {
-          model: Product,
+          model: ProductBase,
+          include: [{
+            model: Product,
+          }],
           required,
         },
+        // {
+        //   model: Product,
+        //   required,
+        // },
       ],
       order: [
         [newOrder.field, newOrder.direction],
@@ -506,7 +466,10 @@ module.exports = class OsDomain {
       transaction,
     })
 
-    // console.log(JSON.parse(JSON.stringify(os)))
+    // console.log(paranoid)
+
+    // console.log(JSON.parse(JSON.stringify(os.rows)))
+    // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
 
     const { rows } = os
 
@@ -529,7 +492,7 @@ module.exports = class OsDomain {
 
     const formatProduct = R.map((item) => {
       const resp = {
-        name: item.name,
+        name: item.product.name,
         id: item.osParts.id,
         amount: item.osParts.amount,
         output: item.osParts.output,
@@ -540,34 +503,34 @@ module.exports = class OsDomain {
       return resp
     })
 
-    const formatProductDelete = R.map((item) => {
-      const resp = {
-        name: item.product.name,
-        osPartsId: item.id,
-        amount: item.amount,
-        output: item.output,
-        missOut: item.missOut,
-        return: item.return,
-      }
-      return resp
-    })
+    // const formatProductDelete = R.map((item) => {
+    //   const resp = {
+    //     name: item.product.name,
+    //     osPartsId: item.id,
+    //     amount: item.amount,
+    //     output: item.output,
+    //     missOut: item.missOut,
+    //     return: item.return,
+    //   }
+    //   return resp
+    // })
 
-    const formatProductNull = async (id) => {
-      const osParts = await OsParts.findAll({
-        where: {
-          oId: id,
-        },
-        include: [{
-          model: Product,
-        }],
-        paranoid: false,
-        transaction,
-      })
+    // const formatProductNull = async (id) => {
+    //   const osParts = await OsParts.findAll({
+    //     where: {
+    //       oId: id,
+    //     },
+    //     include: [{
+    //       model: Product,
+    //     }],
+    //     paranoid: false,
+    //     transaction,
+    //   })
 
-      // console.log(JSON.parse(JSON.stringify(osParts)))
+    //   // console.log(JSON.parse(JSON.stringify(osParts)))
 
-      return formatProductDelete(osParts)
-    }
+    //   return formatProductDelete(osParts)
+    // }
 
     const formatData = R.map(async (item) => {
       const resp = {
@@ -575,11 +538,13 @@ module.exports = class OsDomain {
         razaoSocial: item.razaoSocial,
         cnpj: item.cnpj,
         date: item.date,
+        formatedDate: moment(item.date).format('L'),
         technician: item.technician.name,
         technicianId: item.technicianId,
         os: item.os,
         createdAt: formatDateFunct(item.createdAt),
-        products: item.products.length !== 0 ? formatProduct(item.products) : await formatProductNull(item.id),
+        products: formatProduct(item.productBases),
+        // products: item.productBases.products.length !== 0 ? formatProduct(item.productBases.products) : await formatProductNull(item.id),
       }
       return resp
     })
@@ -620,7 +585,15 @@ module.exports = class OsDomain {
           model: Technician,
         },
         {
-          model: Product,
+          model: ProductBase,
+          include: [
+            {
+              model: Product,
+            },
+            {
+              model: StockBase,
+            },
+          ],
         },
       ],
       transaction,
@@ -638,21 +611,25 @@ module.exports = class OsDomain {
 
     const formatedReserve = R.map((item) => {
       const resp = {
-        stockBase: item.osParts.stockBase,
+        stockBase: item.stockBase.stockBase,
         amount: item.osParts.amount,
-        nomeProdutoCarrinho: item.name,
-        productId: item.id,
+        nomeProdutoCarrinho: item.product.name,
+        productId: item.productId,
       }
       return resp
     })
+
+    // console.log(JSON.parse(JSON.stringify(osReturn.productBases)))
 
     const response = {
       razaoSocial: osReturn.razaoSocial,
       cnpj: osReturn.cnpj,
       data: formatDateFunct(osReturn.date),
       technician: osReturn.technician.name,
-      reserve: formatedReserve(osReturn.products),
+      reserve: formatedReserve(osReturn.productBases),
     }
+
+    // console.log(JSON.parse(JSON.stringify(response)))
 
     return response
   }
@@ -713,6 +690,26 @@ module.exports = class OsDomain {
       message.add = 'quantidade adicionada exede o limite'
       throw new FieldValidationError([{ field, message }])
     }
+
+    const productBase = await ProductBase.findByPk(osPart.productBaseId, { transaction })
+
+    let productBaseUpdate = {}
+
+    if (key === 'return') {
+      productBaseUpdate = {
+        ...productBase,
+        available: (parseInt(productBase.available, 10) + parseInt(value, 10)).toString(),
+        reserved: (parseInt(productBase.reserved, 10) - parseInt(value, 10)).toString(),
+      }
+    } else {
+      productBaseUpdate = {
+        ...productBase,
+        amount: (parseInt(productBase.amount, 10) - parseInt(value, 10)).toString(),
+        reserved: (parseInt(productBase.reserved, 10) - parseInt(value, 10)).toString(),
+      }
+    }
+
+    await productBase.update(productBaseUpdate, { transaction })
 
     const osPartUpdate = {
       ...osPart,
