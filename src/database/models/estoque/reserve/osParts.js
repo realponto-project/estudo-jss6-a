@@ -28,16 +28,17 @@ module.exports = (sequelize) => {
       defaultValue: '0',
     },
 
-    stockBase: {
-      type: Sequelize.ENUM(['REALPONTO', 'NOVAREAL', 'PONTOREAL']),
-      allowNull: false,
-    },
+    // stockBase: {
+    //   type: Sequelize.ENUM(['REALPONTO', 'NOVAREAL', 'PONTOREAL']),
+    //   allowNull: false,
+    // },
   })
 
   osParts.associate = (models) => {
     // osParts.belongsToMany(models.product, { through: 'osParts' })
     osParts.belongsTo(models.product)
     osParts.belongsTo(models.os)
+    osParts.belongsTo(models.productBase)
   }
 
   return osParts

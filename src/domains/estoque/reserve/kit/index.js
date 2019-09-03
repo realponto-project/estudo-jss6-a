@@ -94,16 +94,8 @@ module.exports = class KitDomain {
         const { kitParts } = bodyData
 
         const kitPartsCreattedPromises = kitParts.map(async (item) => {
-          const stockBase = await StockBase.findOne({
-            where: { stockBase: item.stockBase },
+          const productBase = await ProductBase.findByPk(item.productBaseId, {
             transaction,
-          })
-
-          const productBase = await ProductBase.findOne({
-            where: {
-              productId: item.productId,
-              stockBaseId: stockBase.id,
-            },
           })
 
           const kitPartsCreatted = {

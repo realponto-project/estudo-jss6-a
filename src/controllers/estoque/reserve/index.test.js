@@ -3,8 +3,8 @@ const request = require('../../../helpers/request')
 const database = require('../../../database')
 
 const KitParts = database.model('kitParts')
-
-// const database = require('../../../database')
+const ProductBase = database.model('productBase')
+const StockBase = database.model('stockBase')
 // const { FieldValidationError } = require('../../../helpers/errors')
 
 
@@ -12,6 +12,7 @@ describe('reserveController', () => {
   let headers = null
   let product = null
   let technician = null
+  let productBase = null
 
   beforeAll(async () => {
     const loginBody = {
@@ -93,6 +94,14 @@ describe('reserveController', () => {
     }
 
     technician = await request().post('/api/technician', technicianMock, { headers })
+
+    productBase = await ProductBase.findOne({
+      where: {
+        productId: product.body.id,
+      },
+      include: [{ model: StockBase, where: { stockBase: 'REALPONTO' } }],
+      transacition: null,
+    })
   })
 
   test('create reserva Os', async () => {
@@ -104,9 +113,8 @@ describe('reserveController', () => {
       technicianId: technician.body.id,
       osParts: [
         {
-          productId: product.body.id,
+          productBaseId: productBase.id,
           amount: '5',
-          stockBase: 'REALPONTO',
         },
       ],
     }
@@ -118,10 +126,6 @@ describe('reserveController', () => {
     expect(statusCode).toBe(200)
     expect(body.razaoSocial).toBe(reserveMock.razaoSocial)
     expect(body.cnpj).toBe(reserveMock.cnpj)
-    expect(body.products[0].category).toBe(product.body.category)
-    expect(body.products[0].description).toBe(product.body.description)
-    expect(body.products[0].SKU).toBe(product.body.SKU)
-    expect(body.products[0].minimumStock).toBe(product.body.minimumStock)
     expect(body.technician.name).toBe(technician.body.name)
     expect(body.technician.CNH).toBe(technician.body.CNH)
   })
@@ -135,9 +139,8 @@ describe('reserveController', () => {
       technicianId: technician.body.id,
       osParts: [
         {
-          productId: product.body.id,
-          amount: '2',
-          stockBase: 'REALPONTO',
+          productBaseId: productBase.id,
+          amount: '6',
         },
       ],
     }
@@ -145,7 +148,7 @@ describe('reserveController', () => {
     const reserveCreated = await request().post('/api/reserve/OS', reserveMock, { headers })
 
     const outputmock = {
-      osPartsId: reserveCreated.body.products[0].osParts.id,
+      osPartsId: reserveCreated.body.productBases[0].osParts.id,
       add: {
         output: '2',
       },
@@ -170,9 +173,8 @@ describe('reserveController', () => {
       technicianId: technician.body.id,
       osParts: [
         {
-          productId: product.body.id,
-          amount: '4',
-          stockBase: 'REALPONTO',
+          productBaseId: productBase.id,
+          amount: '9',
         },
       ],
     }
@@ -220,9 +222,8 @@ describe('reserveController', () => {
       technicianId: technician.body.id,
       osParts: [
         {
-          productId: product.body.id,
-          amount: '4',
-          stockBase: 'REALPONTO',
+          productBaseId: productBase.id,
+          amount: '3',
         },
       ],
     }
@@ -289,9 +290,8 @@ describe('reserveController', () => {
       cnpjOrCpf: '46700988888',
       freeMarketParts: [
         {
-          productId: product.body.id,
-          amount: '5',
-          stockBase: 'REALPONTO',
+          productBaseId: productBase.id,
+          amount: '1',
         },
       ],
     }
@@ -303,6 +303,17 @@ describe('reserveController', () => {
     expect(statusCode).toBe(200)
     expect(body.trackingCode).toBe(reserveMock.trackingCode)
     expect(body.zipCode).toBe(reserveMock.zipCode)
-    expect(body.products.length > 0).toBe(true)
+  })
+
+  test('getAllKit', async () => {
+    const response = await request().get('/api/reserve/freeMarket', { headers })
+
+    const { statusCode } = response
+
+    expect(statusCode).toBe(200)
+    // expect(body.count).toBeTruthy()
+    // expect(body.page).toBeTruthy()
+    // expect(body.show).toBeTruthy()
+    // expect(body.rows).toBeTruthy()
   })
 })

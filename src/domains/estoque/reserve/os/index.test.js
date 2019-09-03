@@ -20,10 +20,13 @@ const carDomain = new CarDomain()
 const technicianDomain = new TechnicianDomain()
 
 const OsParts = database.model('osParts')
+const ProductBase = database.model('productBase')
+const StockBase = database.model('stockBase')
 
 describe('reserveOsDomain', () => {
   let productCreated = null
   let technicianCreated = null
+  let productBase = null
 
   beforeAll(async () => {
     const mark = {
@@ -66,8 +69,8 @@ describe('reserveOsDomain', () => {
     const companyCreated = await companyDomain.add(companyMock)
 
     const entranceMock = {
-      amountAdded: '32',
-      stockBase: 'PONTOREAL',
+      amountAdded: '64',
+      stockBase: 'REALPONTO',
       productId: productCreated.id,
       companyId: companyCreated.id,
       responsibleUser: 'modrp',
@@ -91,6 +94,14 @@ describe('reserveOsDomain', () => {
     }
 
     technicianCreated = await technicianDomain.add(technicianMock)
+
+    productBase = await ProductBase.findOne({
+      where: {
+        productId: productCreated.id,
+      },
+      include: [{ model: StockBase, where: { stockBase: 'REALPONTO' } }],
+      transacition: null,
+    })
   })
 
   test('create reserve OS', async () => {
@@ -102,9 +113,8 @@ describe('reserveOsDomain', () => {
       technicianId: technicianCreated.id,
       osParts: [
         {
-          productId: productCreated.id,
+          productBaseId: productBase.id,
           amount: '5',
-          stockBase: 'PONTOREAL',
         },
       ],
     }
@@ -124,9 +134,8 @@ describe('reserveOsDomain', () => {
       technicianId: technicianCreated.id,
       osParts: [
         {
-          productId: productCreated.id,
-          amount: '2',
-          stockBase: 'PONTOREAL',
+          productBaseId: productBase.id,
+          amount: '1',
         },
       ],
     }
@@ -144,9 +153,8 @@ describe('reserveOsDomain', () => {
       technicianId: technicianCreated.id,
       osParts: [
         {
-          productId: productCreated.id,
-          amount: '2',
-          stockBase: 'PONTOREAL',
+          productBaseId: productBase.id,
+          amount: '4',
         },
       ],
     }
@@ -155,7 +163,6 @@ describe('reserveOsDomain', () => {
     const osParts = await OsParts.findOne({
       where: {
         oId: reserveCreated.id,
-        productId: productCreated.id,
       },
       transacition: null,
     })
@@ -186,9 +193,8 @@ describe('reserveOsDomain', () => {
       technicianId: technicianCreated.id,
       osParts: [
         {
-          productId: productCreated.id,
-          amount: '2',
-          stockBase: 'PONTOREAL',
+          productBaseId: productBase.id,
+          amount: '3',
         },
       ],
     }
@@ -209,16 +215,15 @@ describe('reserveOsDomain', () => {
       technicianId: technicianCreated.id,
       osParts: [
         {
-          productId: productCreated.id,
-          amount: '2',
-          stockBase: 'PONTOREAL',
+          productBaseId: productBase.id,
+          amount: '6',
         },
       ],
     }
     const reserveCreated = await osDomain.add(reserveMock)
 
     const output = {
-      osPartsId: reserveCreated.products[0].osParts.id,
+      osPartsId: reserveCreated.productBases[0].osParts.id,
       add: {
         output: '2',
       },

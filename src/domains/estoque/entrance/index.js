@@ -278,7 +278,7 @@ module.exports = class TechnicianDomain {
     } = formatQuery(newQuery)
 
     // console.log(getWhere('part'))
-    // console.log(getWhere('entrance'))
+    console.log(getWhere('entrance'))
 
     const entrances = await Entrance.findAndCountAll({
       where: getWhere('entrance'),

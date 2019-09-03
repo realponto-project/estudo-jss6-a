@@ -108,34 +108,34 @@ module.exports = class TechnicianDomain {
 
     await car.addTechnician(technicianCreated, { transaction })
 
-    // if (technician.external) {
-    //   const kit = await Kit.findOne({ transaction })
+    if (technician.external) {
+      const kit = await Kit.findOne({ transaction })
 
-    //   console.log(JSON.parse(JSON.stringify(kit)))
+      // console.log(JSON.parse(JSON.stringify(kit)))
 
-    //   const kitParts = await KitParts.findAll({
-    //     where: { kitId: kit.id },
-    //     transaction,
-    //   })
+      const kitParts = await KitParts.findAll({
+        where: { kitId: kit.id },
+        transaction,
+      })
 
-    //   console.log(JSON.parse(JSON.stringify(kitParts)))
+      // console.log(JSON.parse(JSON.stringify(kitParts)))
 
-    //   const kitCreated = await Kit.create({ technicianId: technicianCreated.id }, { transaction })
+      const kitCreated = await Kit.create({ technicianId: technicianCreated.id }, { transaction })
 
-    //   const kitPartsPromise = kitParts.map(async (item) => {
-    //     const kitPart = {
-    //       kitId: kitCreated.id,
-    //       productBaseId: item.productBaseId,
-    //       amount: '0',
-    //     }
+      const kitPartsPromise = kitParts.map(async (item) => {
+        const kitPart = {
+          kitId: kitCreated.id,
+          productBaseId: item.productBaseId,
+          amount: '0',
+        }
 
-    //     await KitParts.create(kitPart, { transaction })
-    //   })
+        await KitParts.create(kitPart, { transaction })
+      })
 
-    //   console.log(JSON.parse(JSON.stringify(kitCreated)))
+      // console.log(JSON.parse(JSON.stringify(kitCreated)))
 
-    //   await Promise.all(kitPartsPromise)
-    // }
+      await Promise.all(kitPartsPromise)
+    }
 
     const response = await Technician.findByPk(technicianCreated.id, {
       include: [{

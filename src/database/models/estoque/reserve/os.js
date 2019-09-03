@@ -31,7 +31,7 @@ module.exports = (sequelize) => {
   })
 
   os.associate = (models) => {
-    os.belongsToMany(models.product, { through: 'osParts' })
+    os.belongsToMany(models.productBase, { through: 'osParts' })
     os.belongsTo(models.technician, {
       foreignKey: {
         allowNull: true,

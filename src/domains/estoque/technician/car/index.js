@@ -22,12 +22,12 @@ module.exports = class CarDomain {
     const field = {
       model: false,
       year: false,
-      plate: false,
+      newPlaca: false,
     }
     const message = {
       model: '',
       year: '',
-      plate: '',
+      newPlaca: '',
     }
 
     let errors = false
@@ -46,8 +46,8 @@ module.exports = class CarDomain {
 
     if (carNotHasProp('plate') || !car.plate) {
       errors = true
-      field.plate = true
-      message.plate = 'Por favor informar a placa do carro.'
+      field.newPlaca = true
+      message.newPlaca = 'Por favor informar a placa do carro.'
     } else if (!/^[A-Z]{3}-\d{4}/.test(car.plate)) {
       errors = true
       field.plate = true
@@ -60,8 +60,8 @@ module.exports = class CarDomain {
 
       if (carHasExist) {
         errors = true
-        field.plate = true
-        message.plate = 'Carro já está cadastrado.'
+        field.newPlaca = true
+        message.newPlaca = 'Placa já cadastrado.'
       }
     }
 

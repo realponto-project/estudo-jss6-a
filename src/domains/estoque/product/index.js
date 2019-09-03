@@ -12,6 +12,8 @@ const EquipType = database.model('equipType')
 const Mark = database.model('mark')
 const Product = database.model('product')
 const Manufacturer = database.model('manufacturer')
+const ProductBase = database.model('productBase')
+const StockBase = database.model('stockBase')
 
 module.exports = class ProductDomain {
   async add(bodyData, options = {}) {
@@ -276,6 +278,37 @@ module.exports = class ProductDomain {
       id: item.id,
       name: item.name,
       serial: item.serial,
+    }))
+
+    return response
+  }
+
+  async getProductByStockBase(stockBase, options = {}) {
+    const { transaction = null } = options
+
+    const productBase = await ProductBase.findAll({
+      attributes: ['id', 'stockBaseId', 'productId', 'available'],
+      include: [
+        {
+          model: StockBase,
+          where: { stockBase },
+          attributes: [],
+        },
+        {
+          model: Product,
+          attributes: ['name', 'serial'],
+        },
+      ],
+      transaction,
+    })
+
+    // console.log(JSON.parse(JSON.stringify(productBase)))
+
+    const response = productBase.map(item => ({
+      id: item.id,
+      available: item.available,
+      name: item.product.name,
+      serial: item.product.serial,
     }))
 
     return response
