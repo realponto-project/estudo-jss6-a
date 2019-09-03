@@ -38,7 +38,7 @@ module.exports = class CarDomain {
       message.model = 'Por favor informar modelo do carro.'
     }
 
-    if (carNotHasProp('year') || !car.year) {
+    if (carNotHasProp('year') || !car.year || !/^\d{4}/.test(car.year)) {
       errors = true
       field.year = true
       message.year = 'Por favor informar o ano do carro.'
@@ -68,7 +68,6 @@ module.exports = class CarDomain {
     if (errors) {
       throw new FieldValidationError([{ field, message }])
     }
-
 
     const carCreated = await Car.create(car, { transaction })
 

@@ -10,6 +10,7 @@ router.put('/output', reserveController.output)
 router.post('/kit', reserveController.addKit)
 router.get('/kit', reserveController.getAllKit)
 router.post('/kitOut', reserveController.addKitOut)
+router.get('/kitOut', reserveController.getAllKitOut)
 router.post('/freeMarket', reserveController.addFreeMarket)
 router.get('/freeMarket', reserveController.getAllFreeMarket)
 

@@ -111,30 +111,26 @@ module.exports = class TechnicianDomain {
     if (technician.external) {
       const kit = await Kit.findOne({ transaction })
 
-      // console.log(JSON.parse(JSON.stringify(kit)))
+      if (kit) {
+        const kitParts = await KitParts.findAll({
+          where: { kitId: kit.id },
+          transaction,
+        })
 
-      const kitParts = await KitParts.findAll({
-        where: { kitId: kit.id },
-        transaction,
-      })
+        const kitCreated = await Kit.create({ technicianId: technicianCreated.id }, { transaction })
 
-      // console.log(JSON.parse(JSON.stringify(kitParts)))
+        const kitPartsPromise = kitParts.map(async (item) => {
+          const kitPart = {
+            kitId: kitCreated.id,
+            productBaseId: item.productBaseId,
+            amount: '0',
+          }
 
-      const kitCreated = await Kit.create({ technicianId: technicianCreated.id }, { transaction })
+          await KitParts.create(kitPart, { transaction })
+        })
 
-      const kitPartsPromise = kitParts.map(async (item) => {
-        const kitPart = {
-          kitId: kitCreated.id,
-          productBaseId: item.productBaseId,
-          amount: '0',
-        }
-
-        await KitParts.create(kitPart, { transaction })
-      })
-
-      // console.log(JSON.parse(JSON.stringify(kitCreated)))
-
-      await Promise.all(kitPartsPromise)
+        await Promise.all(kitPartsPromise)
+      }
     }
 
     const response = await Technician.findByPk(technicianCreated.id, {
@@ -230,10 +226,12 @@ module.exports = class TechnicianDomain {
   // }
 
   async getAll(options = {}) {
-    const { transaction = null } = options
+    const { query = null, transaction = null } = options
+
+    const newQuery = Object.assign({}, query)
 
     const technician = await Technician.findAll({
-      where: { external: true },
+      where: newQuery,
       attributes: ['id', 'name'],
       order: [
         ['name', 'ASC'],

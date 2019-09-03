@@ -137,7 +137,7 @@ module.exports = class FreeMarketDomain {
 
         await FreeMarketParts.create(freeMarketPartsCreatted, { transaction })
 
-        console.log(freeMarketParts)
+        // console.log(freeMarketParts)
 
 
         const productBase = await ProductBase.findByPk(item.productBaseId, {
@@ -148,7 +148,7 @@ module.exports = class FreeMarketDomain {
           transaction,
         })
 
-        console.log(JSON.parse(JSON.stringify(productBase)))
+        // console.log(JSON.parse(JSON.stringify(productBase)))
 
         if (productBase.product.serial) {
           const { serialNumberArray } = item

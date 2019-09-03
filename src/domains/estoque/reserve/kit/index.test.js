@@ -30,15 +30,15 @@ describe('kitDomain', () => {
     const carMock = {
       model: 'GOL',
       year: '2007',
-      plate: 'RST-4355',
+      plate: 'RST-8888',
     }
 
     await carDomain.add(carMock)
 
     const technicianMock = {
       name: 'KLEITINHO DA MEIOTA',
-      CNH: '01/01/2000',
-      plate: 'RST-4355',
+      CNH: '01/01/2020',
+      plate: 'RST-8888',
       external: true,
     }
 
@@ -85,7 +85,7 @@ describe('kitDomain', () => {
 
     const entranceMock = {
       amountAdded: '26',
-      stockBase: 'PONTOREAL',
+      stockBase: 'REALPONTO',
       productId: productCreated.id,
       companyId: companyCreated.id,
       responsibleUser: 'modrp',

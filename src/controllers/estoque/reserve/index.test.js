@@ -242,9 +242,8 @@ describe('reserveController', () => {
   test('create reserva kit', async () => {
     const reserveMock = {
       kitParts: [{
+        productBaseId: productBase.id,
         amount: '2',
-        productId: product.body.id,
-        stockBase: 'REALPONTO',
       }],
     }
 
@@ -275,6 +274,18 @@ describe('reserveController', () => {
 
     expect(statusCode).toBe(200)
     expect(body).toBeTruthy()
+  })
+
+  test('getAllKitOut', async () => {
+    const response = await request().get('/api/reserve/kitOut', { headers })
+
+    const { statusCode } = response
+
+    expect(statusCode).toBe(200)
+    // expect(body.count).toBeTruthy()
+    // expect(body.page).toBeTruthy()
+    // expect(body.show).toBeTruthy()
+    // expect(body.rows).toBeTruthy()
   })
 
   test('create reserva mercado livre', async () => {

@@ -22,6 +22,8 @@ const entranceDomain = new EntranceDomain()
 const kitDomain = new KitDomain()
 
 const KitParts = database.model('kitParts')
+const ProductBase = database.model('productBase')
+const StockBase = database.model('stockBase')
 
 describe('kitOutDomain', () => {
   let kitParts = null
@@ -85,7 +87,7 @@ describe('kitOutDomain', () => {
 
     const entranceMock = {
       amountAdded: '26',
-      stockBase: 'PONTOREAL',
+      stockBase: 'REALPONTO',
       productId: productCreated.id,
       companyId: companyCreated.id,
       responsibleUser: 'modrp',
@@ -93,11 +95,18 @@ describe('kitOutDomain', () => {
 
     await entranceDomain.add(entranceMock)
 
+    const productBase = await ProductBase.findOne({
+      where: {
+        productId: productCreated.id,
+      },
+      include: [{ model: StockBase, where: { stockBase: 'REALPONTO' } }],
+      transacition: null,
+    })
+
     const reserveMock = {
       kitParts: [{
-        amount: '1',
-        productId: productCreated.id,
-        stockBase: 'PONTOREAL',
+        productBaseId: productBase.id,
+        amount: '5',
       }],
     }
 
@@ -120,12 +129,18 @@ describe('kitOutDomain', () => {
       reposicao: '3',
       expedicao: '2',
       perda: '1',
-      os: '945682',
+      os: '65',
       kitPartId: kitParts.id,
     }
 
     const kitOutCreated = await kitOutDomain.add(kitOutMock)
 
     expect(kitOutCreated).toBeTruthy()
+  })
+
+  test('getAll', async () => {
+    const kitOutList = await kitDomain.getAll()
+
+    expect(kitOutList.rows.length > 0).toBeTruthy()
   })
 })

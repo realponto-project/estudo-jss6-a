@@ -54,8 +54,14 @@ const getAllNames = async (req, res, next) => {
 const getProductByStockBase = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
-    const { stockBase } = req.query
-    const products = await productDomain.getProductByStockBase(stockBase)
+    let query
+    if (R.has('query', req)) {
+      if (R.has('query', req.query)) {
+        query = JSON.parse(req.query.query)
+      }
+    }
+
+    const products = await productDomain.getProductByStockBase({ query, transaction })
 
     await transaction.commit()
     res.json(products)
