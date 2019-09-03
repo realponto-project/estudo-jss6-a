@@ -1,15 +1,19 @@
 /* eslint-disable max-len */
 const R = require('ramda')
-// const moment = require('moment')
+const moment = require('moment')
 // const axios = require('axios')
 
-// const formatQuery = require('../../../../helpers/lazyLoad')
+const formatQuery = require('../../../../../helpers/lazyLoad')
 const database = require('../../../../../database')
 
 const { FieldValidationError } = require('../../../../../helpers/errors')
 
 const KitOut = database.model('kitOut')
+const Kit = database.model('kit')
 const KitParts = database.model('kitParts')
+const ProductBase = database.model('productBase')
+const Product = database.model('product')
+const Technician = database.model('technician')
 
 module.exports = class KitOutDomain {
   async add(bodyData, options = {}) {
@@ -219,5 +223,135 @@ module.exports = class KitOutDomain {
     // })
 
     // return response
+  }
+
+  async getAll(options = {}) {
+    const inicialOrder = {
+      field: 'createdAt',
+      acendent: true,
+      direction: 'DESC',
+    }
+
+    const { query = null, transaction = null } = options
+
+    const newQuery = Object.assign({}, query)
+    const newOrder = (query && query.order) ? query.order : inicialOrder
+
+    if (newOrder.acendent) {
+      newOrder.direction = 'DESC'
+    } else {
+      newOrder.direction = 'ASC'
+    }
+
+    const {
+      getWhere,
+      limit,
+      offset,
+      pageResponse,
+    } = formatQuery(newQuery)
+
+    const kitOut = await KitOut.findAndCountAll({
+      where: getWhere('kitOut'),
+      include: [
+        {
+          model: KitParts,
+          paranoid: false,
+          include: [
+            {
+              model: ProductBase,
+              include: [{
+                model: Product,
+              }],
+            },
+            {
+              model: Kit,
+              paranoid: false,
+              include: [{
+                model: Technician,
+              }],
+            },
+          ],
+        },
+        // {
+        //   model: ProductBase,
+        //   include: [{
+        //     model: Product,
+        //   }],
+        // },
+        // // {
+        // //   model: Product,
+        // //   required,
+        // // },
+      ],
+      order: [
+        [newOrder.field, newOrder.direction],
+      ],
+      limit,
+      offset,
+      transaction,
+    })
+
+    // console.log(paranoid)
+
+    // console.log(JSON.parse(JSON.stringify(kitOut.rows[0].kitPart)))
+    // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
+
+    const { rows } = kitOut
+
+    if (rows.length === 0) {
+      return {
+        page: null,
+        show: 0,
+        count: kitOut.count,
+        rows: [],
+      }
+    }
+
+    const formatDateFunct = (date) => {
+      moment.locale('pt-br')
+      const formatDate = moment(date).format('L')
+      const formatHours = moment(date).format('LT')
+      const dateformated = `${formatDate} ${formatHours}`
+      return dateformated
+    }
+
+    const formatData = R.map(async (item) => {
+      const resp = {
+        id: item.id,
+        amount: item.amount,
+        name: item.kitPart.productBase.product.name,
+        technician: item.kitPart.kit.technician.name,
+        createdAt: formatDateFunct(item.createdAt),
+        // razaoSocial: item.razaoSocial,
+        // cnpj: item.cnpj,
+        // date: item.date,
+        // formatedDate: moment(item.date).format('L'),
+        // technician: item.technician.name,
+        // technicianId: item.technicianId,
+        // os: item.os,
+        // products: formatProduct(item.productBases),
+        // products: item.productBases.products.length !== 0 ? formatProduct(item.productBases.products) : await formatProductNull(item.id),
+      }
+      return resp
+    })
+
+    const kitOutList = await Promise.all(formatData(rows))
+
+    let show = limit
+    if (kitOut.count < show) {
+      show = kitOut.count
+    }
+
+
+    const response = {
+      page: pageResponse,
+      show,
+      count: kitOut.count,
+      rows: kitOutList,
+    }
+
+    // console.log(response)
+
+    return response
   }
 }

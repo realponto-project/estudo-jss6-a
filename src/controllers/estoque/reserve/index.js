@@ -113,6 +113,26 @@ const addKitOut = async (req, res, next) => {
   }
 }
 
+const getAllKitOut = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    let query
+    if (R.has('query', req)) {
+      if (R.has('query', req.query)) {
+        query = JSON.parse(req.query.query)
+      }
+    }
+
+    const kitsOut = await kitOutDomain.getAll({ query, transaction })
+
+    await transaction.commit()
+    res.json(kitsOut)
+  } catch (error) {
+    await transaction.rollback()
+    next()
+  }
+}
+
 const addFreeMarket = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
@@ -190,6 +210,7 @@ module.exports = {
   addKit,
   getAllKit,
   addKitOut,
+  getAllKitOut,
   addFreeMarket,
   getAllFreeMarket,
   getAllOs,

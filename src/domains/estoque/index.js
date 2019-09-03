@@ -53,6 +53,9 @@ module.exports = class StockDomain {
           model: Product,
           attributes: ['name'],
           where: getWhere('product'),
+          // order: [
+          //   ['name', 'ASC'],
+          // ],
           include: [
             {
               model: Mark,
@@ -74,9 +77,9 @@ module.exports = class StockDomain {
           where: getWhere('stockBase'),
         },
       ],
-      order: [
-        [newOrder.field, newOrder.direction],
-      ],
+      // order: [
+      //   [newOrder.field, newOrder.direction],
+      // ],
       limit,
       offset,
       transaction,

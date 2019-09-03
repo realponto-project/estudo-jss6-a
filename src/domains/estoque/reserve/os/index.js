@@ -110,7 +110,7 @@ module.exports = class OsDomain {
 
     const reserveCreated = await Os.create(reserve, { transaction })
 
-    console.log(bodyData)
+    // console.log(bodyData)
 
     if (bodyHasProp('osParts')) {
       const { osParts } = bodyData

@@ -1,5 +1,6 @@
 const R = require('ramda')
 const moment = require('moment')
+const Sequelize = require('sequelize')
 
 const formatQuery = require('../../../helpers/lazyLoad')
 const database = require('../../../database')
@@ -14,6 +15,8 @@ const Product = database.model('product')
 const Manufacturer = database.model('manufacturer')
 const ProductBase = database.model('productBase')
 const StockBase = database.model('stockBase')
+
+const { Op: operators } = Sequelize
 
 module.exports = class ProductDomain {
   async add(bodyData, options = {}) {
@@ -194,6 +197,8 @@ module.exports = class ProductDomain {
       pageResponse,
     } = formatQuery(newQuery)
 
+    console.log(getWhere('product'))
+
     const products = await Product.findAndCountAll({
       where: getWhere('product'),
       include: [
@@ -271,6 +276,9 @@ module.exports = class ProductDomain {
 
     const products = await Product.findAll({
       attributes: ['id', 'name', 'serial'],
+      order: [
+        ['name', 'ASC'],
+      ],
       transaction,
     })
 
@@ -283,8 +291,29 @@ module.exports = class ProductDomain {
     return response
   }
 
-  async getProductByStockBase(stockBase, options = {}) {
-    const { transaction = null } = options
+  async getProductByStockBase(options = {}) {
+    const { query = null, transaction = null } = options
+
+    const newQuery = Object.assign({}, query)
+
+    const { stockBase } = newQuery
+
+    const kit = R.prop('kit', query) === undefined ? false : R.prop('kit', query)
+
+    let getWhere = {}
+
+    if (kit) {
+      getWhere = {
+        [operators.or]: [
+          {
+            category: { [operators.eq]: 'peca' },
+          },
+          {
+            category: { [operators.eq]: 'outros' },
+          },
+        ],
+      }
+    }
 
     const productBase = await ProductBase.findAll({
       attributes: ['id', 'stockBaseId', 'productId', 'available'],
@@ -297,12 +326,11 @@ module.exports = class ProductDomain {
         {
           model: Product,
           attributes: ['name', 'serial'],
+          where: getWhere,
         },
       ],
       transaction,
     })
-
-    // console.log(JSON.parse(JSON.stringify(productBase)))
 
     const response = productBase.map(item => ({
       id: item.id,
