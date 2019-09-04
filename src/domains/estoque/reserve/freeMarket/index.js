@@ -233,16 +233,18 @@ module.exports = class FreeMarketDomain {
 
     const freeMarket = await FreeMarket.findAndCountAll({
       where: getWhere('freeMarket'),
-      // include: [
-      //   {
-      //     model: Technician,
-      //     where: getWhere('technician'),
-      //   },
-      //   {
-      //     model: Product,
-      //     required,
-      //   },
-      // ],
+      include: [
+        // {
+        //   model: Technician,
+        //   where: getWhere('technician'),
+        // },
+        {
+          model: ProductBase,
+          include: [{
+            model: Product,
+          }],
+        },
+      ],
       order: [
         [newOrder.field, newOrder.direction],
       ],
@@ -251,7 +253,7 @@ module.exports = class FreeMarketDomain {
       transaction,
     })
 
-    // console.log(JSON.parse(JSON.stringify(os)))
+    // console.log(JSON.parse(JSON.stringify(freeMarket.rows[0].productBases)))
 
     const { rows } = freeMarket
 
@@ -263,6 +265,15 @@ module.exports = class FreeMarketDomain {
         rows: [],
       }
     }
+
+    const formatProduct = R.map((item) => {
+      const resp = {
+        name: item.product.name,
+        id: item.freeMarketParts.id,
+        amount: item.freeMarketParts.amount,
+      }
+      return resp
+    })
 
     const formatDateFunct = (date) => {moment.locale('pt-br')
       const formatDate = moment(date).format('L')
@@ -277,6 +288,7 @@ module.exports = class FreeMarketDomain {
         trackingCode: item.trackingCode,
         name: item.name,
         zipCode: item.zipCode,
+        products: formatProduct(item.productBases),
         createdAt: formatDateFunct(item.createdAt),
       }
       return resp
@@ -297,7 +309,7 @@ module.exports = class FreeMarketDomain {
       rows: freeMarketList,
     }
 
-    // console.log(response)
+    console.log(response)
 
     return response
   }

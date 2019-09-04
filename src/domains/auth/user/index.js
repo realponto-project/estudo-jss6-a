@@ -15,7 +15,11 @@ class UserDomain {
   async user_Create(bodyData, options = {}) {
     const { transaction = null } = options
 
-    const userNotFormatted = R.omit(['id', 'password', 'addCompany', 'addPart', 'addAnalyze', 'addEquip', 'addEntry'], bodyData)
+    const omitArray = ['id', 'password', 'addCompany', 'addPart', 'addAnalyze', 'addEquip', 'addEntry', 'addEquipType',
+      'tecnico', 'addAccessories', 'addUser', 'addTypeAccount', 'addTec', 'addCar', 'addMark', 'addType',
+      'addProd', 'addFonr', 'addEntr', 'addKit', 'addKitOut', 'addOutPut', 'addROs', 'addRML', 'gerROs', 'delROs', 'updateRos']
+
+    const userNotFormatted = R.omit(omitArray, bodyData)
 
     const notHasProps = props => R.not(R.has(props, userNotFormatted))
     const bodyNotHasProps = props => R.not(R.has(props, bodyData))
@@ -69,6 +73,22 @@ class UserDomain {
       addEquip: false,
       addEntry: false,
       responsibleUser: false,
+
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
     const message = {
       typeName: '',
@@ -78,6 +98,22 @@ class UserDomain {
       addEquip: '',
       addEntry: '',
       responsibleUser: '',
+
+      addTec: '',
+      addCar: '',
+      addMark: '',
+      addType: '',
+      addProd: '',
+      addFonr: '',
+      addEntr: '',
+      addKit: '',
+      addKitOut: '',
+      addOutPut: '',
+      addROs: '',
+      addRML: '',
+      gerROs: '',
+      delROs: '',
+      updateRos: '',
     }
 
     let errors = null
@@ -145,6 +181,95 @@ class UserDomain {
       message.addTypeAccount = 'addTypeAccount não é um booleano'
     }
 
+    if (bodyNotHasProps('addTec') || typeof bodyData.addTec !== 'boolean') {
+      errors = true
+      field.addTec = true
+      message.addTec = 'addTec não é um booleano'
+    }
+
+    if (bodyNotHasProps('addCar') || typeof bodyData.addCar !== 'boolean') {
+      errors = true
+      field.addCar = true
+      message.addCar = 'addCar não é um booleano'
+    }
+
+    if (bodyNotHasProps('addMark') || typeof bodyData.addMark !== 'boolean') {
+      errors = true
+      field.addMark = true
+      message.addMark = 'addMark não é um booleano'
+    }
+
+    if (bodyNotHasProps('addType') || typeof bodyData.addType !== 'boolean') {
+      errors = true
+      field.addType = true
+      message.addType = 'addType não é um booleano'
+    }
+
+    if (bodyNotHasProps('addProd') || typeof bodyData.addProd !== 'boolean') {
+      errors = true
+      field.addProd = true
+      message.addProd = 'addProd não é um booleano'
+    }
+
+    if (bodyNotHasProps('addFonr') || typeof bodyData.addFonr !== 'boolean') {
+      errors = true
+      field.addFonr = true
+      message.addFonr = 'addFonr não é um booleano'
+    }
+
+    if (bodyNotHasProps('addEntr') || typeof bodyData.addEntr !== 'boolean') {
+      errors = true
+      field.addEntr = true
+      message.addEntr = 'addEntr não é um booleano'
+    }
+
+    if (bodyNotHasProps('addKit') || typeof bodyData.addKit !== 'boolean') {
+      errors = true
+      field.addKit = true
+      message.addKit = 'addKit não é um booleano'
+    }
+
+    if (bodyNotHasProps('addKitOut') || typeof bodyData.addKitOut !== 'boolean') {
+      errors = true
+      field.addKitOut = true
+      message.addKitOut = 'addKitOut não é um booleano'
+    }
+
+    if (bodyNotHasProps('addOutPut') || typeof bodyData.addOutPut !== 'boolean') {
+      errors = true
+      field.addOutPut = true
+      message.addOutPut = 'addOutPut não é um booleano'
+    }
+
+    if (bodyNotHasProps('addROs') || typeof bodyData.addROs !== 'boolean') {
+      errors = true
+      field.addROs = true
+      message.addROs = 'addROs não é um booleano'
+    }
+
+    if (bodyNotHasProps('addRML') || typeof bodyData.addRML !== 'boolean') {
+      errors = true
+      field.addRML = true
+      message.addRML = 'addRML não é um booleano'
+    }
+    if (bodyNotHasProps('gerROs') || typeof bodyData.gerROs !== 'boolean') {
+      errors = true
+      field.gerROs = true
+      message.gerROs = 'gerROs não é um booleano'
+    }
+
+    if (bodyNotHasProps('delROs') || typeof bodyData.delROs !== 'boolean') {
+      errors = true
+      field.delROs = true
+      message.delROs = 'delROs não é um booleano'
+    }
+
+    if (bodyNotHasProps('updateRos') || typeof bodyData.updateRos !== 'boolean') {
+      errors = true
+      field.updateRos = true
+      message.updateRos = 'updateRos não é um booleano'
+    }
+
     if (notHasProps('responsibleUser')) {
       errors = true
       field.responsibleUser = true
@@ -183,6 +308,17 @@ class UserDomain {
       addAccessories: bodyData.addAccessories,
       addUser: bodyData.addUser,
       addTypeAccount: bodyData.addTypeAccount,
+      addProd: bodyData.addProd,
+      addFonr: bodyData.addFonr,
+      addEntr: bodyData.addEntr,
+      addKit: bodyData.addKit,
+      addKitOut: bodyData.addKitOut,
+      addOutPut: bodyData.addOutPut,
+      addROs: bodyData.addROs,
+      addRML: bodyData.addRML,
+      gerROs: bodyData.gerROs,
+      delROs: bodyData.delROs,
+      updateRos: bodyData.updateRos,
     }
 
     if (userNotFormatted.customized) {
@@ -434,7 +570,17 @@ class UserDomain {
         addAccessories: userResources.resource.addAccessories,
         addUser: userResources.resource.addUser,
         addTypeAccount: userResources.resource.addTypeAccount,
-
+        addProd: userResources.resource.addProd,
+        addFonr: userResources.resource.addFonr,
+        addEntr: userResources.resource.addEntr,
+        addKit: userResources.resource.addKit,
+        addKitOut: userResources.resource.addKitOut,
+        addOutPut: userResources.resource.addOutPut,
+        addROs: userResources.resource.addROs,
+        addRML: userResources.resource.addRML,
+        gerROs: userResources.resource.gerROs,
+        delROs: userResources.resource.delROs,
+        updateRos: userResources.resource.updateRos,
       }
     } else {
       userResources = await User.findByPk(user.id, {
@@ -458,6 +604,17 @@ class UserDomain {
         addAccessories: userResources.typeAccount.resource.addAccessories,
         addUser: userResources.typeAccount.resource.addUser,
         addTypeAccount: userResources.typeAccount.resource.addTypeAccount,
+        addProd: userResources.typeAccount.resource.addProd,
+        addFonr: userResources.typeAccount.resource.addFonr,
+        addEntr: userResources.typeAccount.resource.addEntr,
+        addKit: userResources.typeAccount.resource.addKit,
+        addKitOut: userResources.typeAccount.resource.addKitOut,
+        addOutPut: userResources.typeAccount.resource.addOutPut,
+        addROs: userResources.typeAccount.resource.addROs,
+        addRML: userResources.typeAccount.resource.addRML,
+        gerROs: userResources.typeAccount.resource.gerROs,
+        delROs: userResources.typeAccount.resource.delROs,
+        updateRos: userResources.typeAccount.resource.updateRos,
       }
     }
 

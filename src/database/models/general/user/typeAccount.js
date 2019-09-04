@@ -12,6 +12,14 @@ module.exports = (sequelize) => {
       allowNull: false,
       unique: true,
     },
+    stock: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false,
+    },
+    labTec: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false,
+    },
     responsibleUser: {
       type: Sequelize.STRING,
       allowNull: false,

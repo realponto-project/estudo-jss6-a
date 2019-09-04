@@ -1,3 +1,5 @@
+const R = require('ramda')
+
 const database = require('../../../database')
 
 const SessionDomain = require('./session')
@@ -13,18 +15,28 @@ const TypeAccount = database.model('typeAccount')
 const sessionDomain = new SessionDomain()
 
 class LoginDomain {
-  async login({ username, password }, options = {}) {
+  async login({ username, password, typeAccount }, options = {}) {
     const { transaction = null } = options
 
     const login = await Login.findOne({
       include: [{
         model: User,
         where: { username },
+        include: [{
+          model: TypeAccount,
+        }],
       }],
       transaction,
     })
 
     if (!login) {
+      throw new UnauthorizedError()
+    }
+
+    const authorizedStock = R.filter(R.propEq('stock', true), [typeAccount, login.user.typeAccount])
+    const authorizedLabTec = R.filter(R.propEq('labTec', true), [typeAccount, login.user.typeAccount])
+
+    if (authorizedStock.length !== 2 && authorizedLabTec.length !== 2) {
       throw new UnauthorizedError()
     }
 

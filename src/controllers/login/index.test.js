@@ -23,6 +23,23 @@ describe('logincontroller', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      stock: false,
+      labTec: true,
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
 
     await typeAccount.add(typeAccountMock)
@@ -42,6 +59,21 @@ describe('logincontroller', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
 
     user = await userDomain.user_Create(userMock)
@@ -51,6 +83,7 @@ describe('logincontroller', () => {
     const loginBody = {
       username: userMock.username,
       password: userMock.username,
+      typeAccount: { labTec: true },
     }
 
     const response = await request().post('/oapi/login', loginBody)
@@ -67,6 +100,7 @@ describe('logincontroller', () => {
     const loginBody = {
       username: 'naocadastrado1322103',
       password: 'baasdfa',
+      typeAccount: { labTec: true },
     }
 
     const response = await request().post('/oapi/login', loginBody)
@@ -79,6 +113,7 @@ describe('logincontroller', () => {
     const loginBody = {
       password: userMock.username,
       username: 'incorrectpass',
+      typeAccount: { labTec: true },
     }
 
     const response = await request().post('/oapi/login', loginBody)
@@ -91,6 +126,7 @@ describe('logincontroller', () => {
     const loginBody = {
       password: userMock.username,
       username: '',
+      typeAccount: { labTec: true },
     }
 
     const response = await request().post('/oapi/login', loginBody)
@@ -103,6 +139,7 @@ describe('logincontroller', () => {
     const loginBody = {
       username: '',
       password: userMock.username,
+      typeAccount: { labTec: true },
     }
 
     const response = await request().post('/oapi/login', loginBody)
@@ -114,6 +151,7 @@ describe('logincontroller', () => {
   test('try login with username omited', async () => {
     const loginBody = {
       password: userMock.username,
+      typeAccount: { labTec: true },
     }
 
     const response = await request().post('/oapi/login', loginBody)
@@ -125,6 +163,7 @@ describe('logincontroller', () => {
   test('try login with password omited', async () => {
     const loginBody = {
       username: userMock.username,
+      typeAccount: { labTec: true },
     }
 
     const response = await request().post('/oapi/login', loginBody)
@@ -137,6 +176,7 @@ describe('logincontroller', () => {
     const loginBody = {
       username: userMock.username,
       password: userMock.username,
+      typeAccount: { labTec: true },
     }
 
     const response = await request().post('/oapi/login', loginBody)
@@ -155,6 +195,7 @@ describe('logincontroller', () => {
     const loginBody = {
       username: userMock.username,
       password: userMock.username,
+      typeAccount: { labTec: true },
     }
 
     const response = await request().post('/oapi/login', loginBody)

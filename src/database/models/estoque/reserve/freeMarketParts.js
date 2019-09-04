@@ -14,5 +14,10 @@ module.exports = (sequelize) => {
     },
   })
 
+  freeMarketParts.associate = (models) => {
+    freeMarketParts.belongsTo(models.freeMarket)
+    freeMarketParts.belongsTo(models.productBase)
+  }
+
   return freeMarketParts
 }
