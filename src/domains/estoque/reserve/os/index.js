@@ -108,7 +108,11 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
+    reserve.cnpj = reserve.cnpj.replace(/\D/g, '')
+
     const reserveCreated = await Os.create(reserve, { transaction })
+
+    await reserveCreated.update({ ...reserveCreated, os: reserveCreated.id.toString() }, { transaction })
 
     // console.log(bodyData)
 

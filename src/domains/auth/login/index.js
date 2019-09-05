@@ -62,6 +62,9 @@ class LoginDomain {
           'resourceId',
           'typeAccountId',
         ],
+        include: [{
+          model: TypeAccount,
+        }],
       },
     )
 
@@ -143,8 +146,10 @@ class LoginDomain {
       token: session.id,
       userId: user.id,
       username: user.username,
+      typeAccount: user.typeAccount.typeName,
       active: session.active,
     }
+
     return response
   }
 

@@ -69,9 +69,44 @@ const createDateEnd = (inputSearch) => {
 
 const isDate = type => type instanceof Sequelize.DATE
 
+const isNumber = type => type instanceof Sequelize.NUMBER
+
 const assocDate = (inputSearch) => {
   const startDate = createDateStart(inputSearch)
   const endDate = createDateEnd(inputSearch)
+
+  const searchformated = {
+    ...startDate,
+    ...endDate,
+  }
+  return searchformated
+}
+
+const createStart = (inputSearch) => {
+  if (isStartDatePresent(inputSearch)) {
+    const number = getDateStart(inputSearch)
+
+    const numberSearchFormatter = { [operators.gte]: number }
+
+    return numberSearchFormatter
+  }
+  return {}
+}
+
+const createEnd = (inputSearch) => {
+  if (isEndDatePresent(inputSearch)) {
+    const number = getDateEnd(inputSearch)
+
+    const numberSearchFormatter = { [operators.lte]: number }
+
+    return numberSearchFormatter
+  }
+  return {}
+}
+
+const assocNumber = (inputSearch) => {
+  const startDate = createStart(inputSearch)
+  const endDate = createEnd(inputSearch)
 
   const searchformated = {
     ...startDate,
@@ -213,6 +248,7 @@ const getspecificSearchFormated = (filter, model) => {
     if (isEnum(type)) return assocEnum(inputSearch)
     if (isUUID(type)) return assocEnum(inputSearch)
     if (isBoolean(type)) return assocEnum(inputSearch)
+    if (isNumber(type)) return assocNumber(inputSearch)
     return {}
   }
 
