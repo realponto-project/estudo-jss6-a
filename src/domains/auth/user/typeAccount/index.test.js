@@ -23,6 +23,23 @@ describe('typeAccountDomain', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      stock: false,
+      labTec: true,
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
   })
 
@@ -68,13 +85,8 @@ describe('typeAccountDomain', () => {
   })
 
   test('getResourcesByTypeAccount', async () => {
-    const typeAccount = await typeAccountDomain.getResourcesByTypeAccount('Adm')
+    const typeAccount = await typeAccountDomain.getResourcesByTypeAccount()
 
-    expect(typeAccount.typeName).toBe('Adm')
-    expect(typeAccount.addCompany).toBe(true)
-    expect(typeAccount.addPart).toBe(true)
-    expect(typeAccount.addAnalyze).toBe(true)
-    expect(typeAccount.addEquip).toBe(false)
-    expect(typeAccount.addEntry).toBe(false)
+    expect(typeAccount.typeName).toBeTruthy()
   })
 })

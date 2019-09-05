@@ -61,10 +61,10 @@ describe('equipController', () => {
   //     responsibleUser: 'modrp',
   //   }
 
-  //   const loginBody = {
-  //     username: 'modrp',
-  //     password: 'modrp',
-  //   }
+    // const loginBody = {
+    //   username: 'modrp',
+    //   password: 'modrp',
+    // }
 
   //   const login = await request().post('/oapi/login', loginBody)
 

@@ -229,8 +229,6 @@ module.exports = class OsDomain {
       os: '',
     }
 
-    const osListInit = await Os.findAll({ transaction })
-
     const os = await Os.findByPk(osId, { transaction })
 
     if (os) {
@@ -263,9 +261,9 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
-    const osListfinal = await Os.findAll({ transaction })
+    const osDeleted = await Os.findByPk(osId, { transaction })
 
-    if (osListInit.length - osListfinal.length > 0) {
+    if (!osDeleted) {
       return 'sucesso'
     }
     return 'erro'
@@ -468,7 +466,7 @@ module.exports = class OsDomain {
 
     // console.log(paranoid)
 
-    // console.log(JSON.parse(JSON.stringify(os.rows)))
+    // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
     // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
 
     const { rows } = os
@@ -503,34 +501,38 @@ module.exports = class OsDomain {
       return resp
     })
 
-    // const formatProductDelete = R.map((item) => {
-    //   const resp = {
-    //     name: item.product.name,
-    //     osPartsId: item.id,
-    //     amount: item.amount,
-    //     output: item.output,
-    //     missOut: item.missOut,
-    //     return: item.return,
-    //   }
-    //   return resp
-    // })
+    const formatProductDelete = R.map((item) => {
+      const resp = {
+        name: item.productBase.product.name,
+        osPartsId: item.id,
+        amount: item.amount,
+        output: item.output,
+        missOut: item.missOut,
+        return: item.return,
+        quantMax: (parseInt(item.amount, 10)) - (parseInt(item.return, 10)) - (parseInt(item.output, 10)) - (parseInt(item.missOut, 10)),
+      }
+      return resp
+    })
 
-    // const formatProductNull = async (id) => {
-    //   const osParts = await OsParts.findAll({
-    //     where: {
-    //       oId: id,
-    //     },
-    //     include: [{
-    //       model: Product,
-    //     }],
-    //     paranoid: false,
-    //     transaction,
-    //   })
+    const formatProductNull = async (id) => {
+      const osParts = await OsParts.findAll({
+        where: {
+          oId: id,
+        },
+        include: [{
+          model: ProductBase,
+          include: [{
+            model: Product,
+          }],
+        }],
+        paranoid: false,
+        transaction,
+      })
 
-    //   // console.log(JSON.parse(JSON.stringify(osParts)))
+      // console.log(JSON.parse(JSON.stringify(osParts)))
 
-    //   return formatProductDelete(osParts)
-    // }
+      return formatProductDelete(osParts)
+    }
 
     const formatData = R.map(async (item) => {
       const resp = {
@@ -543,8 +545,8 @@ module.exports = class OsDomain {
         technicianId: item.technicianId,
         os: item.os,
         createdAt: formatDateFunct(item.createdAt),
-        products: formatProduct(item.productBases),
-        // products: item.productBases.products.length !== 0 ? formatProduct(item.productBases.products) : await formatProductNull(item.id),
+        // products: formatProduct(item.productBases),
+        products: item.productBases.length !== 0 ? formatProduct(item.productBases) : await formatProductNull(item.id),
       }
       return resp
     })
@@ -722,6 +724,17 @@ module.exports = class OsDomain {
 
     if (total - parseInt(value, 10) === 0) {
       await osPartsUpdate.destroy({ transaction })
+    }
+
+    const os = await Os.findByPk(osPart.oId, {
+      include: [{
+        model: ProductBase,
+      }],
+      transaction,
+    })
+
+    if (os.productBases.length === 0) {
+      await os.destroy({ transaction })
     }
 
     const response = await OsParts.findByPk(bodyData.osPartsId, { transaction })

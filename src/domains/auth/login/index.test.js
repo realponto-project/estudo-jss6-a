@@ -27,6 +27,23 @@ describe('loginDomain', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      stock: false,
+      labTec: true,
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
 
     await typeAccount.add(typeAccountMock)
@@ -46,6 +63,21 @@ describe('loginDomain', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
   })
 
@@ -56,6 +88,7 @@ describe('loginDomain', () => {
     const userLogin = {
       username: 'teste2',
       password: 'teste2',
+      typeAccount: { labTec: true },
     }
 
     const session = await loginDomain.login(userLogin)
@@ -67,6 +100,7 @@ describe('loginDomain', () => {
     const userLogin = {
       username: 'teste2',
       password: 'teste5',
+      typeAccount: { labTec: true },
     }
 
     await expect(loginDomain.login(userLogin))
@@ -77,6 +111,7 @@ describe('loginDomain', () => {
     const userLogin = {
       username: 'userNaoCadastrado',
       password: 'abcs',
+      typeAccount: { labTec: true },
     }
 
     await expect(loginDomain.login(userLogin))
@@ -101,6 +136,23 @@ describe('logoutTest', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      stock: false,
+      labTec: true,
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
 
     await typeAccount.add(typeAccountMock)
@@ -120,6 +172,21 @@ describe('logoutTest', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
   })
 
@@ -129,6 +196,7 @@ describe('logoutTest', () => {
     const userLogin = {
       username: 'teste3',
       password: 'teste3',
+      typeAccount: { labTec: true },
     }
 
     const session = await loginDomain.login(userLogin)
@@ -160,6 +228,23 @@ describe('sessionDomain', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      stock: false,
+      labTec: true,
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
 
     await typeAccount.add(typeAccountMock)
@@ -179,6 +264,21 @@ describe('sessionDomain', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
   })
 
@@ -187,6 +287,7 @@ describe('sessionDomain', () => {
     const loginMock = {
       username: user.username,
       password: user.username,
+      typeAccount: { labTec: true },
     }
     const login = await loginDomain.login(loginMock)
 

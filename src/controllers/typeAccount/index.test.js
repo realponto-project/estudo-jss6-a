@@ -3,7 +3,6 @@ const request = require('../../helpers/request')
 describe('typeAccountController', () => {
   let headers = null
   let typeAccountMock = null
-  let params = null
 
   beforeAll(async () => {
     typeAccountMock = {
@@ -19,11 +18,29 @@ describe('typeAccountController', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      stock: false,
+      labTec: true,
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
 
     const loginBody = {
       username: 'modrp',
       password: 'modrp',
+      typeAccount: { labTec: true },
     }
 
     const login = await request().post('/oapi/login', loginBody)
@@ -33,10 +50,6 @@ describe('typeAccountController', () => {
     headers = {
       token,
       username,
-    }
-
-    params = {
-      typeName: 'ADM',
     }
   })
 
@@ -64,15 +77,10 @@ describe('typeAccountController', () => {
   })
 
   test('getResourcesByTypeAccount', async () => {
-    const response = await request().get('/api/typeAccount/getResourcesByTypeAccount', { headers, params })
+    const response = await request().get('/api/typeAccount/getResourcesByTypeAccount', { headers })
 
-    const { body, statusCode } = response
+    const { statusCode } = response
 
     expect(statusCode).toBe(200)
-    expect(body.addCompany).toBe(true)
-    expect(body.addPart).toBe(false)
-    expect(body.addAnalyze).toBe(true)
-    expect(body.addEquip).toBe(true)
-    expect(body.addEntry).toBe(true)
   })
 })

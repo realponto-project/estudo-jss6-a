@@ -24,6 +24,23 @@ describe('userController', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      stock: false,
+      labTec: true,
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
 
     await typeAccount.add(typeAccountMock)
@@ -43,11 +60,27 @@ describe('userController', () => {
       addUser: true,
       addTypeAccount: true,
       responsibleUser: 'modrp',
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
 
     const loginBody = {
       username: 'modrp',
       password: 'modrp',
+      typeAccount: { labTec: true },
     }
 
     const login = await request().post('/oapi/login', loginBody)
@@ -90,6 +123,21 @@ describe('userController', () => {
       addUser: false,
       addTypeAccount: false,
       responsibleUser: 'modrp',
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
     }
 
     await request().post('/api/user', userMock, { headers })

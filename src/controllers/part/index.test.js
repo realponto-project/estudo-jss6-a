@@ -44,10 +44,11 @@ describe('partController', () => {
   //   const partCreated = await partDomain.add(partMock)
 
 
-  //   const loginBody = {
-  //     username: 'modrp',
-  //     password: 'modrp',
-  //   }
+  // const loginBody = {
+  //   username: 'modrp',
+  //   password: 'modrp',
+  //   typeAccount: { labTec: true },
+  // }
 
   //   const login = await request().post('/oapi/login', loginBody)
 
