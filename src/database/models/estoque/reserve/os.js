@@ -8,11 +8,11 @@ module.exports = (sequelize) => {
     //   primaryKey: true,
     // },
 
-    // os: {
-    //   type: Sequelize.STRING,
-    //   allowNull: false,
-    //   unique: true,
-    // },
+    os: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      unique: true,
+    },
 
     razaoSocial: {
       type: Sequelize.STRING,

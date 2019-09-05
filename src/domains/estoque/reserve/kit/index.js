@@ -163,15 +163,17 @@ module.exports = class KitDomain {
     // console.log(getWhere('entrance'))
 
     const entrances = await KitParts.findAndCountAll({
-      // where: getWhere('kit'),
+      where: getWhere('kitParts'),
       include: [
         {
           model: ProductBase,
           include: [
             {
               model: Product,
+              where: getWhere('product'),
             },
           ],
+          required: true,
         },
         {
           model: Kit,
@@ -229,7 +231,7 @@ module.exports = class KitDomain {
         // mark: entrance.product.mark.mark,
         // manufacturer: entrance.product.mark.manufacturer.manufacturer,
         // // eslint-disable-next-line max-len
-        name: entrance.productBase.product.name,
+        name: entrance.productBase ? entrance.productBase.product.name : null,
         // createdAt: formatDateFunct(entrance.createdAt),
       }
       return resp

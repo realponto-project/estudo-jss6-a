@@ -286,19 +286,24 @@ module.exports = class KitOutDomain {
         {
           model: KitParts,
           paranoid: false,
+          required: true,
           include: [
             {
               model: ProductBase,
               include: [{
                 model: Product,
+                where: getWhere('product'),
               }],
+              required: true,
             },
             {
               model: Kit,
               paranoid: false,
               include: [{
                 model: Technician,
+                where: getWhere('technician'),
               }],
+              required: true,
             },
           ],
         },
@@ -323,7 +328,7 @@ module.exports = class KitOutDomain {
 
     // console.log(paranoid)
 
-    // console.log(JSON.parse(JSON.stringify(kitOut)))
+    console.log(JSON.parse(JSON.stringify(kitOut)))
     // console.log(JSON.parse(JSON.stringify(kitOut.rows[0].kitPart)))
     // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
 
