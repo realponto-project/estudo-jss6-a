@@ -83,6 +83,21 @@ class LoginDomain {
         addAccessories: resourceReturn.addAccessories,
         addUser: resourceReturn.addUser,
         addTypeAccount: resourceReturn.addTypeAccount,
+        addTec: resourceReturn.addTec,
+        addCar: resourceReturn.addCar,
+        addMark: resourceReturn.addMark,
+        addType: resourceReturn.addType,
+        addProd: resourceReturn.addProd,
+        addFonr: resourceReturn.addFonr,
+        addEntr: resourceReturn.addEntr,
+        addKit: resourceReturn.addKit,
+        addKitOut: resourceReturn.addKitOut,
+        addOutPut: resourceReturn.addOutPut,
+        addROs: resourceReturn.addROs,
+        addRML: resourceReturn.addRML,
+        gerROs: resourceReturn.gerROs,
+        delROs: resourceReturn.delROs,
+        updateRos: resourceReturn.updateRos,
       }
     } else {
       const { typeAccountId } = user
@@ -105,6 +120,21 @@ class LoginDomain {
         addAccessories: typeAccountReturn.resource.addAccessories,
         addUser: typeAccountReturn.resource.addUser,
         addTypeAccount: typeAccountReturn.resource.addTypeAccount,
+        addTec: typeAccountReturn.resource.addTec,
+        addCar: typeAccountReturn.resource.addCar,
+        addMark: typeAccountReturn.resource.addMark,
+        addType: typeAccountReturn.resource.addType,
+        addProd: typeAccountReturn.resource.addProd,
+        addFonr: typeAccountReturn.resource.addFonr,
+        addEntr: typeAccountReturn.resource.addEntr,
+        addKit: typeAccountReturn.resource.addKit,
+        addKitOut: typeAccountReturn.resource.addKitOut,
+        addOutPut: typeAccountReturn.resource.addOutPut,
+        addROs: typeAccountReturn.resource.addROs,
+        addRML: typeAccountReturn.resource.addRML,
+        gerROs: typeAccountReturn.resource.gerROs,
+        delROs: typeAccountReturn.resource.delROs,
+        updateRos: typeAccountReturn.resource.updateRos,
       }
     }
 

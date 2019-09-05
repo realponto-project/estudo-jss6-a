@@ -308,9 +308,16 @@ module.exports = class TypeAccountDomain {
       direction: 'ASC',
     }
 
-    const { transaction = null } = options
+    const { query = null, transaction = null } = options
+
+    const newQuery = Object.assign({}, query)
+
+    const {
+      getWhere,
+    } = formatQuery(newQuery)
 
     const typeAccounts = await TypeAccount.findAndCountAll({
+      where: getWhere('typeAccount'),
       include: [{
         model: Resources,
       }],
@@ -376,6 +383,10 @@ module.exports = class TypeAccountDomain {
       addAccessories: typeAccount.resource.addAccessories,
       addUser: typeAccount.resource.addUser,
       addTypeAccount: typeAccount.resource.addTypeAccount,
+      addTec: typeAccount.resource.addTec,
+      addCar: typeAccount.resource.addCar,
+      addMark: typeAccount.resource.addMark,
+      addType: typeAccount.resource.addType,
       addProd: typeAccount.resource.addProd,
       addFonr: typeAccount.resource.addFonr,
       addEntr: typeAccount.resource.addEntr,

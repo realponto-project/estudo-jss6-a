@@ -72,9 +72,9 @@ module.exports = class KitOutDomain {
       message.kitPartId = 'Por favor o ID do tecnico'
     } else {
       const { kitPartId } = bodyData
-      const technicianExist = await KitParts.findByPk(kitPartId, { transaction })
+      const kitPartExist = await KitParts.findByPk(kitPartId, { transaction })
 
-      if (!technicianExist) {
+      if (!kitPartExist) {
         errors = true
         field.kitPartId = true
         message.kitPartId = 'Técnico não encomtrado'
@@ -92,9 +92,13 @@ module.exports = class KitOutDomain {
 
     const kitPart = await KitParts.findByPk(kitPartId, { transaction })
 
+    const productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
+
+    console.log(JSON.parse(JSON.stringify(productBase)))
+
     const amount = parseInt(kitPart.amount, 10) + reposicaoNumber - expedicaoNumber - perdaNumber
 
-    if (amount <= 0) {
+    if (amount < 0) {
       field.amount = true
       message.amount = 'quantidade inválida'
       throw new FieldValidationError([{ field, message }])
@@ -117,6 +121,14 @@ module.exports = class KitOutDomain {
       }
 
       await KitOut.create(kitOut, { transaction })
+
+      const productBaseUpdate = {
+        ...productBase,
+        amount: (parseInt(productBase.amount, 10) - parseInt(perda, 10)).toString(),
+        reserved: (parseInt(productBase.reserved, 10) - parseInt(perda, 10)).toString(),
+      }
+
+      await productBase.update(productBaseUpdate, { transaction })
     }
 
     if (reposicaoNumber > 0) {
@@ -129,6 +141,14 @@ module.exports = class KitOutDomain {
       }
 
       await KitOut.create(kitOut, { transaction })
+
+      const productBaseUpdate = {
+        ...productBase,
+        available: (parseInt(productBase.available, 10) - parseInt(reposicao, 10)).toString(),
+        reserved: (parseInt(productBase.reserved, 10) + parseInt(reposicao, 10)).toString(),
+      }
+
+      await productBase.update(productBaseUpdate, { transaction })
     }
 
     if (expedicaoNumber > 0) {
@@ -147,13 +167,15 @@ module.exports = class KitOutDomain {
         transaction,
       })
 
+      // console.log(JSON.parse(JSON.stringify(kitOutReturn)))
+
       if (kitOutReturn) {
         const kitOutUpdate = {
           ...kitOutReturn,
           amount: (parseInt(kitOutReturn.amount, 10) + parseInt(expedicao, 10)).toString(),
         }
 
-        kitOutReturn.update(kitOutUpdate, { transaction })
+        await kitOutReturn.update(kitOutUpdate, { transaction })
       } else {
         const kitOut = {
           action: 'expedicao',
@@ -162,6 +184,14 @@ module.exports = class KitOutDomain {
           os,
         }
         await KitOut.create(kitOut, { transaction })
+
+        const productBaseUpdate = {
+          ...productBase,
+          amount: (parseInt(productBase.amount, 10) - parseInt(expedicao, 10)).toString(),
+          reserved: (parseInt(productBase.reserved, 10) - parseInt(expedicao, 10)).toString(),
+        }
+
+        await productBase.update(productBaseUpdate, { transaction })
       }
     }
 
@@ -293,6 +323,7 @@ module.exports = class KitOutDomain {
 
     // console.log(paranoid)
 
+    // console.log(JSON.parse(JSON.stringify(kitOut)))
     // console.log(JSON.parse(JSON.stringify(kitOut.rows[0].kitPart)))
     // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
 

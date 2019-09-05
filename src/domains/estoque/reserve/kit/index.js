@@ -52,6 +52,8 @@ module.exports = class KitDomain {
 
     // console.log(JSON.parse(JSON.stringify(oldKit)))
 
+    let count = 0
+
     if (oldKit.length > 0) {
       const oldKitDelete = oldKit.map(async (itemOldKit) => {
         const oldKitParts = await KitParts.findAll({
@@ -60,20 +62,22 @@ module.exports = class KitDomain {
           transaction,
         })
 
+        // console.log(JSON.parse(JSON.stringify(oldKitParts)))
+
         const kitPartsDeletePromises = oldKitParts.map(async (item) => {
           const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
+          // console.log(JSON.parse(JSON.stringify(productBase)))
+          
+          count += parseInt(item.amount, 10)
+
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) + (parseInt(item.amount, 10) * technicial.length)).toString(),
-            reserved: (parseInt(productBase.reserved, 10) - (parseInt(item.amount, 10) * technicial.length)).toString(),
+            available: (parseInt(productBase.available, 10) + count).toString(),
+            reserved: (parseInt(productBase.reserved, 10) - count).toString(),
           }
 
-          // console.log(JSON.parse(JSON.stringify(productBase)))
-
           await productBase.update(productBaseUpdate, { transaction })
-
-          // const productBase1 = await ProductBase.findByPk(item.productBaseId, { transaction })
 
           // console.log(JSON.parse(JSON.stringify(productBase1)))
 
@@ -211,7 +215,7 @@ module.exports = class KitDomain {
 
     const formatData = await R.map((entrance) => {
       const resp = {
-        id: entrance.id,
+        kitPartId: entrance.id,
         amount: entrance.amount,
         // oldAmount: entrance.oldAmount,
         // stockBase: entrance.stockBase,
