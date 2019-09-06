@@ -48,7 +48,13 @@ module.exports = class KitDomain {
 
     // console.log(JSON.parse(JSON.stringify(technicial)))
 
-    const oldKit = await Kit.findAll({ transaction })
+    const oldKit = await Kit.findAll({
+      include: [{
+        model: Technician,
+        // required: true,
+      }],
+      transaction,
+    })
 
     // console.log(JSON.parse(JSON.stringify(oldKit)))
 
@@ -65,21 +71,19 @@ module.exports = class KitDomain {
         // console.log(JSON.parse(JSON.stringify(oldKitParts)))
 
         const kitPartsDeletePromises = oldKitParts.map(async (item) => {
-          const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
-          // console.log(JSON.parse(JSON.stringify(productBase)))
-          
-          count += parseInt(item.amount, 10)
+          if (itemOldKit.technicianId) {
+            const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
-          const productBaseUpdate = {
-            ...productBase,
-            available: (parseInt(productBase.available, 10) + count).toString(),
-            reserved: (parseInt(productBase.reserved, 10) - count).toString(),
+            count += parseInt(item.amount, 10)
+
+            const productBaseUpdate = {
+              ...productBase,
+              available: (parseInt(productBase.available, 10) + count).toString(),
+              reserved: (parseInt(productBase.reserved, 10) - count).toString(),
+            }
+            await productBase.update(productBaseUpdate, { transaction })
           }
-
-          await productBase.update(productBaseUpdate, { transaction })
-
-          // console.log(JSON.parse(JSON.stringify(productBase1)))
 
           await item.destroy({ transaction })
         })
@@ -123,6 +127,27 @@ module.exports = class KitDomain {
     })
 
     await Promise.all(kitCreatedPromise)
+
+    const kitCreatedTecNull = await Kit.create({ transaction })
+
+    if (bodyHasProp('kitParts')) {
+      const { kitParts } = bodyData
+
+      const kitPartsCreattedPromises = kitParts.map(async (item) => {
+        const productBase = await ProductBase.findByPk(item.productBaseId, {
+          transaction,
+        })
+
+        const kitPartsCreatted = {
+          amount: item.amount,
+          kitId: kitCreatedTecNull.id,
+          productBaseId: productBase.id,
+        }
+
+        await KitParts.create(kitPartsCreatted, { transaction })
+      })
+      await Promise.all(kitPartsCreattedPromises)
+    }
 
     const response = await Kit.findAll({
       include: [{
@@ -194,7 +219,7 @@ module.exports = class KitDomain {
       transaction,
     })
 
-    // console.log(JSON.parse(JSON.stringify(entrances)))
+    // console.log(JSON.parse(JSON.stringify(entrances.rows)))
 
     const { rows } = entrances
 
@@ -232,6 +257,7 @@ module.exports = class KitDomain {
         // manufacturer: entrance.product.mark.manufacturer.manufacturer,
         // // eslint-disable-next-line max-len
         name: entrance.productBase ? entrance.productBase.product.name : null,
+        quantMax: entrance.productBase ? parseInt(entrance.productBase.available, 10) : null,
         // createdAt: formatDateFunct(entrance.createdAt),
       }
       return resp
@@ -253,6 +279,120 @@ module.exports = class KitDomain {
       show,
       count: entrances.count,
       rows: entrancesList,
+    }
+
+    // console.log(response)
+
+    return response
+  }
+
+  async getKitDefaultValue(options = {}) {
+    const inicialOrder = {
+      field: 'createdAt',
+      acendent: true,
+      direction: 'DESC',
+    }
+
+    const { query = null, transaction = null } = options
+
+    const newQuery = Object.assign({}, query)
+    const newOrder = (query && query.order) ? query.order : inicialOrder
+
+    if (newOrder.acendent) {
+      newOrder.direction = 'DESC'
+    } else {
+      newOrder.direction = 'ASC'
+    }
+
+    const {
+      getWhere,
+      limit,
+      offset,
+      pageResponse,
+    } = formatQuery(newQuery)
+
+    // console.log(query)
+    // console.log(getWhere('entrance'))
+
+    const kitParts = await KitParts.findAndCountAll({
+      where: getWhere('kitParts'),
+      include: [
+        {
+          model: ProductBase,
+          include: [
+            {
+              model: Product,
+              where: getWhere('product'),
+            },
+          ],
+          required: true,
+        },
+        {
+          model: Kit,
+          where: { technicianId: null },
+          required: true,
+        },
+      ],
+      order: [
+        [newOrder.field, newOrder.direction],
+      ],
+      limit,
+      offset,
+      transaction,
+    })
+
+    // console.log(JSON.parse(JSON.stringify(kitParts)))
+    // console.log(JSON.parse(JSON.stringify(kitParts.rows)))
+
+    const { rows } = kitParts
+
+    if (rows.length === 0) {
+      return {
+        page: null,
+        show: 0,
+        count: kitParts.count,
+        rows: [],
+      }
+    }
+
+    const formatData = await R.map((kitPart) => {
+      const resp = {
+        amount: parseInt(kitPart.amount, 10),
+        itemCarrinho: kitPart.productBase.product.name,
+        productBaseId: kitPart.productBase.id,
+        // oldAmount: kitPart.oldAmount,
+        // stockBase: kitPart.stockBase,
+        // responsibleUser: kitPart.responsibleUser,
+        // razaoSocial: kitPart.company.razaoSocial,
+        // category: kitPart.product.category,
+        // description: kitPart.product.description,
+        // SKU: kitPart.product.SKU,
+        // minimumStock: kitPart.product.minimumStock,
+        // amount: kitPart.product.amount,
+        // mark: kitPart.product.mark.mark,
+        // manufacturer: kitPart.product.mark.manufacturer.manufacturer,
+        // // eslint-disable-next-line max-len
+        // createdAt: formatDateFunct(kitPart.createdAt),
+      }
+      return resp
+    })
+
+    const kitPartsList = formatData(rows)
+
+    // const kitPartsList = formatData(rows).filter((item) => {
+    //   if (item.name.indexOf(query.filters.name.toUpperCase()) !== -1) return item
+    // })
+
+    let show = limit
+    if (kitParts.count < show) {
+      show = kitParts.count
+    }
+
+    const response = {
+      page: pageResponse,
+      show,
+      count: kitParts.count,
+      rows: kitPartsList,
     }
 
     // console.log(response)

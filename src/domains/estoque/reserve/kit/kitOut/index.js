@@ -14,6 +14,7 @@ const KitParts = database.model('kitParts')
 const ProductBase = database.model('productBase')
 const Product = database.model('product')
 const Technician = database.model('technician')
+const Os = database.model('os')
 
 module.exports = class KitOutDomain {
   async add(bodyData, options = {}) {
@@ -92,24 +93,10 @@ module.exports = class KitOutDomain {
 
     const kitPart = await KitParts.findByPk(kitPartId, { transaction })
 
-    const productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
+    let productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
 
-    console.log(JSON.parse(JSON.stringify(productBase)))
-
-    const amount = parseInt(kitPart.amount, 10) + reposicaoNumber - expedicaoNumber - perdaNumber
-
-    if (amount < 0) {
-      field.amount = true
-      message.amount = 'quantidade inválida'
-      throw new FieldValidationError([{ field, message }])
-    }
-
-    const kitPartUpdate = {
-      ...kitPart,
-      amount,
-    }
-
-    await kitPart.update(kitPartUpdate, { transaction })
+    // console.log(JSON.parse(JSON.stringify(productBase)))
+    // console.log(JSON.parse(JSON.stringify(kitPart)))
 
     if (perdaNumber > 0) {
       const { perda } = bodyData
@@ -124,11 +111,14 @@ module.exports = class KitOutDomain {
 
       const productBaseUpdate = {
         ...productBase,
+        available: productBase.available,
         amount: (parseInt(productBase.amount, 10) - parseInt(perda, 10)).toString(),
         reserved: (parseInt(productBase.reserved, 10) - parseInt(perda, 10)).toString(),
       }
 
       await productBase.update(productBaseUpdate, { transaction })
+
+      productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
     }
 
     if (reposicaoNumber > 0) {
@@ -149,10 +139,20 @@ module.exports = class KitOutDomain {
       }
 
       await productBase.update(productBaseUpdate, { transaction })
+
+      productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
     }
 
     if (expedicaoNumber > 0) {
       const { expedicao } = bodyData
+
+      // console.log(parseInt(expedicao, 10), parseInt(kitPart.amount, 10))
+
+      if (parseInt(expedicao, 10) > parseInt(kitPart.amount, 10)) {
+        field.expedicao = true
+        message.expedicao = 'expedição não pode ser maior que o valor da reserva'
+        throw new FieldValidationError([{ field, message }])
+      }
 
       if (bodyDataNotHasProp('os') || !bodyData.os || /\D/.test(bodyData.os)) {
         field.os = true
@@ -161,6 +161,18 @@ module.exports = class KitOutDomain {
       }
 
       const { os } = bodyData
+
+      const osExist = await Os.findOne({
+        where: { os },
+        paranoid: false,
+        transaction,
+      })
+
+      if (!osExist) {
+        field.os = true
+        message.os = 'Ação inválida'
+        throw new FieldValidationError([{ field, message }])
+      }
 
       const kitOutReturn = await KitOut.findOne({
         where: { os },
@@ -192,8 +204,25 @@ module.exports = class KitOutDomain {
         }
 
         await productBase.update(productBaseUpdate, { transaction })
+
+        productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
       }
     }
+
+    const amount = parseInt(kitPart.amount, 10) + reposicaoNumber - expedicaoNumber - perdaNumber
+
+    if (amount < 0) {
+      field.amount = true
+      message.amount = 'quantidade inválida'
+      throw new FieldValidationError([{ field, message }])
+    }
+
+    const kitPartUpdate = {
+      ...kitPart,
+      amount,
+    }
+
+    await kitPart.update(kitPartUpdate, { transaction })
 
     return 'sucesso'
 
@@ -328,7 +357,7 @@ module.exports = class KitOutDomain {
 
     // console.log(paranoid)
 
-    console.log(JSON.parse(JSON.stringify(kitOut)))
+    // console.log(JSON.parse(JSON.stringify(kitOut)))
     // console.log(JSON.parse(JSON.stringify(kitOut.rows[0].kitPart)))
     // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
 

@@ -100,6 +100,28 @@ const getAllKit = async (req, res, next) => {
   }
 }
 
+const getKitDefaultValue = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    let query
+    if (R.has('query', req)) {
+      if (R.has('query', req.query)) {
+        query = JSON.parse(req.query.query)
+      }
+    }
+
+    const kitDefault = await kitDomain.getKitDefaultValue({ query, transaction })
+
+    // console.log(kitDefault)
+
+    await transaction.commit()
+    res.json(kitDefault)
+  } catch (error) {
+    await transaction.rollback()
+    next()
+  }
+}
+
 const addKitOut = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
@@ -209,6 +231,7 @@ module.exports = {
   deleteOs,
   addKit,
   getAllKit,
+  getKitDefaultValue,
   addKitOut,
   getAllKitOut,
   addFreeMarket,

@@ -13,7 +13,7 @@ const { FieldValidationError } = require('../../../../helpers/errors')
 
 const Equip = database.model('equip')
 const Product = database.model('product')
-const StockBase = database.model('stockBase')
+// const StockBase = database.model('stockBase')
 const ProductBase = database.model('productBase')
 const FreeMarket = database.model('freeMarket')
 const FreeMarketParts = database.model('freeMarketParts')
@@ -253,8 +253,6 @@ module.exports = class FreeMarketDomain {
       transaction,
     })
 
-    // console.log(JSON.parse(JSON.stringify(freeMarket.rows[0].productBases)))
-
     const { rows } = freeMarket
 
     if (rows.length === 0) {
@@ -275,7 +273,8 @@ module.exports = class FreeMarketDomain {
       return resp
     })
 
-    const formatDateFunct = (date) => {moment.locale('pt-br')
+    const formatDateFunct = (date) => {
+      moment.locale('pt-br')
       const formatDate = moment(date).format('L')
       const formatHours = moment(date).format('LT')
       const dateformated = `${formatDate} ${formatHours}`
@@ -309,7 +308,7 @@ module.exports = class FreeMarketDomain {
       rows: freeMarketList,
     }
 
-    console.log(response)
+    // console.log(response)
 
     return response
   }
