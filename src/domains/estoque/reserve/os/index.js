@@ -17,6 +17,8 @@ const ProductBase = database.model('productBase')
 const StockBase = database.model('stockBase')
 const Technician = database.model('technician')
 const Equip = database.model('equip')
+const KitOut = database.model('kitOut')
+const KitParts = database.model('kitParts')
 
 module.exports = class OsDomain {
   async add(bodyData, options = {}) {
@@ -492,19 +494,6 @@ module.exports = class OsDomain {
       return dateformated
     }
 
-    const formatProduct = R.map((item) => {
-      const resp = {
-        name: item.product.name,
-        id: item.osParts.id,
-        amount: item.osParts.amount,
-        output: item.osParts.output,
-        missOut: item.osParts.missOut,
-        return: item.osParts.return,
-        quantMax: (parseInt(item.osParts.amount, 10)) - (parseInt(item.osParts.return, 10)) - (parseInt(item.osParts.output, 10)) - (parseInt(item.osParts.missOut, 10)),
-      }
-      return resp
-    })
-
     const formatProductDelete = R.map((item) => {
       const resp = {
         name: item.productBase.product.name,
@@ -518,8 +507,20 @@ module.exports = class OsDomain {
       return resp
     })
 
+    const formatKitOut = R.map((item) => {
+      const resp = {
+        name: `#${item.kitPart.productBase.product.name}`,
+        amount: '-',
+        output: item.amount,
+        missOut: '-',
+        return: '-',
+      }
+      return resp
+    })
+
     const formatProductNull = async (id) => {
       const osParts = await OsParts.findAll({
+
         where: {
           oId: id,
         },
@@ -535,10 +536,56 @@ module.exports = class OsDomain {
 
       // console.log(JSON.parse(JSON.stringify(osParts)))
 
-      return formatProductDelete(osParts)
+      const kitOuts = await KitOut.findAll({
+        where: { os: id.toString() },
+        include: [{
+          model: KitParts,
+          include: [{
+            model: ProductBase,
+            include: [{
+              model: Product,
+            }],
+          }],
+        }],
+        transaction,
+      })
+
+      // console.log(JSON.parse(JSON.stringify(kitOuts)))
+
+      // console.log(formatKitOut(kitOuts))
+      const resp = formatProductDelete(osParts)
+      
+      Array.prototype.push.apply(resp, formatKitOut(kitOuts))
+
+      return resp
     }
 
+    let notDelet = false
+
+    const formatProduct = R.map((item) => {
+      notDelet = (item.osParts.output !== '0' || item.osParts.missOut !== '0' || item.osParts.return !== '0')
+      const resp = {
+        name: item.product.name,
+        id: item.osParts.id,
+        amount: item.osParts.amount,
+        output: item.osParts.output,
+        missOut: item.osParts.missOut,
+        return: item.osParts.return,
+        quantMax: (parseInt(item.osParts.amount, 10)) - (parseInt(item.osParts.return, 10)) - (parseInt(item.osParts.output, 10)) - (parseInt(item.osParts.missOut, 10)),
+      }
+      return resp
+    })
+
     const formatData = R.map(async (item) => {
+      const osParts = await OsParts.findAll({
+        where: {
+          oId: item.id,
+        },
+        attributes: [],
+        paranoid: false,
+        transaction,
+      })
+
       const resp = {
         id: item.id,
         razaoSocial: item.razaoSocial,
@@ -551,7 +598,9 @@ module.exports = class OsDomain {
         createdAt: formatDateFunct(item.createdAt),
         // products: formatProduct(item.productBases),
         products: item.productBases.length !== 0 ? formatProduct(item.productBases) : await formatProductNull(item.id),
+        notDelet: osParts.length !== item.productBases.length || notDelet,
       }
+      // console.log(formatProduct(item.productBases))
       return resp
     })
 
@@ -570,7 +619,7 @@ module.exports = class OsDomain {
       rows: osList,
     }
 
-    // console.log(response)
+    console.log(response)
 
     return response
   }
@@ -636,6 +685,7 @@ module.exports = class OsDomain {
     }
 
     // console.log(JSON.parse(JSON.stringify(response)))
+    // console.log(response)
 
     return response
   }
@@ -719,7 +769,7 @@ module.exports = class OsDomain {
 
     const osPartUpdate = {
       ...osPart,
-      [key]: value + parseInt(osPart[key], 10),
+      [key]: (parseInt(value, 10) + parseInt(osPart[key], 10)).toString(),
     }
 
     await osPart.update(osPartUpdate, { transaction })

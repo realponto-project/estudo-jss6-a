@@ -258,6 +258,14 @@ describe('reserveController', () => {
     expect(body.length > 0).toBe(true)
   })
 
+  test('getKitDefaultValue', async () => {
+    const response = await request().get('/api/reserve/kitDefaultValue', { headers })
+
+    const { statusCode } = response
+
+    expect(statusCode).toBe(200)
+  })
+
   test('create reserva kitOut', async () => {
     const kitParts = await KitParts.findOne()
 

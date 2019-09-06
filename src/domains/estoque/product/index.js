@@ -197,7 +197,7 @@ module.exports = class ProductDomain {
       pageResponse,
     } = formatQuery(newQuery)
 
-    console.log(getWhere('product'))
+    // console.log(getWhere('product'))
 
     const products = await Product.findAndCountAll({
       where: getWhere('product'),

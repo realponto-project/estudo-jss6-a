@@ -129,7 +129,7 @@ describe('kitOutDomain', () => {
       reposicao: '3',
       expedicao: '2',
       perda: '1',
-      os: '65',
+      os: '1',
       kitPartId: kitParts.id,
     }
 

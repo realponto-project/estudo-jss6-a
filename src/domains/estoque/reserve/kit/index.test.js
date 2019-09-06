@@ -120,4 +120,10 @@ describe('kitDomain', () => {
 
     expect(kitList.rows.length > 0).toBeTruthy()
   })
+
+  test('getKitDefaultValue', async () => {
+    const kitList = await kitDomain.getKitDefaultValue()
+
+    expect(kitList.rows.length > 0).toBeTruthy()
+  })
 })
