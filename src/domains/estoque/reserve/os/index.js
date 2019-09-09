@@ -1,3 +1,4 @@
+/* eslint-disable array-callback-return */
 /* eslint-disable max-len */
 const R = require('ramda')
 const moment = require('moment')
@@ -169,7 +170,7 @@ module.exports = class OsDomain {
               if (!equip) {
                 errors = true
                 field.serialNumber = true
-                message.serialNumber = 'este equipamento não esta cadastrado nessa base de estoque'
+                message.serialNumber = `este equipamento não esta cadastrado nessa base de estoque/ ${serialNumber} ja esta reservado`
                 throw new FieldValidationError([{ field, message }])
               }
             })
@@ -366,6 +367,7 @@ module.exports = class OsDomain {
         if (R.prop('id', item)) {
           const osPartsReturn = await OsParts.findByPk(item.id, { transaction })
 
+          // eslint-disable-next-line consistent-return
           osPartsAll = await osPartsAll.filter((itemOld) => {
             if (itemOld.id !== item.id) {
               // console.log(itemOld.id)
@@ -611,7 +613,7 @@ module.exports = class OsDomain {
 
       // console.log(formatKitOut(kitOuts))
       const resp = formatProductDelete(osParts)
-      
+
       Array.prototype.push.apply(resp, formatKitOut(kitOuts))
 
       return resp

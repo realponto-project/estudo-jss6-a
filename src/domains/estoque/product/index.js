@@ -336,13 +336,15 @@ module.exports = class ProductDomain {
       transaction,
     })
 
-    const response = productBase.map(item => ({
-      id: item.id,
-      available: item.available,
-      name: item.product.name,
-      serial: item.product.serial,
-    }))
-
-    return response
+    const response = productBase.map((item) => {
+      const resp = {
+        id: item.id,
+        available: item.available,
+        name: item.product.name,
+        serial: item.product.serial,
+      }
+      return resp
+    })
+    return response.filter(item => parseInt(item.available, 10) !== 0)
   }
 }
