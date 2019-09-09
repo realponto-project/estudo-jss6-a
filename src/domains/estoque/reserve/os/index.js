@@ -147,6 +147,12 @@ module.exports = class OsDomain {
         if (productBase.product.serial) {
           const { serialNumberArray } = item
 
+          if (serialNumberArray.length !== parseInt(item.amount, 10)) {
+            errors = true
+            field.serialNumbers = true
+            message.serialNumbers = 'quantidade adicionada nãop condiz com a quantidade de números de série.'
+          }
+
           if (serialNumberArray.length > 0) {
             await serialNumberArray.map(async (serialNumber) => {
               const equip = await Equip.findOne({
@@ -157,6 +163,8 @@ module.exports = class OsDomain {
                 },
                 transaction,
               })
+
+              console.log(JSON.parse(JSON.stringify(equip)))
 
               if (!equip) {
                 errors = true
@@ -172,12 +180,26 @@ module.exports = class OsDomain {
                   reserved: false,
                   productBaseId: productBase.id,
                 },
+                transaction,
               })
+
+              console.log(JSON.parse(JSON.stringify(equip)))
               await equip.update({
                 ...equip,
-                // osPartId: osPartCreated.id,
+                osPartId: osPartCreated.id,
                 reserved: true,
               }, { transaction })
+
+              const equip1 = await Equip.findOne({
+                where: {
+                  serialNumber,
+                  reserved: false,
+                  productBaseId: productBase.id,
+                },
+                transaction,
+              })
+
+              console.log(JSON.parse(JSON.stringify(equip1)))
             })
           }
         }
@@ -246,6 +268,20 @@ module.exports = class OsDomain {
       const osPartsPromise = osParts.map(async (item) => {
         const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
+        const equips = await Equip.findAll({
+          where: { osPartId: item.id },
+          transaction,
+        })
+
+        const equipUpdatePromise = equips.map(async (equip) => {
+          await equip.update({
+            ...equip,
+            reserved: false,
+          }, { transaction })
+        })
+
+        await Promise.all(equipUpdatePromise)
+
         const productBaseUpdate = {
           ...productBase,
           available: (parseInt(productBase.available, 10) + parseInt(item.amount, 10)).toString(),
@@ -292,13 +328,15 @@ module.exports = class OsDomain {
       date: '',
     }
 
+    console.log(bodyData)
+
     let errors = false
 
     if (reserveHasProp('date')) {
       if (!reserve.date) {
         errors = true
         field.date = true
-        message.date = 'Razao social não pode ser nula.'
+        message.date = 'date não pode ser nula.'
       } else {
         reserveOs.date = reserve.date
       }
@@ -318,7 +356,7 @@ module.exports = class OsDomain {
 
       let osPartsAll = await OsParts.findAll({
         where: { oId: bodyData.id },
-        attributes: ['id'],
+        attributes: ['id', 'productBaseId'],
         transaction,
       })
 
@@ -334,13 +372,13 @@ module.exports = class OsDomain {
               return itemOld.id
             }
           })
-          // console.log(osParts)
-          // console.log(JSON.parse(JSON.stringify(osPartsReturn)))
+          // console.log(item)
+          console.log(JSON.parse(JSON.stringify(osPartsReturn)))
 
           // osPartsReturn.filter((id) => id === )
           const productBase = await ProductBase.findByPk(osPartsReturn.productBaseId, { transaction })
 
-          // console.log(JSON.parse(JSON.stringify(productBase)))
+          console.log(JSON.parse(JSON.stringify(productBase)))
 
           const productBaseUpdate = {
             ...productBase,
@@ -348,10 +386,12 @@ module.exports = class OsDomain {
             reserved: (parseInt(productBase.reserved, 10) - parseInt(osPartsReturn.amount, 10) + parseInt(item.amount, 10)).toString(),
           }
 
+          // console.log('osPartsReturn')
           const osPartsUpdate = {
             ...osPartsReturn,
             amount: item.amount,
           }
+
 
           await osPartsReturn.update(osPartsUpdate, { transaction })
           await productBase.update(productBaseUpdate, { transaction })
@@ -361,7 +401,7 @@ module.exports = class OsDomain {
             oId: bodyData.id,
           }
 
-          // console.log(osPartsCreatted)
+          // console.log(item)
 
           await OsParts.create(osPartsCreatted, { transaction })
 
@@ -383,6 +423,23 @@ module.exports = class OsDomain {
       if (osPartsAll.length > 0) {
         const osPartsdeletePromises = osPartsAll.map(async (item) => {
           const osPartDelete = await OsParts.findByPk(item.id, { transaction })
+
+          const equips = await Equip.findAll({
+            where: { osPartId: item.id },
+            transaction,
+          })
+
+          const equipUpdatePromise = equips.map(async (equip) => {
+            await equip.update({
+              ...equip,
+              reserved: false,
+              osPartId: null,
+            }, { transaction })
+          })
+
+          console.log(JSON.parse(JSON.stringify(item)))
+
+          await Promise.all(equipUpdatePromise)
 
           const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
@@ -562,10 +619,23 @@ module.exports = class OsDomain {
 
     let notDelet = false
 
-    const formatProduct = R.map((item) => {
+    const formatProduct = R.map(async (item) => {
       notDelet = (item.osParts.output !== '0' || item.osParts.missOut !== '0' || item.osParts.return !== '0')
+
+      let equips = []
+
+      if (item.product.serial) {
+        equips = await Equip.findAll({
+          attributes: ['serialNumber'],
+          where: { osPartId: item.osParts.id },
+          transaction,
+        })
+      }
+
       const resp = {
+        serialNumbers: equips,
         name: item.product.name,
+        serial: item.product.serial,
         id: item.osParts.id,
         amount: item.osParts.amount,
         output: item.osParts.output,
@@ -597,7 +667,7 @@ module.exports = class OsDomain {
         os: item.os,
         createdAt: formatDateFunct(item.createdAt),
         // products: formatProduct(item.productBases),
-        products: item.productBases.length !== 0 ? formatProduct(item.productBases) : await formatProductNull(item.id),
+        products: item.productBases.length !== 0 ? await Promise.all(formatProduct(item.productBases)) : await formatProductNull(item.id),
         notDelet: osParts.length !== item.productBases.length || notDelet,
       }
       // console.log(formatProduct(item.productBases))
@@ -619,7 +689,7 @@ module.exports = class OsDomain {
       rows: osList,
     }
 
-    console.log(response)
+    // console.log(response)
 
     return response
   }
@@ -747,9 +817,71 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
-    const productBase = await ProductBase.findByPk(osPart.productBaseId, { transaction })
+    const productBase = await ProductBase.findByPk(osPart.productBaseId, {
+      include: [{
+        model: Product,
+        attributes: ['serial'],
+      }],
+      transaction,
+    })
 
     let productBaseUpdate = {}
+
+    if (productBase.product.serial) {
+      const { serialNumberArray } = bodyData
+
+      if (serialNumberArray.length !== parseInt(value, 10)) {
+        errors = true
+        field.serialNumbers = true
+        message.serialNumbers = 'quantidade adicionada nãop condiz com a quantidade de números de série.'
+      }
+
+      if (serialNumberArray.length > 0) {
+        await serialNumberArray.map(async (serialNumber) => {
+          const equip = await Equip.findOne({
+            where: {
+              serialNumber,
+              reserved: true,
+              productBaseId: productBase.id,
+            },
+            transaction,
+          })
+
+          if (!equip) {
+            errors = true
+            field.serialNumber = true
+            message.serialNumber = 'este equipamento não esta cadastrado nessa base de estoque'
+            throw new FieldValidationError([{ field, message }])
+          }
+        })
+        await serialNumberArray.map(async (serialNumber) => {
+          const equip = await Equip.findOne({
+            where: {
+              serialNumber,
+              reserved: true,
+              productBaseId: productBase.id,
+            },
+            transaction,
+          })
+
+          await equip.update({
+            ...equip,
+            reserved: false,
+          }, { transaction })
+
+          if (key !== 'return') {
+            await equip.destroy({ transaction })
+          }
+
+          if (key !== 'output') {
+            await equip.update({
+              ...equip,
+              osPartId: null,
+            }, { transaction })
+          }
+        })
+      }
+    }
 
     if (key === 'return') {
       productBaseUpdate = {

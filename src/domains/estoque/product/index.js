@@ -208,6 +208,9 @@ module.exports = class ProductDomain {
             model: Manufacturer,
           }],
         },
+        {
+          model: EquipType,
+        },
       ],
       order: [
         [newOrder.field, newOrder.direction],
@@ -241,12 +244,13 @@ module.exports = class ProductDomain {
         id: product.id,
         category: product.category,
         description: product.description,
-        SKU: product.SKU,
+        sku: product.SKU,
         minimumStock: product.minimumStock,
         amount: product.amount,
         mark: product.mark.mark,
         manufacturer: product.mark.manufacturer.manufacturer,
         name: product.name,
+        type: product.equipType ? product.equipType.type : '-',
         createdAt: formatDateFunct(product.createdAt),
         updatedAt: formatDateFunct(product.updatedAt),
       }

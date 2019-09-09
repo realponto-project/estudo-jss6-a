@@ -158,8 +158,10 @@ module.exports = class FreeMarketDomain {
               const equip = await Equip.findOne({
                 where: {
                   serialNumber,
+                  reserved: false,
                   productBaseId: productBase.id,
                 },
+                transaction,
               })
 
               if (!equip) {
@@ -175,12 +177,13 @@ module.exports = class FreeMarketDomain {
                   reserved: false,
                   productBaseId: productBase.id,
                 },
+                transaction,
               })
               await equip.update({
                 ...equip,
-                // osPartId: osPartCreated.id,
                 reserved: true,
               }, { transaction })
+              await equip.destroy({ transaction })
             })
           }
         }

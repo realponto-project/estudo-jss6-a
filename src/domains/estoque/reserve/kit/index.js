@@ -58,7 +58,8 @@ module.exports = class KitDomain {
 
     // console.log(JSON.parse(JSON.stringify(oldKit)))
 
-    let count = 0
+    let count = {}
+    let count1 = {}
 
     if (oldKit.length > 0) {
       const oldKitDelete = oldKit.map(async (itemOldKit) => {
@@ -75,12 +76,23 @@ module.exports = class KitDomain {
           if (itemOldKit.technicianId) {
             const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
-            count += parseInt(item.amount, 10)
+            // console.log(JSON.parse(JSON.stringify(productBase)))
+
+            count = {
+              ...count,
+              [item.productBaseId]: count[item.productBaseId] ? count[item.productBaseId] : 0,
+            }
+
+            count[item.productBaseId] += parseInt(item.amount, 10)
+
+            // console.log(JSON.parse(JSON.stringify(item)))
+
+            // console.log(count)
 
             const productBaseUpdate = {
               ...productBase,
-              available: (parseInt(productBase.available, 10) + count).toString(),
-              reserved: (parseInt(productBase.reserved, 10) - count).toString(),
+              available: (parseInt(productBase.available, 10) + count[item.productBaseId]).toString(),
+              reserved: (parseInt(productBase.reserved, 10) - count[item.productBaseId]).toString(),
             }
             await productBase.update(productBaseUpdate, { transaction })
           }
@@ -114,13 +126,21 @@ module.exports = class KitDomain {
 
           await KitParts.create(kitPartsCreatted, { transaction })
 
+          count1 = {
+            ...count1,
+            [item.productBaseId]: count1[item.productBaseId] ? count1[item.productBaseId] : 0,
+          }
+
+          count1[item.productBaseId] += parseInt(item.amount, 10)
+
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) - (parseInt(item.amount, 10) * technicial.length)).toString(),
-            reserved: (parseInt(productBase.reserved, 10) + (parseInt(item.amount, 10) * technicial.length)).toString(),
+            available: (parseInt(productBase.available, 10) - count1[item.productBaseId]).toString(),
+            reserved: (parseInt(productBase.reserved, 10) + count1[item.productBaseId]).toString(),
           }
 
           await productBase.update(productBaseUpdate, { transaction })
+          count1 = 0
         })
         await Promise.all(kitPartsCreattedPromises)
       }
