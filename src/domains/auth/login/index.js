@@ -40,7 +40,11 @@ class LoginDomain {
       throw new UnauthorizedError()
     }
 
+    console.log(password)
     const checkPwd = await login.checkPassword(password)
+
+    console.log(checkPwd)
+
 
     if (!checkPwd) {
       throw new UnauthorizedError()

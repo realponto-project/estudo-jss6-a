@@ -353,6 +353,8 @@ class UserDomain {
     //   userFormatted.userId = user.id
     // }
 
+    console.log(userFormatted)
+
     const userCreated = await User.create(userFormatted, {
       include: [Login],
       transaction,
