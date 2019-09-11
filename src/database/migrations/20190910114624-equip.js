@@ -45,7 +45,7 @@ module.exports = {
           model: 'osParts',
           key: 'id',
         },
-        allowNull: false,
+        allowNull: true,
       },
     })
 

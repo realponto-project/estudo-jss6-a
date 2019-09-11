@@ -27,7 +27,7 @@ module.exports = {
           model: 'technician',
           key: 'id',
         },
-        allowNull: false,
+        allowNull: true,
       },
     })
 

@@ -1,15 +1,15 @@
-const bcrypt = require('bcrypt')
+// const bcrypt = require('bcrypt')
 
-const getHash = plainPassoword => bcrypt.hash(plainPassoword, 10)
+// const getHash = plainPassoword => bcrypt.hash(plainPassoword, 10)
 
-const shouldMakeAHash = login => login.changed('password')
+// const shouldMakeAHash = login => login.changed('password')
 
-const makeHashPasswordHook = async (login) => {
-  if (shouldMakeAHash(login)) {
-    // eslint-disable-next-line no-param-reassign
-    login.password = await getHash(login.password)
-  }
-}
+// const makeHashPasswordHook = async (login) => {
+//   if (shouldMakeAHash(login)) {
+//     // eslint-disable-next-line no-param-reassign
+//     login.password = await getHash(login.password)
+//   }
+// }
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
@@ -50,12 +50,12 @@ module.exports = {
       login.hasOne(models.user)
     }
 
-    login.prototype.checkPassword = async function compare(plaintext) {
-      return bcrypt.compare(plaintext, this.password)
-    }
+    // login.prototype.checkPassword = async function compare(plaintext) {
+    //   return bcrypt.compare(plaintext, this.password)
+    // }
 
-    login.beforeCreate(makeHashPasswordHook)
-    login.beforeUpdate(makeHashPasswordHook)
+    // login.beforeCreate(makeHashPasswordHook)
+    // login.beforeUpdate(makeHashPasswordHook)
     return login
   },
 

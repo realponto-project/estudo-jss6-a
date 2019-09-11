@@ -1,4 +1,5 @@
 const R = require('ramda')
+const Sequelize = require('sequelize')
 
 const database = require('../../../../database')
 
@@ -8,6 +9,8 @@ const { FieldValidationError } = require('../../../../helpers/errors')
 const TypeAccount = database.model('typeAccount')
 const Resources = database.model('resources')
 const User = database.model('user')
+
+const { Op: operators } = Sequelize
 
 module.exports = class TypeAccountDomain {
   async add(bodyData, options = {}) {
@@ -317,7 +320,10 @@ module.exports = class TypeAccountDomain {
     } = formatQuery(newQuery)
 
     const typeAccounts = await TypeAccount.findAndCountAll({
-      where: getWhere('typeAccount'),
+      where: {
+        ...getWhere('typeAccount'),
+        typeName: { [operators.ne]: 'MOD' },
+      },
       include: [{
         model: Resources,
       }],

@@ -193,6 +193,11 @@ module.exports = class FreeMarketDomain {
           available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
           amount: (parseInt(productBase.amount, 10) - parseInt(item.amount, 10)).toString(),
         }
+        if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+          field.productBaseUpdate = true
+          message.productBaseUpdate = 'Número negativo não é valido'
+          throw new FieldValidationError([{ field, message }])
+        }
 
         await productBase.update(productBaseUpdate, { transaction })
       })

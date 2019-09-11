@@ -1,7 +1,10 @@
 /* eslint-disable max-len */
 const R = require('ramda')
-// const moment = require('moment')
+const moment = require('moment')
 // const axios = require('axios')
+const Sequelize = require('sequelize')
+
+const { Op: operators } = Sequelize
 
 const formatQuery = require('../../../../helpers/lazyLoad')
 const database = require('../../../../database')
@@ -12,7 +15,6 @@ const Kit = database.model('kit')
 const Technician = database.model('technician')
 const KitParts = database.model('kitParts')
 const Product = database.model('product')
-const StockBase = database.model('stockBase')
 const ProductBase = database.model('productBase')
 
 module.exports = class KitDomain {
@@ -46,6 +48,8 @@ module.exports = class KitDomain {
       transaction,
     })
 
+    console.log(bodyData)
+
     // console.log(JSON.parse(JSON.stringify(technicial)))
 
     const oldKit = await Kit.findAll({
@@ -72,7 +76,6 @@ module.exports = class KitDomain {
         // console.log(JSON.parse(JSON.stringify(oldKitParts)))
 
         const kitPartsDeletePromises = oldKitParts.map(async (item) => {
-
           if (itemOldKit.technicianId) {
             const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
 
@@ -93,6 +96,12 @@ module.exports = class KitDomain {
               ...productBase,
               available: (parseInt(productBase.available, 10) + count[item.productBaseId]).toString(),
               reserved: (parseInt(productBase.reserved, 10) - count[item.productBaseId]).toString(),
+            }
+
+            if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+              field.productBaseUpdate = true
+              message.productBaseUpdate = 'Número negativo não é valido'
+              throw new FieldValidationError([{ field, message }])
             }
             await productBase.update(productBaseUpdate, { transaction })
           }
@@ -137,6 +146,12 @@ module.exports = class KitDomain {
             ...productBase,
             available: (parseInt(productBase.available, 10) - count1[item.productBaseId]).toString(),
             reserved: (parseInt(productBase.reserved, 10) + count1[item.productBaseId]).toString(),
+          }
+
+          if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+            field.productBaseUpdate = true
+            message.productBaseUpdate = 'Número negativo não é valido'
+            throw new FieldValidationError([{ field, message }])
           }
 
           await productBase.update(productBaseUpdate, { transaction })
@@ -204,7 +219,7 @@ module.exports = class KitDomain {
       pageResponse,
     } = formatQuery(newQuery)
 
-    // console.log(query)
+    // console.log(newQuery.filters.technician.specific.name)
     // console.log(getWhere('entrance'))
 
     const entrances = await KitParts.findAndCountAll({
@@ -225,7 +240,7 @@ module.exports = class KitDomain {
           include: [
             {
               model: Technician,
-              where: getWhere('technician'),
+              where: { name: { [operators.eq]: newQuery.filters.technician.specific.name } },
             },
           ],
           required: true,
@@ -252,13 +267,13 @@ module.exports = class KitDomain {
       }
     }
 
-    // const formatDateFunct = (date) => {
-    //   moment.locale('pt-br')
-    //   const formatDate = moment(date).format('L')
-    //   const formatHours = moment(date).format('LT')
-    //   const dateformated = `${formatDate} ${formatHours}`
-    //   return dateformated
-    // }
+    const formatDateFunct = (date) => {
+      moment.locale('pt-br')
+      const formatDate = moment(date).format('L')
+      const formatHours = moment(date).format('LT')
+      const dateformated = `${formatDate} ${formatHours}`
+      return dateformated
+    }
 
     const formatData = await R.map((entrance) => {
       const resp = {
@@ -278,7 +293,7 @@ module.exports = class KitDomain {
         // // eslint-disable-next-line max-len
         name: entrance.productBase ? entrance.productBase.product.name : null,
         quantMax: entrance.productBase ? parseInt(entrance.productBase.available, 10) : null,
-        // createdAt: formatDateFunct(entrance.createdAt),
+        updatedAt: formatDateFunct(entrance.updatedAt),
       }
       return resp
     })

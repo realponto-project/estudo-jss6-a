@@ -111,13 +111,18 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
+    const reserveAll = await Os.findAll({ paranoid: false, transaction })
+
+    reserve.os = (reserveAll.length + 1).toString()
     reserve.cnpj = reserve.cnpj.replace(/\D/g, '')
+
+    // console.log(reserve, 'TEST')
 
     const reserveCreated = await Os.create(reserve, { transaction })
 
-    await reserveCreated.update({ ...reserveCreated, os: reserveCreated.id.toString() }, { transaction })
+    // console.log(JSON.parse(JSON.stringify(reserveCreated)))
 
-    // console.log(bodyData)
+    // await reserveCreated.update({ ...reserveCreated, os: reserveCreated.id.toString() }, { transaction })
 
     if (bodyHasProp('osParts')) {
       const { osParts } = bodyData
@@ -143,7 +148,11 @@ module.exports = class OsDomain {
         }
         // console.log(JSON.parse(JSON.stringify(productBase)))
 
+        // console.log(osPartsCreatted)
+
         const osPartCreated = await OsParts.create(osPartsCreatted, { transaction })
+
+        // console.log(JSON.parse(JSON.stringify(osPartCreated)))
 
         if (productBase.product.serial) {
           const { serialNumberArray } = item
@@ -165,7 +174,7 @@ module.exports = class OsDomain {
                 transaction,
               })
 
-              console.log(JSON.parse(JSON.stringify(equip)))
+              // console.log(JSON.parse(JSON.stringify(equip)))
 
               if (!equip) {
                 errors = true
@@ -184,23 +193,23 @@ module.exports = class OsDomain {
                 transaction,
               })
 
-              console.log(JSON.parse(JSON.stringify(equip)))
+              // console.log(JSON.parse(JSON.stringify(equip)))
               await equip.update({
                 ...equip,
                 osPartId: osPartCreated.id,
                 reserved: true,
               }, { transaction })
 
-              const equip1 = await Equip.findOne({
-                where: {
-                  serialNumber,
-                  reserved: false,
-                  productBaseId: productBase.id,
-                },
-                transaction,
-              })
+              // const equip1 = await Equip.findOne({
+              //   where: {
+              //     serialNumber,
+              //     reserved: false,
+              //     productBaseId: productBase.id,
+              //   },
+              //   transaction,
+              // })
 
-              console.log(JSON.parse(JSON.stringify(equip1)))
+              // console.log(JSON.parse(JSON.stringify(equip1)))
             })
           }
         }
@@ -209,6 +218,12 @@ module.exports = class OsDomain {
           ...productBase,
           available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
           reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
+        }
+
+        if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+          field.productBaseUpdate = true
+          message.productBaseUpdate = 'Número negativo não é valido'
+          throw new FieldValidationError([{ field, message }])
         }
 
         await productBase.update(productBaseUpdate, { transaction })
@@ -227,14 +242,32 @@ module.exports = class OsDomain {
     if (errors) {
       throw new FieldValidationError([{ field, message }])
     }
+    // console.log('teste 2')
+
+    // const teste = await Os.findByPk(reserveCreated.id, {
+    //   include: [
+    //     {
+    //       model: ProductBase,
+    //       // include: [{
+    //       //   model: Product,
+    //       // }],
+    //     },
+    //     {
+    //       model: Technician,
+    //     },
+    //   ],
+    //   transaction,
+    // })
+
+    // console.log(JSON.parse(JSON.stringify(teste)))
 
     const response = await Os.findByPk(reserveCreated.id, {
       include: [
         {
           model: ProductBase,
-          include: [{
-            model: Product,
-          }],
+          // include: [{
+          //   model: Product,
+          // }],
         },
         {
           model: Technician,
@@ -289,6 +322,12 @@ module.exports = class OsDomain {
           reserved: (parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)).toString(),
         }
 
+        if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+          field.productBaseUpdate = true
+          message.productBaseUpdate = 'Número negativo não é valido'
+          throw new FieldValidationError([{ field, message }])
+        }
+
         await productBase.update(productBaseUpdate, { transaction })
 
         await item.destroy()
@@ -329,7 +368,7 @@ module.exports = class OsDomain {
       date: '',
     }
 
-    console.log(bodyData)
+    // console.log(bodyData)
 
     let errors = false
 
@@ -370,17 +409,15 @@ module.exports = class OsDomain {
           // eslint-disable-next-line consistent-return
           osPartsAll = await osPartsAll.filter((itemOld) => {
             if (itemOld.id !== item.id) {
-              // console.log(itemOld.id)
               return itemOld.id
             }
           })
           // console.log(item)
-          console.log(JSON.parse(JSON.stringify(osPartsReturn)))
+          // console.log(JSON.parse(JSON.stringify(osPartsReturn)))
 
-          // osPartsReturn.filter((id) => id === )
           const productBase = await ProductBase.findByPk(osPartsReturn.productBaseId, { transaction })
 
-          console.log(JSON.parse(JSON.stringify(productBase)))
+          // console.log(JSON.parse(JSON.stringify(productBase)))
 
           const productBaseUpdate = {
             ...productBase,
@@ -388,6 +425,11 @@ module.exports = class OsDomain {
             reserved: (parseInt(productBase.reserved, 10) - parseInt(osPartsReturn.amount, 10) + parseInt(item.amount, 10)).toString(),
           }
 
+          if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+            field.productBaseUpdate = true
+            message.productBaseUpdate = 'Número negativo não é valido'
+            throw new FieldValidationError([{ field, message }])
+          }
           // console.log('osPartsReturn')
           const osPartsUpdate = {
             ...osPartsReturn,
@@ -415,6 +457,12 @@ module.exports = class OsDomain {
             reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
           }
 
+          if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+            field.productBaseUpdate = true
+            message.productBaseUpdate = 'Número negativo não é valido'
+            throw new FieldValidationError([{ field, message }])
+          }
+
           await productBase.update(productBaseUpdate, { transaction })
         }
       })
@@ -439,7 +487,7 @@ module.exports = class OsDomain {
             }, { transaction })
           })
 
-          console.log(JSON.parse(JSON.stringify(item)))
+          // console.log(JSON.parse(JSON.stringify(item)))
 
           await Promise.all(equipUpdatePromise)
 
@@ -449,6 +497,12 @@ module.exports = class OsDomain {
             ...productBase,
             available: (parseInt(productBase.available, 10) + parseInt(osPartDelete.amount, 10)).toString(),
             reserved: (parseInt(productBase.reserved, 10) - parseInt(osPartDelete.amount, 10)).toString(),
+          }
+
+          if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+            field.productBaseUpdate = true
+            message.productBaseUpdate = 'Número negativo não é valido'
+            throw new FieldValidationError([{ field, message }])
           }
 
           await productBase.update(productBaseUpdate, { transaction })
@@ -501,6 +555,8 @@ module.exports = class OsDomain {
       pageResponse,
     } = formatQuery(newQuery)
 
+    // console.log('tests')
+
     const os = await Os.findAndCountAll({
       where: getWhere('os'),
       include: [
@@ -529,9 +585,10 @@ module.exports = class OsDomain {
       transaction,
     })
 
+    // console.log('tests')
     // console.log(paranoid)
 
-    // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
+    // console.log(JSON.parse(JSON.stringify(os)))
     // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
 
     const { rows } = os
@@ -579,24 +636,30 @@ module.exports = class OsDomain {
 
     const formatProductNull = async (id) => {
       const osParts = await OsParts.findAll({
-
         where: {
           oId: id,
         },
-        include: [{
-          model: ProductBase,
-          include: [{
-            model: Product,
-          }],
-        }],
+        include: [
+          {
+            model: ProductBase,
+            include: [{
+              model: Product,
+            }],
+          },
+          {
+            model: Os,
+            paranoid: false,
+          },
+        ],
         paranoid: false,
         transaction,
       })
 
-      // console.log(JSON.parse(JSON.stringify(osParts)))
+      // console.log(JSON.parse(JSON.stringify(osParts[0].o.os)))
 
       const kitOuts = await KitOut.findAll({
-        where: { os: id.toString() },
+        // where: { os: id.toString() },
+        where: { os: osParts[0].o.os },
         include: [{
           model: KitParts,
           include: [{
@@ -634,6 +697,10 @@ module.exports = class OsDomain {
         })
       }
 
+      // console.log(item.osParts.id, equips)
+
+      const quantMax = (parseInt(item.osParts.amount, 10)) - (parseInt(item.osParts.return, 10)) - (parseInt(item.osParts.output, 10)) - (parseInt(item.osParts.missOut, 10))
+
       const resp = {
         serialNumbers: equips,
         name: item.product.name,
@@ -643,7 +710,7 @@ module.exports = class OsDomain {
         output: item.osParts.output,
         missOut: item.osParts.missOut,
         return: item.osParts.return,
-        quantMax: (parseInt(item.osParts.amount, 10)) - (parseInt(item.osParts.return, 10)) - (parseInt(item.osParts.output, 10)) - (parseInt(item.osParts.missOut, 10)),
+        quantMax,
       }
       return resp
     })
@@ -691,7 +758,7 @@ module.exports = class OsDomain {
       rows: osList,
     }
 
-    // console.log(response)
+    // console.log(response.rows[0].products)
 
     return response
   }
@@ -897,6 +964,12 @@ module.exports = class OsDomain {
         amount: (parseInt(productBase.amount, 10) - parseInt(value, 10)).toString(),
         reserved: (parseInt(productBase.reserved, 10) - parseInt(value, 10)).toString(),
       }
+    }
+
+    if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+      field.productBaseUpdate = true
+      message.productBaseUpdate = 'Número negativo não é valido'
+      throw new FieldValidationError([{ field, message }])
     }
 
     await productBase.update(productBaseUpdate, { transaction })

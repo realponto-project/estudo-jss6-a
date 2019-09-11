@@ -1,4 +1,5 @@
 const R = require('ramda')
+// const bcrypt = require('bcrypt')
 
 const database = require('../../../database')
 
@@ -40,11 +41,11 @@ class LoginDomain {
       throw new UnauthorizedError()
     }
 
-    console.log(password)
     const checkPwd = await login.checkPassword(password)
 
-    console.log(checkPwd)
+    // console.log(checkPwd)
 
+    // const checkPwd = await bcrypt.compare(password, login.password)
 
     if (!checkPwd) {
       throw new UnauthorizedError()

@@ -42,6 +42,14 @@ module.exports = {
         },
         allowNull: true,
       },
+      productId: {
+        type: Sequelize.UUID,
+        references: {
+          model: 'product',
+          key: 'id',
+        },
+        allowNull: true,
+      },
     })
 
     kitParts.associate = (models) => {

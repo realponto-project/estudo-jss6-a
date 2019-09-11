@@ -15,6 +15,7 @@ const KitParts = database.model('kitParts')
 
 module.exports = class TechnicianDomain {
   async add(bodyData, options = {}) {
+
     const { transaction = null } = options
 
     const technician = R.omit(['id', 'plate'], bodyData)
@@ -96,7 +97,6 @@ module.exports = class TechnicianDomain {
     if (errors) {
       throw new FieldValidationError([{ field, message }])
     }
-
     const car = await Car.findOne({
       where: { plate: bodyData.plate },
       transaction,
@@ -109,7 +109,10 @@ module.exports = class TechnicianDomain {
     await car.addTechnician(technicianCreated, { transaction })
 
     if (technician.external) {
-      const kit = await Kit.findOne({ transaction })
+      const kit = await Kit.findOne({
+        where: { technicianId: null },
+        transaction,
+      })
 
       if (kit) {
         const kitParts = await KitParts.findAll({

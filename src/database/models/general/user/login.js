@@ -37,6 +37,7 @@ module.exports = (sequelize) => {
   }
 
   login.prototype.checkPassword = async function compare(plaintext) {
+    // console.log(plaintext, this.password)
     return bcrypt.compare(plaintext, this.password)
   }
 

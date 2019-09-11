@@ -2,12 +2,6 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     const technicianCar = queryInterface.createTable('technicianCar', {
-      id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
-      },
-
       technicianId: {
         type: Sequelize.UUID,
         references: {

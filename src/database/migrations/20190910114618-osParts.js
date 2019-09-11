@@ -42,12 +42,12 @@ module.exports = {
         type: Sequelize.DATE,
       },
       oId: {
-        type: Sequelize.REAL,
+        type: Sequelize.UUID,
         references: {
           model: 'os',
           key: 'id',
         },
-        allowNull: false,
+        allowNull: true,
       },
       productBaseId: {
         type: Sequelize.UUID,
@@ -56,6 +56,14 @@ module.exports = {
           key: 'id',
         },
         allowNull: false,
+      },
+      productId: {
+        type: Sequelize.UUID,
+        references: {
+          model: 'product',
+          key: 'id',
+        },
+        allowNull: true,
       },
     })
 
