@@ -829,16 +829,20 @@ module.exports = class EquipDomain {
       include: [
         {
           model: OsParts,
+          paranoid: false,
           attributes: ['oId'],
           include: [{
+            paranoid: false,
             attributes: ['os'],
             model: Os,
           }],
         },
         {
+          paranoid: false,
           model: FreeMarketParts,
           attributes: ['freeMarketId'],
           include: [{
+            paranoid: false,
             attributes: ['trackingCode'],
             model: FreeMarket,
           }],
@@ -847,6 +851,8 @@ module.exports = class EquipDomain {
       paranoid: false,
       transaction,
     })
+
+    console.log(JSON.parse(JSON.stringify(response)))
     return response
   }
 }

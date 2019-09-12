@@ -174,8 +174,6 @@ module.exports = class OsDomain {
                 transaction,
               })
 
-              // console.log(JSON.parse(JSON.stringify(equip)))
-
               if (!equip) {
                 errors = true
                 field.serialNumber = true
@@ -993,19 +991,19 @@ module.exports = class OsDomain {
             transaction,
           })
 
-          await equip.update({
-            ...equip,
-            reserved: false,
-          }, { transaction })
-
-          if (key !== 'return') {
-            await equip.destroy({ transaction })
-          }
-
           if (key !== 'output') {
             await equip.update({
               ...equip,
               osPartId: null,
+            }, { transaction })
+          }
+
+          if (key !== 'return') {
+            await equip.destroy({ transaction })
+          } else {
+            await equip.update({
+              ...equip,
+              reserved: false,
             }, { transaction })
           }
         })
