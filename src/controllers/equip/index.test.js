@@ -147,7 +147,7 @@ describe('equipController', () => {
   // })
 
   // test('getOneBySerialNumber', async () => {
-  //   const response = await request().get('/api/equip/serialNumber', { headers, params })
+  // const response = await request().get('/api/equip/serialNumber', { headers, params })
 
   //   const { body, statusCode } = response
 

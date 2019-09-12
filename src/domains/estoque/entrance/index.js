@@ -213,6 +213,7 @@ module.exports = class TechnicianDomain {
             where: { id: productBase.id },
             attributes: [],
           }],
+          paranoid: false,
           transaction,
         })
 

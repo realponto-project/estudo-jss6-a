@@ -412,12 +412,8 @@ module.exports = class OsDomain {
               return itemOld.id
             }
           })
-          // console.log(item)
-          // console.log(JSON.parse(JSON.stringify(osPartsReturn)))
 
           const productBase = await ProductBase.findByPk(osPartsReturn.productBaseId, { transaction })
-
-          // console.log(JSON.parse(JSON.stringify(productBase)))
 
           const productBaseUpdate = {
             ...productBase,
@@ -445,11 +441,68 @@ module.exports = class OsDomain {
             oId: bodyData.id,
           }
 
-          // console.log(item)
+          const osPartCreated = await OsParts.create(osPartsCreatted, { transaction })
 
-          await OsParts.create(osPartsCreatted, { transaction })
+          const productBase = await ProductBase.findByPk(item.productBaseId, {
+            include: [{
+              model: Product,
+              attributes: ['serial'],
+            }],
+            transaction,
+          })
 
-          const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
+          if (!productBase) {
+            field.peca = true
+            message.peca = 'produto não oconst a na base de dados'
+            throw new FieldValidationError([{ field, message }])
+          }
+
+          if (productBase.product.serial) {
+            const { serialNumberArray } = item
+
+            if (serialNumberArray.length !== parseInt(item.amount, 10)) {
+              errors = true
+              field.serialNumbers = true
+              message.serialNumbers = 'quantidade adicionada nãop condiz com a quantidade de números de série.'
+            }
+
+            if (serialNumberArray.length > 0) {
+              await serialNumberArray.map(async (serialNumber) => {
+                const equip = await Equip.findOne({
+                  where: {
+                    serialNumber,
+                    reserved: false,
+                    productBaseId: productBase.id,
+                  },
+                  transaction,
+                })
+
+                if (!equip) {
+                  errors = true
+                  field.serialNumber = true
+                  message.serialNumber = `este equipamento não esta cadastrado nessa base de estoque/ ${serialNumber} ja esta reservado`
+                  throw new FieldValidationError([{ field, message }])
+                }
+              })
+
+              await serialNumberArray.map(async (serialNumber) => {
+                const equip = await Equip.findOne({
+                  where: {
+                    serialNumber,
+                    reserved: false,
+                    productBaseId: productBase.id,
+                  },
+                  transaction,
+                })
+
+                await equip.update({
+                  ...equip,
+                  osPartId: osPartCreated.id,
+                  reserved: true,
+                }, { transaction })
+              })
+            }
+          }
 
           const productBaseUpdate = {
             ...productBase,
@@ -687,6 +740,12 @@ module.exports = class OsDomain {
     const formatProduct = R.map(async (item) => {
       notDelet = (item.osParts.output !== '0' || item.osParts.missOut !== '0' || item.osParts.return !== '0')
 
+      // console.log(notDelet)
+      // console.log(JSON.parse(JSON.stringify(item.osParts)))
+      // console.log(JSON.parse(JSON.stringify(item)))
+
+      // console.log(item.osParts.return !== '0')
+
       let equips = []
 
       if (item.product.serial) {
@@ -695,9 +754,8 @@ module.exports = class OsDomain {
           where: { osPartId: item.osParts.id },
           transaction,
         })
+        notDelet = parseInt(item.osParts.amount, 10) !== equips.length
       }
-
-      // console.log(item.osParts.id, equips)
 
       const quantMax = (parseInt(item.osParts.amount, 10)) - (parseInt(item.osParts.return, 10)) - (parseInt(item.osParts.output, 10)) - (parseInt(item.osParts.missOut, 10))
 
@@ -737,9 +795,10 @@ module.exports = class OsDomain {
         createdAt: formatDateFunct(item.createdAt),
         // products: formatProduct(item.productBases),
         products: item.productBases.length !== 0 ? await Promise.all(formatProduct(item.productBases)) : await formatProductNull(item.id),
-        notDelet: osParts.length !== item.productBases.length || notDelet,
+        notDelet: (osParts.length !== item.productBases.length) || notDelet,
       }
       // console.log(formatProduct(item.productBases))
+      console.log(resp.os, resp.notDelet)
       return resp
     })
 
@@ -759,6 +818,7 @@ module.exports = class OsDomain {
     }
 
     // console.log(response.rows[0].products)
+    // console.log(response.rows)
 
     return response
   }

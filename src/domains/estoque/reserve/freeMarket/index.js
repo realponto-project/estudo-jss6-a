@@ -135,10 +135,7 @@ module.exports = class FreeMarketDomain {
           freeMarketId: freeMarketCreated.id,
         }
 
-        await FreeMarketParts.create(freeMarketPartsCreatted, { transaction })
-
-        // console.log(freeMarketParts)
-
+        const freeMarketPartCreated = await FreeMarketParts.create(freeMarketPartsCreatted, { transaction })
 
         const productBase = await ProductBase.findByPk(item.productBaseId, {
           include: [{
@@ -153,6 +150,12 @@ module.exports = class FreeMarketDomain {
         if (productBase.product.serial) {
           const { serialNumberArray } = item
 
+          if (serialNumberArray.length !== parseInt(item.amount, 10)) {
+            errors = true
+            field.serialNumbers = true
+            message.serialNumbers = 'quantidade adicionada nãop condiz com a quantidade de números de série.'
+          }
+
           if (serialNumberArray.length > 0) {
             await serialNumberArray.map(async (serialNumber) => {
               const equip = await Equip.findOne({
@@ -165,8 +168,9 @@ module.exports = class FreeMarketDomain {
               })
 
               if (!equip) {
+                errors = true
                 field.serialNumber = true
-                message.serialNumber = 'este equipamento não esta cadastrado nessa base de estoque'
+                message.serialNumber = `este equipamento não esta cadastrado nessa base de estoque/ ${serialNumber} ja esta reservado`
                 throw new FieldValidationError([{ field, message }])
               }
             })
@@ -181,6 +185,7 @@ module.exports = class FreeMarketDomain {
               })
               await equip.update({
                 ...equip,
+                freeMarketPartId: freeMarketPartCreated.id,
                 reserved: true,
               }, { transaction })
               await equip.destroy({ transaction })
@@ -202,6 +207,10 @@ module.exports = class FreeMarketDomain {
         await productBase.update(productBaseUpdate, { transaction })
       })
       await Promise.all(kitPartsCreattedPromises)
+    }
+
+    if (errors) {
+      throw new FieldValidationError([{ field, message }])
     }
 
     const response = await FreeMarket.findByPk(freeMarketCreated.id, {

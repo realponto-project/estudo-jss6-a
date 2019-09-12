@@ -82,6 +82,7 @@ module.exports = (sequelize) => {
     serialNumber: {
       type: Sequelize.STRING,
       allowNull: false,
+      unique: true,
     },
 
     reserved: {
@@ -97,6 +98,7 @@ module.exports = (sequelize) => {
       },
     })
     equip.belongsTo(models.osParts)
+    equip.belongsTo(models.freeMarketParts)
   }
 
   return equip

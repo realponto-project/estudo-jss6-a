@@ -11,6 +11,7 @@ module.exports = {
       serialNumber: {
         type: Sequelize.STRING,
         allowNull: false,
+        unique: true,
       },
 
       reserved: {
@@ -43,6 +44,14 @@ module.exports = {
         type: Sequelize.UUID,
         references: {
           model: 'osParts',
+          key: 'id',
+        },
+        allowNull: true,
+      },
+      freeMarketPartId: {
+        type: Sequelize.UUID,
+        references: {
+          model: 'freeMarketParts',
           key: 'id',
         },
         allowNull: true,
