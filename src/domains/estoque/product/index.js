@@ -197,8 +197,6 @@ module.exports = class ProductDomain {
       pageResponse,
     } = formatQuery(newQuery)
 
-    console.log(getWhere('mark'))
-
     const products = await Product.findAndCountAll({
       where: getWhere('product'),
       include: [
@@ -225,8 +223,6 @@ module.exports = class ProductDomain {
     })
 
     const { rows } = products
-
-    console.log(JSON.parse(JSON.stringify(rows)))
 
     if (rows.length === 0) {
       return {
