@@ -15,6 +15,7 @@ const ProductBase = database.model('productBase')
 const Product = database.model('product')
 const Technician = database.model('technician')
 const Os = database.model('os')
+// const OsParts = database.model('osParts')
 
 module.exports = class KitOutDomain {
   async add(bodyData, options = {}) {
@@ -86,9 +87,25 @@ module.exports = class KitOutDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
+    const kitPartExist = await KitParts.findByPk(bodyData.kitPartId, {
+      attributes: ['kitId'],
+      include: [{
+        model: Kit,
+        attributes: ['technicianId'],
+        include: [{ model: Technician, attributes: ['name'] }],
+      }],
+      transaction,
+    })
+
     const perdaNumber = parseInt(bodyData.perda, 10)
     const reposicaoNumber = parseInt(bodyData.reposicao, 10)
     const expedicaoNumber = parseInt(bodyData.expedicao, 10)
+
+    if (perdaNumber === 0 && reposicaoNumber === 0 && expedicaoNumber === 0) {
+      field.quant = true
+      message.quant = 'Quantidade invalida'
+      throw new FieldValidationError([{ field, message }])
+    }
     const { kitPartId } = bodyData
 
     const kitPart = await KitParts.findByPk(kitPartId, { transaction })
@@ -164,18 +181,37 @@ module.exports = class KitOutDomain {
 
       const osExist = await Os.findOne({
         where: { os },
+        include: [{ model: Technician, attributes: ['name'] }],
         paranoid: false,
         transaction,
       })
 
+      // console.log(JSON.parse(JSON.stringify(osExist)))
+
       if (!osExist) {
         field.os = true
-        message.os = 'Ação inválida'
+        message.os = 'OS inválida'
         throw new FieldValidationError([{ field, message }])
+      } else {
+        if (osExist.deletedAt !== null) {
+          field.os = true
+          message.os = 'OS encerrada'
+          throw new FieldValidationError([{ field, message }])
+        }
+        if (kitPartExist.kit.technician.name !== osExist.technician.name) {
+          field.os = true
+          message.os = `O tecnico que está relacionado com a OS ${osExist.os} é o/a ${osExist.technician.name}`
+          throw new FieldValidationError([{ field, message }])
+        }
       }
 
+      // console.log(bodyData.kitPartId)
+
       const kitOutReturn = await KitOut.findOne({
-        where: { os },
+        where: {
+          os,
+          kitPartId: bodyData.kitPartId,
+        },
         transaction,
       })
 

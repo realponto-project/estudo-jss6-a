@@ -11,6 +11,7 @@ module.exports = {
       trackingCode: {
         type: Sequelize.STRING,
         allowNull: false,
+        unique: true,
       },
 
       name: {

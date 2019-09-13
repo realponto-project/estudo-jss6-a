@@ -48,7 +48,7 @@ module.exports = class KitDomain {
       transaction,
     })
 
-    console.log(bodyData)
+    // console.log(bodyData)
 
     // console.log(JSON.parse(JSON.stringify(technicial)))
 

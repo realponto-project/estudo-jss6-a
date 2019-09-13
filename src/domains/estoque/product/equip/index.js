@@ -611,7 +611,7 @@ module.exports = class EquipDomain {
 
   //   let global = ''
 
-  //   if (R.prop('filters', query) && R.prop('global', query.filters)) global = query.filters.global.replace(/\W/gi, '')
+  //  if (R.prop('filters', query) && R.prop('global', query.filters)) global = query.filters.global.replace(/\W/gi, '')
 
   //   const globalSearch = R.map((equip) => {
   //     const resp = {
@@ -852,7 +852,7 @@ module.exports = class EquipDomain {
       transaction,
     })
 
-    console.log(JSON.parse(JSON.stringify(response)))
+    // console.log(JSON.parse(JSON.stringify(response)))
     return response
   }
 }

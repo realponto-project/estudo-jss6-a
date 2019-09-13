@@ -21,7 +21,6 @@ module.exports = {
       os: {
         type: Sequelize.STRING,
         allowNull: true,
-        unique: true,
       },
       createdAt: {
         defaultValue: Sequelize.NOW,

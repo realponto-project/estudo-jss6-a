@@ -56,6 +56,18 @@ module.exports = class FreeMarketDomain {
       errors = true
       field.codigo = true
       message.codigo = 'Digite o código de rastreio.'
+    } else {
+      const freeMarketHasExist = await FreeMarket.findOne({
+        where: { trackingCode: freeMarket.trackingCode },
+        paranoid: false,
+        transaction,
+      })
+
+      if (freeMarketHasExist) {
+        errors = true
+        field.codigo = true
+        message.codigo = 'Codigo já registrado.'
+      }
     }
 
     if (freeMarketNotHasProp('name') || !freeMarket.name) {

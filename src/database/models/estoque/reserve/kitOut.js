@@ -21,7 +21,6 @@ module.exports = (sequelize) => {
     os: {
       type: Sequelize.STRING,
       allowNull: true,
-      unique: true,
     },
   })
 

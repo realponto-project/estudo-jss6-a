@@ -111,6 +111,36 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
+    // console.log(reserve.date)
+
+    const query = {
+      filters: {
+        os: {
+          specific: {
+            date: { start: moment(reserve.date).format('L'), end: moment(reserve.date).add(1, 'days').format('L') },
+          },
+        },
+      },
+    }
+    const {
+      getWhere,
+    } = formatQuery(query)
+
+    const reserveHasExist = await Os.findOne({
+      where: {
+        ...getWhere('os'),
+        razaoSocial: reserve.razaoSocial,
+        cnpj: reserve.cnpj.replace(/\D/g, ''),
+      },
+      transaction,
+    })
+
+    if (reserveHasExist) {
+      field.message = true
+      message.message = 'Há uma reserva nesta data para esta empresa'
+      throw new FieldValidationError([{ field, message }])
+    }
+
     const reserveAll = await Os.findAll({ paranoid: false, transaction })
 
     reserve.os = (reserveAll.length + 1).toString()
@@ -146,13 +176,8 @@ module.exports = class OsDomain {
           message.peca = 'produto não oconst a na base de dados'
           throw new FieldValidationError([{ field, message }])
         }
-        // console.log(JSON.parse(JSON.stringify(productBase)))
-
-        // console.log(osPartsCreatted)
 
         const osPartCreated = await OsParts.create(osPartsCreatted, { transaction })
-
-        // console.log(JSON.parse(JSON.stringify(osPartCreated)))
 
         if (productBase.product.serial) {
           const { serialNumberArray } = item
@@ -226,14 +251,6 @@ module.exports = class OsDomain {
 
         await productBase.update(productBaseUpdate, { transaction })
       })
-      // await Promise.all(osPartsCreattedPromises).then(() => {
-      //   console.log('sucesso')
-      // })
-      //   .catch(() => {
-      //     errors = true
-      //     console.log('erro')
-      //     return { erro: 'errorrr' }
-      //   })
       await Promise.all(osPartsCreattedPromises)
     }
 
@@ -378,6 +395,38 @@ module.exports = class OsDomain {
       } else {
         reserveOs.date = reserve.date
       }
+    }
+
+    // console.log(reserve.date)
+
+    const query = {
+      filters: {
+        os: {
+          specific: {
+            date: { start: moment(reserve.date).format('L'), end: moment(reserve.date).format('L') },
+          },
+        },
+      },
+    }
+    const {
+      getWhere,
+    } = formatQuery(query)
+
+    // console.log(getWhere('os'))
+
+    const reserveHasExist = await Os.findOne({
+      where: {
+        ...getWhere('os'),
+        razaoSocial: oldReserve.razaoSocial,
+        cnpj: oldReserve.cnpj.replace(/\D/g, ''),
+      },
+      transaction,
+    })
+
+    if (reserveHasExist) {
+      field.message = true
+      message.message = 'Há uma reserva nesta data para esta empresa'
+      throw new FieldValidationError([{ field, message }])
     }
 
     if (reserveHasProp('technicianId')) {
@@ -796,7 +845,7 @@ module.exports = class OsDomain {
         notDelet: (osParts.length !== item.productBases.length) || notDelet,
       }
       // console.log(formatProduct(item.productBases))
-      console.log(resp.os, resp.notDelet)
+      // console.log(resp.os, resp.notDelet)
       return resp
     })
 
@@ -821,7 +870,7 @@ module.exports = class OsDomain {
     return response
   }
 
-  async getOsByOs(id, options = {}) {
+  async getOsByOs(os, options = {}) {
     const { transaction = null } = options
 
     const formatDateFunct = (date) => {
@@ -831,7 +880,7 @@ module.exports = class OsDomain {
     }
 
     const osReturn = await Os.findOne({
-      where: { id },
+      where: { os },
       include: [
         {
           model: Technician,
