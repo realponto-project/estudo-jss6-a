@@ -51,8 +51,8 @@ module.exports = class ProductDomain {
 
     if (productNotHasProp('name') || !product.name) {
       errors = true
-      field.name = true
-      message.name = 'Informe o nome.'
+      field.item = true
+      message.item = 'Informe o nome.'
     } else {
       const { name } = product
 
@@ -63,8 +63,8 @@ module.exports = class ProductDomain {
 
       if (productHasExist) {
         errors = true
-        field.name = true
-        message.name = 'Nome já cadastrado.'
+        field.item = true
+        message.item = 'Nome já cadastrado.'
       }
     }
 

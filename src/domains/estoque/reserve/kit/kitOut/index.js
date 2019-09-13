@@ -31,6 +31,7 @@ module.exports = class KitOutDomain {
       perda: false,
       os: false,
       kitPartId: false,
+      message: false,
     }
     const message = {
       reposicao: '',
@@ -40,6 +41,7 @@ module.exports = class KitOutDomain {
       amount: '',
       os: '',
       kitPartId: '',
+      message: '',
     }
 
     let errors = false
@@ -102,8 +104,8 @@ module.exports = class KitOutDomain {
     const expedicaoNumber = parseInt(bodyData.expedicao, 10)
 
     if (perdaNumber === 0 && reposicaoNumber === 0 && expedicaoNumber === 0) {
-      field.quant = true
-      message.quant = 'Quantidade invalida'
+      field.message = true
+      message.message = 'Quantidade invalida'
       throw new FieldValidationError([{ field, message }])
     }
     const { kitPartId } = bodyData

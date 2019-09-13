@@ -1,6 +1,6 @@
 const R = require('ramda')
 const moment = require('moment')
-const Sequelize = require('sequelize')
+// const Sequelize = require('sequelize')
 
 // const { Op: operators } = Sequelize
 
@@ -36,6 +36,7 @@ module.exports = class TechnicianDomain {
       stockBase: false,
       productId: false,
       companyId: false,
+      message: false,
       responsibleUser: false,
     }
     const message = {
@@ -43,6 +44,7 @@ module.exports = class TechnicianDomain {
       stockBase: '',
       productId: '',
       companyId: '',
+      message: '',
       responsibleUser: '',
     }
 
@@ -129,13 +131,13 @@ module.exports = class TechnicianDomain {
     if (product.serial) {
       if (entranceNotHasProp('serialNumbers') || entrance.serialNumbers.length === 0) {
         errors = true
-        field.serialNumbers = true
-        message.serialNumbers = 'Por favor ao menos um numero de série.'
+        field.message = true
+        message.message = 'Por favor ao menos um numero de série.'
       // eslint-disable-next-line eqeqeq
       } else if (entrance.serialNumbers.length != entrance.amountAdded) {
         errors = true
-        field.serialNumbers = true
-        message.serialNumbers = 'quantidade adicionada nãop condiz com a quantidade de números de série.'
+        field.message = true
+        message.message = 'Quantidade adicionada não condiz com a quantidade de números de série.'
       } else {
         const { serialNumbers } = entrance
 
@@ -144,8 +146,8 @@ module.exports = class TechnicianDomain {
 
         if (serialNumbers.length !== filterSerialNumber.length) {
           errors = true
-          field.serialNumbers = true
-          message.serialNumbers = 'Há números de série repetido.'
+          field.message = true
+          message.message = 'Há números de série repetido.'
         }
       }
     }
@@ -330,7 +332,8 @@ module.exports = class TechnicianDomain {
       return dateformated
     }
 
-    const formatData = await R.map((entrance) => {
+    // eslint-disable-next-line consistent-return
+    const formatData = R.map((entrance) => {
       if (entrance.product) {
         const resp = {
           id: entrance.id,

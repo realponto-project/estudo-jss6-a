@@ -111,7 +111,11 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
-    // console.log(reserve.date)
+    console.log(reserve.date)
+
+    reserve.date = new Date(reserve.date)
+
+    console.log(reserve.date)
 
     const query = {
       filters: {
