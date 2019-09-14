@@ -22,6 +22,7 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+
       createdAt: {
         defaultValue: Sequelize.NOW,
         type: Sequelize.DATE,
@@ -36,6 +37,7 @@ module.exports = {
         defaultValue: null,
         type: Sequelize.DATE,
       },
+
       kitPartId: {
         type: Sequelize.UUID,
         references: {
