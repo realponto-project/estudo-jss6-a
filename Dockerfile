@@ -4,4 +4,4 @@ ADD . .
 LABEL Description="backendmodrp"
 RUN yarn install
 CMD [ "yarn", "start" ]
-EXPOSE 5312
+EXPOSE 5200
