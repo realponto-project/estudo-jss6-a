@@ -1,26 +1,26 @@
 {
   "development": {
     "username": "postgres",
-    "password": "estoque",
+    "password": "modrp102030",
     "database": "estoque",
     "host": "localhost",
-    "port": 5402,
+    "port": 5432,
     "dialect": "postgres"
   },
   "test": {
     "username": "postgres",
-    "password": "estoque",
+    "password": "modrp102030",
     "database": "estoque",
     "host": "localhost",
-    "port": 5402,
+    "port": 5432,
     "dialect": "postgres"
   },
   "production": {
     "username": "postgres",
-    "password": "estoque",
+    "password": "modrp102030",
     "database": "estoque",
     "host": "localhost",
-    "port": 5402,
+    "port": 5432,
     "dialect": "postgres"
   }
 }
