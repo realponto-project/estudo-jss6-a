@@ -2,6 +2,7 @@
 /* eslint-disable max-len */
 const R = require('ramda')
 const moment = require('moment')
+const Sequelize = require('sequelize')
 // const axios = require('axios')
 
 const Cnpj = require('@fnando/cnpj/dist/node')
@@ -20,6 +21,8 @@ const Technician = database.model('technician')
 const Equip = database.model('equip')
 const KitOut = database.model('kitOut')
 const KitParts = database.model('kitParts')
+
+const { Op: operators } = Sequelize
 
 module.exports = class OsDomain {
   async add(bodyData, options = {}) {
@@ -111,28 +114,14 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
-    console.log(reserve.date)
-
-    reserve.date = new Date(reserve.date)
-
-    console.log(reserve.date)
-
-    const query = {
-      filters: {
-        os: {
-          specific: {
-            date: { start: moment(reserve.date).format('L'), end: moment(reserve.date).add(1, 'days').format('L') },
-          },
-        },
-      },
-    }
-    const {
-      getWhere,
-    } = formatQuery(query)
+    // reserve.date = new Date(reserve.date)
 
     const reserveHasExist = await Os.findOne({
       where: {
-        ...getWhere('os'),
+        date: {
+          [operators.gte]: moment(reserve.date).startOf('day').toString(),
+          [operators.lte]: moment(reserve.date).endOf('day').toString(),
+        },
         razaoSocial: reserve.razaoSocial,
         cnpj: reserve.cnpj.replace(/\D/g, ''),
       },

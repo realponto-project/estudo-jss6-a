@@ -1,7 +1,7 @@
 const R = require('ramda')
-// const moment = require('moment')
+const moment = require('moment')
 
-// const formatQuery = require('../../../helpers/lazyLoad')
+const formatQuery = require('../../../helpers/lazyLoad')
 const database = require('../../../database')
 
 const { FieldValidationError } = require('../../../helpers/errors')
@@ -15,7 +15,6 @@ const KitParts = database.model('kitParts')
 
 module.exports = class TechnicianDomain {
   async add(bodyData, options = {}) {
-
     const { transaction = null } = options
 
     const technician = R.omit(['id', 'plate'], bodyData)
@@ -146,87 +145,237 @@ module.exports = class TechnicianDomain {
     return response
   }
 
-  // async getAll(options = {}) {
-  //   const inicialOrder = {
-  //     field: 'createdAt',
-  //     acendent: true,
-  //     direction: 'DESC',
+  // async update(bodyData, options = {}) {
+  //   const { transaction = null } = options
+
+  //   const technician = R.omit(['id', 'plate'], bodyData)
+
+  //   const technicianNotHasProp = prop => R.not(R.has(prop, technician))
+  //   const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
+
+  //   const oldTechnician = await Technician.findByPk(bodyData.id, { transaction })
+
+  //   const field = {
+  //     name: false,
+  //     CNH: false,
+  //     plate: false,
+  //   }
+  //   const message = {
+  //     name: false,
+  //     CNH: false,
+  //     plate: false,
   //   }
 
-  //   const { query = null, transaction = null } = options
+  //   let errors = false
 
-  //   const newQuery = Object.assign({}, query)
-  //   const newOrder = (query && query.order) ? query.order : inicialOrder
+  //   if (!oldTechnician) {
+  //     errors = true
+  //     field.id = true
+  //     message.id = 'Não foi encontrado o Tecnico'
+  //   }
 
-  //   if (newOrder.acendent) {
-  //     newOrder.direction = 'DESC'
+  //   if (technicianNotHasProp('name') || !technician.name) {
+  //     errors = true
+  //     field.nome = true
+  //     message.nome = 'Por favor informar nome do técinico.'
+  //   } else if (!/^[A-Za-zà-ù]/gi.test(technician.name)) {
+  //     errors = true
+  //     field.nome = true
+  //     message.nome = 'Nome inválido.'
   //   } else {
-  //     newOrder.direction = 'ASC'
+  //     const nameHasExist = await Technician.findOne({
+  //       where: { name: technician.name },
+  //       transaction,
+  //     })
+
+  //     if (nameHasExist && nameHasExist.id !== bodyData.id) {
+  //       errors = true
+  //       field.nome = true
+  //       message.nome = 'Há um técnico cadastrado com esse nome'
+  //     }
   //   }
 
-  //   const {
-  //     getWhere,
-  //     limit,
-  //     offset,
-  //     pageResponse,
-  //   } = formatQuery(newQuery)
+  //   if (technicianNotHasProp('CNH') || !technician.CNH) {
+  //     errors = true
+  //     field.cnh = true
+  //     message.cnh = 'Por favor a CNH.'
+  //   } else if (/\D\/-./gi.test(technician.CNH) || technician.CNH.replace(/\D/gi, '').length !== 8) {
+  //     errors = true
+  //     field.cnh = true
+  //     message.cnh = 'Por favor 8 números.'
+  //   }
 
-  //   const technical = await Technician.findAndCountAll({
-  //     where: getWhere('technician'),
-  //     order: [
-  //       [newOrder.field, newOrder.direction],
-  //     ],
-  //     limit,
-  //     offset,
+  //   if (bodyDataNotHasProp('plate') || !bodyData.plate) {
+  //     errors = true
+  //     field.car = true
+  //     message.car = 'Por favor informar a placa do carro.'
+  //   } else if (!/^[A-Z]{3}-\d{4}/.test(bodyData.plate)) {
+  //     errors = true
+  //     field.car = true
+  //     message.car = 'Placa inválida.'
+  //   } else {
+  //     const car = await Car.findOne({
+  //       where: { plate: bodyData.plate },
+  //       transaction,
+  //     })
+
+  //     if (!car) {
+  //       errors = true
+  //       field.plate = true
+  //       message.plate = 'Não há nenhum carro cadastrado com essa placa.'
+  //     }
+  //   }
+
+  //   if (technicianNotHasProp('external') || typeof technician.external !== 'boolean') {
+  //     errors = true
+  //     field.external = true
+  //     message.external = 'Informar se é externo'
+  //   }
+
+  //   if (errors) {
+  //     throw new FieldValidationError([{ field, message }])
+  //   }
+  //   const car = await Car.findOne({
+  //     where: { plate: bodyData.plate },
   //     transaction,
   //   })
 
-  //   const { rows } = technical
+  //   // const oldCar = await Car.findOne({
+  //   //   where: { plate: bodyData.plate },
+  //   //   transaction,
+  //   // })
 
-  //   if (rows.length === 0) {
-  //     return {
-  //       page: null,
-  //       show: 0,
-  //       count: technical.count,
-  //       rows: [],
+  //   technician.CNH = technician.CNH.replace(/\D/gi, '')
+
+  //   await car.addTechnician(oldTechnician, { transaction })
+
+  //   if (!oldTechnician.external && technician.external) {
+  //     const kit = await Kit.findOne({
+  //       where: { technicianId: null },
+  //       transaction,
+  //     })
+
+  //     if (kit) {
+  //       const kitParts = await KitParts.findAll({
+  //         where: { kitId: kit.id },
+  //         transaction,
+  //       })
+
+  //       const kitCreated = await Kit.create({ technicianId: oldTechnician.id }, { transaction })
+
+  //       const kitPartsPromise = kitParts.map(async (item) => {
+  //         const kitPart = {
+  //           kitId: kitCreated.id,
+  //           productBaseId: item.productBaseId,
+  //           amount: '0',
+  //         }
+
+  //         await KitParts.create(kitPart, { transaction })
+  //       })
+
+  //       await Promise.all(kitPartsPromise)
   //     }
   //   }
 
-  //   const formatDateFunct = (date) => {
-  //     moment.locale('pt-br')
-  //     const formatDate = moment(date).format('L')
-  //     const formatHours = moment(date).format('LT')
-  //     const dateformated = `${formatDate} ${formatHours}`
-  //     return dateformated
-  //   }
-
-  //   const formatData = R.map((technician) => {
-  //     const resp = {
-  //       id: technician.id,
-  //       name: technician.name,
-  //       CNH: technician.CNH,
-  //       createdAt: formatDateFunct(technician.createdAt),
-  //       updatedAt: formatDateFunct(technician.updatedAt),
-  //     }
-  //     return resp
+  //   const response = await Technician.findByPk(technicianCreated.id, {
+  //     include: [{
+  //       model: Car,
+  //     }],
+  //     transaction,
   //   })
 
-  //   const technicianList = formatData(rows)
-
-  //   let show = limit
-  //   if (technical.count < show) {
-  //     show = technical.count
-  //   }
-
-
-  //   const response = {
-  //     page: pageResponse,
-  //     show,
-  //     count: technical.count,
-  //     rows: technicianList,
-  //   }
   //   return response
   // }
+
+  async getAllTechnician(options = {}) {
+    const inicialOrder = {
+      field: 'createdAt',
+      acendent: true,
+      direction: 'DESC',
+    }
+
+    const { query = null, transaction = null } = options
+
+    const newQuery = Object.assign({}, query)
+    const newOrder = (query && query.order) ? query.order : inicialOrder
+
+    if (newOrder.acendent) {
+      newOrder.direction = 'DESC'
+    } else {
+      newOrder.direction = 'ASC'
+    }
+
+    const {
+      getWhere,
+      limit,
+      offset,
+      pageResponse,
+    } = formatQuery(newQuery)
+
+    const technical = await Technician.findAndCountAll({
+      where: getWhere('technician'),
+      include: [{
+        model: Car,
+        where: getWhere('car'),
+      }],
+      order: [
+        [newOrder.field, newOrder.direction],
+      ],
+      limit,
+      offset,
+      transaction,
+    })
+
+    const { rows } = technical
+
+    // console.log(JSON.parse(JSON.stringify(rows.cars)))
+
+    if (rows.length === 0) {
+      return {
+        page: null,
+        show: 0,
+        count: technical.count,
+        rows: [],
+      }
+    }
+
+    const formatDateFunct = (date) => {
+      moment.locale('pt-br')
+      const formatDate = moment(date).format('L')
+      const formatHours = moment(date).format('LT')
+      const dateformated = `${formatDate} ${formatHours}`
+      return dateformated
+    }
+
+    const formatData = R.map((technician) => {
+      const resp = {
+        id: technician.id,
+        name: technician.name,
+        CNH: technician.CNH,
+        external: technician.external,
+        plate: technician.cars[0].plate,
+        createdAt: formatDateFunct(technician.createdAt),
+        updatedAt: formatDateFunct(technician.updatedAt),
+      }
+      return resp
+    })
+
+    const technicianList = formatData(rows)
+
+    let show = limit
+    if (technical.count < show) {
+      show = technical.count
+    }
+
+
+    const response = {
+      page: pageResponse,
+      show,
+      count: technical.count,
+      rows: technicianList,
+    }
+    return response
+  }
 
   async getAll(options = {}) {
     const { query = null, transaction = null } = options

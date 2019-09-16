@@ -38,7 +38,28 @@ const getAll = async (req, res, next) => {
   }
 }
 
+const getAllTechnician = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    let query
+    if (R.has('query', req)) {
+      if (R.has('query', req.query)) {
+        query = JSON.parse(req.query.query)
+      }
+    }
+
+    const techinial = await technicianDomain.getAllTechnician({ query, transaction })
+
+    await transaction.commit()
+    res.json(techinial)
+  } catch (error) {
+    await transaction.rollback()
+    next()
+  }
+}
+
 module.exports = {
   add,
   getAll,
+  getAllTechnician,
 }

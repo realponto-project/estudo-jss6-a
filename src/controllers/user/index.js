@@ -19,6 +19,19 @@ const add = async (req, res, next) => {
   }
 }
 
+const update = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const user = await userDomain.user_Update(req.body, { transaction })
+
+    await transaction.commit()
+    res.json(user)
+  } catch (error) {
+    await transaction.rollback()
+    next(error)
+  }
+}
+
 const updatePassword = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
@@ -70,6 +83,7 @@ const getAll = async (req, res, next) => {
 
 module.exports = {
   add,
+  update,
   getResourceByUsername,
   getAll,
   updatePassword,

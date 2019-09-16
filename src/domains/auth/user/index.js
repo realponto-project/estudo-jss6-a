@@ -635,6 +635,370 @@ class UserDomain {
     return response
   }
 
+  // eslint-disable-next-line camelcase
+  async user_Update(bodyData, options = {}) {
+    const { transaction = null } = options
+
+    const omitArray = ['id', 'username', 'password', 'addCompany', 'addPart', 'addAnalyze', 'addEquip', 'addEntry', 'addEquipType',
+      'tecnico', 'addAccessories', 'addUser', 'addTypeAccount', 'addTec', 'addCar', 'addMark', 'addType',
+      'addProd', 'addFonr', 'addEntr', 'addKit', 'addKitOut', 'addOutPut', 'addROs', 'addRML', 'gerROs', 'delROs', 'updateRos']
+
+    const userNotFormatted = R.omit(omitArray, bodyData)
+
+    const oldUser = await User.findByPk(bodyData.id, {
+      include: [{
+        model: Resources,
+      }],
+      transaction,
+    })
+
+    const notHasProps = props => R.not(R.has(props, userNotFormatted))
+    const bodyNotHasProps = props => R.not(R.has(props, bodyData))
+
+    if (notHasProps('typeName')) {
+      throw new FieldValidationError([{
+        field: 'typeName',
+        message: 'typeName undefined',
+      }])
+    }
+
+    const { typeName } = userNotFormatted
+
+    const typeAccountRetorned = await TypeAccount.findOne({
+      where: { typeName },
+      include: [{
+        model: Resources,
+      }],
+      transaction,
+    })
+
+    if (!typeAccountRetorned) {
+      throw new FieldValidationError([{
+        field: 'typeName',
+        message: 'typeName invalid',
+      }])
+    }
+
+    userNotFormatted.typeAccountId = typeAccountRetorned.id
+
+    if (notHasProps('customized')) {
+      throw new FieldValidationError([{
+        field: 'customized',
+        message: 'customized undefined',
+      }])
+    }
+
+    const field = {
+      typeName: false,
+      addCompany: false,
+      addPart: false,
+      addAnalyze: false,
+      addEquip: false,
+      addEntry: false,
+      responsibleUser: false,
+
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
+    }
+    const message = {
+      typeName: '',
+      addCompany: '',
+      addPart: '',
+      addAnalyze: '',
+      addEquip: '',
+      addEntry: '',
+      responsibleUser: '',
+
+      addTec: '',
+      addCar: '',
+      addMark: '',
+      addType: '',
+      addProd: '',
+      addFonr: '',
+      addEntr: '',
+      addKit: '',
+      addKitOut: '',
+      addOutPut: '',
+      addROs: '',
+      addRML: '',
+      gerROs: '',
+      delROs: '',
+      updateRos: '',
+    }
+
+    let errors = null
+
+    if (bodyNotHasProps('addCompany') || typeof bodyData.addCompany !== 'boolean') {
+      errors = true
+      field.addCompany = true
+      message.addCompany = 'addCompany não é um booleano'
+    }
+
+    if (bodyNotHasProps('addPart') || typeof bodyData.addPart !== 'boolean') {
+      errors = true
+      field.addPart = true
+      message.addPart = 'addPart não é um booleano'
+    }
+
+
+    if (bodyNotHasProps('addAnalyze') || typeof bodyData.addAnalyze !== 'boolean') {
+      errors = true
+      field.addAnalyze = true
+      message.addAnalyze = 'addAnalyze não é um booleano'
+    }
+
+
+    if (bodyNotHasProps('addEquip') || typeof bodyData.addEquip !== 'boolean') {
+      errors = true
+      field.addEquip = true
+      message.addEquip = 'addEquip não é um booleano'
+    }
+
+
+    if (bodyNotHasProps('addEntry') || typeof bodyData.addEntry !== 'boolean') {
+      errors = true
+      field.addEntry = true
+      message.addEntry = 'addEntry não é um booleano'
+    }
+
+    if (bodyNotHasProps('addEquipType') || typeof bodyData.addEquipType !== 'boolean') {
+      errors = true
+      field.addEquipType = true
+      message.addEquipType = 'addEquipType não é um booleano'
+    }
+
+    if (bodyNotHasProps('tecnico') || typeof bodyData.tecnico !== 'boolean') {
+      errors = true
+      field.tecnico = true
+      message.tecnico = 'tecnico não é um booleano'
+    }
+
+    if (bodyNotHasProps('addAccessories') || typeof bodyData.addAccessories !== 'boolean') {
+      errors = true
+      field.addAccessories = true
+      message.addAccessories = 'addAccessories não é um booleano'
+    }
+
+    if (bodyNotHasProps('addUser') || typeof bodyData.addUser !== 'boolean') {
+      errors = true
+      field.addUser = true
+      message.addUser = 'addUser não é um booleano'
+    }
+
+    if (bodyNotHasProps('addTypeAccount') || typeof bodyData.addTypeAccount !== 'boolean') {
+      errors = true
+      field.addTypeAccount = true
+      message.addTypeAccount = 'addTypeAccount não é um booleano'
+    }
+
+    if (bodyNotHasProps('addTec') || typeof bodyData.addTec !== 'boolean') {
+      errors = true
+      field.addTec = true
+      message.addTec = 'addTec não é um booleano'
+    }
+
+    if (bodyNotHasProps('addCar') || typeof bodyData.addCar !== 'boolean') {
+      errors = true
+      field.addCar = true
+      message.addCar = 'addCar não é um booleano'
+    }
+
+    if (bodyNotHasProps('addMark') || typeof bodyData.addMark !== 'boolean') {
+      errors = true
+      field.addMark = true
+      message.addMark = 'addMark não é um booleano'
+    }
+
+    if (bodyNotHasProps('addType') || typeof bodyData.addType !== 'boolean') {
+      errors = true
+      field.addType = true
+      message.addType = 'addType não é um booleano'
+    }
+
+    if (bodyNotHasProps('addProd') || typeof bodyData.addProd !== 'boolean') {
+      errors = true
+      field.addProd = true
+      message.addProd = 'addProd não é um booleano'
+    }
+
+    if (bodyNotHasProps('addFonr') || typeof bodyData.addFonr !== 'boolean') {
+      errors = true
+      field.addFonr = true
+      message.addFonr = 'addFonr não é um booleano'
+    }
+
+    if (bodyNotHasProps('addEntr') || typeof bodyData.addEntr !== 'boolean') {
+      errors = true
+      field.addEntr = true
+      message.addEntr = 'addEntr não é um booleano'
+    }
+
+    if (bodyNotHasProps('addKit') || typeof bodyData.addKit !== 'boolean') {
+      errors = true
+      field.addKit = true
+      message.addKit = 'addKit não é um booleano'
+    }
+
+    if (bodyNotHasProps('addKitOut') || typeof bodyData.addKitOut !== 'boolean') {
+      errors = true
+      field.addKitOut = true
+      message.addKitOut = 'addKitOut não é um booleano'
+    }
+
+    if (bodyNotHasProps('addOutPut') || typeof bodyData.addOutPut !== 'boolean') {
+      errors = true
+      field.addOutPut = true
+      message.addOutPut = 'addOutPut não é um booleano'
+    }
+
+    if (bodyNotHasProps('addROs') || typeof bodyData.addROs !== 'boolean') {
+      errors = true
+      field.addROs = true
+      message.addROs = 'addROs não é um booleano'
+    }
+
+    if (bodyNotHasProps('addRML') || typeof bodyData.addRML !== 'boolean') {
+      errors = true
+      field.addRML = true
+      message.addRML = 'addRML não é um booleano'
+    }
+    if (bodyNotHasProps('gerROs') || typeof bodyData.gerROs !== 'boolean') {
+      errors = true
+      field.gerROs = true
+      message.gerROs = 'gerROs não é um booleano'
+    }
+
+    if (bodyNotHasProps('delROs') || typeof bodyData.delROs !== 'boolean') {
+      errors = true
+      field.delROs = true
+      message.delROs = 'delROs não é um booleano'
+    }
+
+    if (bodyNotHasProps('updateRos') || typeof bodyData.updateRos !== 'boolean') {
+      errors = true
+      field.updateRos = true
+      message.updateRos = 'updateRos não é um booleano'
+    }
+
+    if (notHasProps('responsibleUser')) {
+      errors = true
+      field.responsibleUser = true
+      message.responsibleUser = 'username não está sendo passado.'
+    } else if (bodyData.responsibleUser) {
+      const { responsibleUser } = bodyData
+
+      const user = await User.findOne({
+        where: { username: responsibleUser },
+        transaction,
+      })
+
+      if (!user && bodyData.responsibleUser !== 'modrp') {
+        errors = true
+        field.responsibleUser = true
+        message.responsibleUser = 'username inválido.'
+      }
+    } else {
+      errors = true
+      field.responsibleUser = true
+      message.responsibleUser = 'username não pode ser nulo.'
+    }
+
+    if (errors) {
+      throw new FieldValidationError([{ field, message }])
+    }
+
+    const resources = {
+      addCompany: bodyData.addCompany,
+      addPart: bodyData.addPart,
+      addAnalyze: bodyData.addAnalyze,
+      addEquip: bodyData.addEquip,
+      addEntry: bodyData.addEntry,
+      addEquipType: bodyData.addEquipType,
+      tecnico: bodyData.tecnico,
+      addAccessories: bodyData.addAccessories,
+      addUser: bodyData.addUser,
+      addTypeAccount: bodyData.addTypeAccount,
+      addTec: bodyData.addTec,
+      addCar: bodyData.addCar,
+      addMark: bodyData.addMark,
+      addType: bodyData.addType,
+      addProd: bodyData.addProd,
+      addFonr: bodyData.addFonr,
+      addEntr: bodyData.addEntr,
+      addKit: bodyData.addKit,
+      addKitOut: bodyData.addKitOut,
+      addOutPut: bodyData.addOutPut,
+      addROs: bodyData.addROs,
+      addRML: bodyData.addRML,
+      gerROs: bodyData.gerROs,
+      delROs: bodyData.delROs,
+      updateRos: bodyData.updateRos,
+    }
+
+    if (userNotFormatted.customized) {
+      if (oldUser.customized) {
+        const resourceUpdate = {
+          ...oldUser.resource,
+          ...resources,
+        }
+        const resourcesRenorned = await oldUser.resource.update(resourceUpdate, { transaction })
+
+        userNotFormatted.resourceId = resourcesRenorned.id
+      } else {
+        const resourcesRenorned = await Resources.create(resources, { transaction })
+
+        userNotFormatted.resourceId = resourcesRenorned.id
+      }
+    } else if (oldUser.customized) {
+      await oldUser.resource.destroy({ transaction })
+    }
+
+
+    // if (user) {
+    //   userFormatted.userId = user.id
+    // }
+
+    // console.log(userFormatted)
+
+
+    let userReturned = null
+
+    if (userNotFormatted.customized) {
+      userReturned = await User.findByPk(bodyData.id, {
+        attributes: { exclude: ['loginId'] },
+        include: [
+          { model: TypeAccount },
+          { model: Resources },
+        ],
+      })
+    } else {
+      userReturned = await User.findByPk(bodyData.id, {
+        attributes: { exclude: ['loginId'] },
+        include: [{
+          model: TypeAccount,
+          include: [{
+            model: Resources,
+          }],
+        }],
+      })
+    }
+
+    return userReturned
+  }
+
   // async findUsernameByPK(userId, options = {}) {
   //   const { transaction = null } = options
 
@@ -668,9 +1032,15 @@ class UserDomain {
       newOrder.direction = 'ASC'
     }
 
-    const { getWhere } = formatQuery(newQuery)
+    const {
+      getWhere,
+      limit,
+      offset,
+      pageResponse,
+    } = formatQuery(newQuery)
 
-    const users = await User.findAll({
+    const users = await User.findAndCountAll({
+      where: getWhere('user'),
       include: [{
         model: TypeAccount,
         where: getWhere('typeAccount'),
@@ -678,22 +1048,46 @@ class UserDomain {
       order: [
         [newOrder.field, newOrder.direction],
       ],
+      limit,
+      offset,
       transaction,
     })
 
+    const { rows } = users
 
-    if (users.length === 0) return []
+    if (rows.length === 0) {
+      return {
+        page: null,
+        show: 0,
+        count: users.count,
+        rows: [],
+      }
+    }
 
-    const formatData = R.map((comp) => {
+    const formatData = R.map((user) => {
       const resp = {
-        username: comp.username,
+        username: user.username,
+        customized: user.customized,
+        typeName: user.typeAccount.typeName,
       }
       return resp
     })
 
-    const usersList = formatData(users)
+    const usersList = formatData(rows)
 
-    return usersList
+    let show = limit
+    if (users.count < show) {
+      show = users.count
+    }
+
+
+    const response = {
+      page: pageResponse,
+      show,
+      count: users.count,
+      rows: usersList,
+    }
+    return response
   }
 }
 

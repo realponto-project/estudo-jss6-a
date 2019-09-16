@@ -18,6 +18,19 @@ const add = async (req, res, next) => {
   }
 }
 
+const update = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const product = await productDomain.update(req.body, { transaction })
+
+    await transaction.commit()
+    res.json(product)
+  } catch (error) {
+    await transaction.rollback()
+    next(error)
+  }
+}
+
 const getAll = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
@@ -73,6 +86,7 @@ const getProductByStockBase = async (req, res, next) => {
 
 module.exports = {
   add,
+  update,
   getAll,
   getAllNames,
   getProductByStockBase,
