@@ -12,6 +12,7 @@ const Car = database.model('car')
 const Technician = database.model('technician')
 const Kit = database.model('kit')
 const KitParts = database.model('kitParts')
+const ProductBase = database.model('productBase')
 
 module.exports = class TechnicianDomain {
   async add(bodyData, options = {}) {
@@ -145,147 +146,207 @@ module.exports = class TechnicianDomain {
     return response
   }
 
-  // async update(bodyData, options = {}) {
-  //   const { transaction = null } = options
+  async update(bodyData, options = {}) {
+    const { transaction = null } = options
 
-  //   const technician = R.omit(['id', 'plate'], bodyData)
+    const technician = R.omit(['id', 'plate'], bodyData)
 
-  //   const technicianNotHasProp = prop => R.not(R.has(prop, technician))
-  //   const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
+    const technicianNotHasProp = prop => R.not(R.has(prop, technician))
+    const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
 
-  //   const oldTechnician = await Technician.findByPk(bodyData.id, { transaction })
+    const oldTechnician = await Technician.findByPk(bodyData.id, {
+      include: [{ model: Car }],
+      transaction,
+    })
 
-  //   const field = {
-  //     name: false,
-  //     CNH: false,
-  //     plate: false,
-  //   }
-  //   const message = {
-  //     name: false,
-  //     CNH: false,
-  //     plate: false,
-  //   }
+    console.log(JSON.parse(JSON.stringify(oldTechnician)))
 
-  //   let errors = false
+    // throw new FieldValidationError()
 
-  //   if (!oldTechnician) {
-  //     errors = true
-  //     field.id = true
-  //     message.id = 'Não foi encontrado o Tecnico'
-  //   }
+    const field = {
+      name: false,
+      CNH: false,
+      plate: false,
+    }
+    const message = {
+      name: false,
+      CNH: false,
+      plate: false,
+    }
 
-  //   if (technicianNotHasProp('name') || !technician.name) {
-  //     errors = true
-  //     field.nome = true
-  //     message.nome = 'Por favor informar nome do técinico.'
-  //   } else if (!/^[A-Za-zà-ù]/gi.test(technician.name)) {
-  //     errors = true
-  //     field.nome = true
-  //     message.nome = 'Nome inválido.'
-  //   } else {
-  //     const nameHasExist = await Technician.findOne({
-  //       where: { name: technician.name },
-  //       transaction,
-  //     })
+    let errors = false
 
-  //     if (nameHasExist && nameHasExist.id !== bodyData.id) {
-  //       errors = true
-  //       field.nome = true
-  //       message.nome = 'Há um técnico cadastrado com esse nome'
-  //     }
-  //   }
+    if (!oldTechnician) {
+      errors = true
+      field.id = true
+      message.id = 'Não foi encontrado o Tecnico'
+    }
 
-  //   if (technicianNotHasProp('CNH') || !technician.CNH) {
-  //     errors = true
-  //     field.cnh = true
-  //     message.cnh = 'Por favor a CNH.'
-  //   } else if (/\D\/-./gi.test(technician.CNH) || technician.CNH.replace(/\D/gi, '').length !== 8) {
-  //     errors = true
-  //     field.cnh = true
-  //     message.cnh = 'Por favor 8 números.'
-  //   }
+    if (technicianNotHasProp('name') || !technician.name) {
+      errors = true
+      field.nome = true
+      message.nome = 'Por favor informar nome do técinico.'
+    } else if (!/^[A-Za-zà-ù]/gi.test(technician.name)) {
+      errors = true
+      field.nome = true
+      message.nome = 'Nome inválido.'
+    } else {
+      const nameHasExist = await Technician.findOne({
+        where: { name: technician.name },
+        transaction,
+      })
 
-  //   if (bodyDataNotHasProp('plate') || !bodyData.plate) {
-  //     errors = true
-  //     field.car = true
-  //     message.car = 'Por favor informar a placa do carro.'
-  //   } else if (!/^[A-Z]{3}-\d{4}/.test(bodyData.plate)) {
-  //     errors = true
-  //     field.car = true
-  //     message.car = 'Placa inválida.'
-  //   } else {
-  //     const car = await Car.findOne({
-  //       where: { plate: bodyData.plate },
-  //       transaction,
-  //     })
+      if (nameHasExist && nameHasExist.id !== bodyData.id) {
+        errors = true
+        field.nome = true
+        message.nome = 'Há um técnico cadastrado com esse nome'
+      }
+    }
 
-  //     if (!car) {
-  //       errors = true
-  //       field.plate = true
-  //       message.plate = 'Não há nenhum carro cadastrado com essa placa.'
-  //     }
-  //   }
+    if (technicianNotHasProp('CNH') || !technician.CNH) {
+      errors = true
+      field.cnh = true
+      message.cnh = 'Por favor a CNH.'
+    } else if (/\D\/-./gi.test(technician.CNH) || technician.CNH.replace(/\D/gi, '').length !== 8) {
+      errors = true
+      field.cnh = true
+      message.cnh = 'Por favor 8 números.'
+    }
 
-  //   if (technicianNotHasProp('external') || typeof technician.external !== 'boolean') {
-  //     errors = true
-  //     field.external = true
-  //     message.external = 'Informar se é externo'
-  //   }
+    if (bodyDataNotHasProp('plate') || !bodyData.plate) {
+      errors = true
+      field.car = true
+      message.car = 'Por favor informar a placa do carro.'
+    } else if (!/^[A-Z]{3}-\d{4}/.test(bodyData.plate)) {
+      errors = true
+      field.car = true
+      message.car = 'Placa inválida.'
+    } else {
+      const car = await Car.findOne({
+        where: { plate: bodyData.plate },
+        transaction,
+      })
 
-  //   if (errors) {
-  //     throw new FieldValidationError([{ field, message }])
-  //   }
-  //   const car = await Car.findOne({
-  //     where: { plate: bodyData.plate },
-  //     transaction,
-  //   })
+      if (!car) {
+        errors = true
+        field.plate = true
+        message.plate = 'Não há nenhum carro cadastrado com essa placa.'
+      }
+    }
 
-  //   // const oldCar = await Car.findOne({
-  //   //   where: { plate: bodyData.plate },
-  //   //   transaction,
-  //   // })
+    if (technicianNotHasProp('external') || typeof technician.external !== 'boolean') {
+      errors = true
+      field.external = true
+      message.external = 'Informar se é externo'
+    }
 
-  //   technician.CNH = technician.CNH.replace(/\D/gi, '')
+    if (errors) {
+      throw new FieldValidationError([{ field, message }])
+    }
+    const car = await Car.findOne({
+      where: { plate: bodyData.plate },
+      transaction,
+    })
 
-  //   await car.addTechnician(oldTechnician, { transaction })
+    const oldCar = await Car.findByPk(oldTechnician.cars[0].id, { transaction })
 
-  //   if (!oldTechnician.external && technician.external) {
-  //     const kit = await Kit.findOne({
-  //       where: { technicianId: null },
-  //       transaction,
-  //     })
+    await oldCar.removeTechnician(oldTechnician, { transaction })
 
-  //     if (kit) {
-  //       const kitParts = await KitParts.findAll({
-  //         where: { kitId: kit.id },
-  //         transaction,
-  //       })
+    technician.CNH = technician.CNH.replace(/\D/gi, '')
 
-  //       const kitCreated = await Kit.create({ technicianId: oldTechnician.id }, { transaction })
+    await car.addTechnician(oldTechnician, { transaction })
 
-  //       const kitPartsPromise = kitParts.map(async (item) => {
-  //         const kitPart = {
-  //           kitId: kitCreated.id,
-  //           productBaseId: item.productBaseId,
-  //           amount: '0',
-  //         }
+    if (!oldTechnician.external && technician.external) {
+      const kit = await Kit.findOne({
+        where: { technicianId: null },
+        transaction,
+      })
 
-  //         await KitParts.create(kitPart, { transaction })
-  //       })
+      if (kit) {
+        const kitParts = await KitParts.findAll({
+          where: { kitId: kit.id },
+          transaction,
+        })
 
-  //       await Promise.all(kitPartsPromise)
-  //     }
-  //   }
+        const kitCreated = await Kit.create({ technicianId: oldTechnician.id }, { transaction })
 
-  //   const response = await Technician.findByPk(technicianCreated.id, {
-  //     include: [{
-  //       model: Car,
-  //     }],
-  //     transaction,
-  //   })
+        const kitPartsPromise = kitParts.map(async (item) => {
+          const kitPart = {
+            kitId: kitCreated.id,
+            productBaseId: item.productBaseId,
+            amount: '0',
+          }
 
-  //   return response
-  // }
+          await KitParts.create(kitPart, { transaction })
+        })
+
+        await Promise.all(kitPartsPromise)
+      }
+    }
+
+    let count = {}
+
+    if (oldTechnician.external && !technician.external) {
+      const kit = await Kit.findOne({
+        where: { technicianId: bodyData.id },
+        transaction,
+      })
+
+      const oldKitParts = await KitParts.findAll({
+        where: { kitId: kit.id },
+        attributes: ['id', 'amount', 'productBaseId'],
+        transaction,
+      })
+
+      const kitPartsDeletePromises = oldKitParts.map(async (item) => {
+        const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
+
+        count = {
+          ...count,
+          [item.productBaseId]: count[item.productBaseId] ? count[item.productBaseId] : 0,
+        }
+
+        count[item.productBaseId] += parseInt(item.amount, 10)
+
+        const productBaseUpdate = {
+          ...productBase,
+          available: (parseInt(productBase.available, 10) + count[item.productBaseId]).toString(),
+          reserved: (parseInt(productBase.reserved, 10) - count[item.productBaseId]).toString(),
+        }
+
+        if (parseInt(productBaseUpdate.available, 10) < 0
+          || parseInt(productBaseUpdate.available, 10) < 0) {
+          field.productBaseUpdate = true
+          message.productBaseUpdate = 'Número negativo não é valido'
+          throw new FieldValidationError([{ field, message }])
+        }
+
+        await productBase.update(productBaseUpdate, { transaction })
+
+        await item.destroy({ transaction })
+      })
+
+      await Promise.all(kitPartsDeletePromises)
+
+      await kit.destroy({ transaction })
+    }
+
+    const newTechnician = {
+      ...oldTechnician,
+      ...technician,
+    }
+
+    await oldTechnician.update(newTechnician, { transaction })
+
+    const response = await Technician.findByPk(bodyData.id, {
+      include: [{
+        model: Car,
+      }],
+      transaction,
+    })
+
+    return response
+  }
 
   async getAllTechnician(options = {}) {
     const inicialOrder = {

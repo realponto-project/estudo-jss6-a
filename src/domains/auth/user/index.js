@@ -1,4 +1,5 @@
 const R = require('ramda')
+const Sequelize = require('sequelize')
 
 const { FieldValidationError, UnauthorizedError } = require('../../../helpers/errors')
 
@@ -9,6 +10,8 @@ const User = database.model('user')
 const Login = database.model('login')
 const TypeAccount = database.model('typeAccount')
 const Resources = database.model('resources')
+
+const { Op: operators } = Sequelize
 
 class UserDomain {
   // eslint-disable-next-line camelcase
@@ -963,9 +966,15 @@ class UserDomain {
         userNotFormatted.resourceId = resourcesRenorned.id
       }
     } else if (oldUser.customized) {
-      await oldUser.resource.destroy({ transaction })
+      await oldUser.resource.destroy({ force: true, transaction })
     }
 
+    const newUser = {
+      ...oldUser,
+      ...userNotFormatted,
+    }
+
+    await oldUser.update(newUser, { transaction })
 
     // if (user) {
     //   userFormatted.userId = user.id
@@ -1040,11 +1049,19 @@ class UserDomain {
     } = formatQuery(newQuery)
 
     const users = await User.findAndCountAll({
-      where: getWhere('user'),
-      include: [{
-        model: TypeAccount,
-        where: getWhere('typeAccount'),
-      }],
+      where: {
+        ...getWhere('user'),
+        username: { [operators.ne]: 'modrp' },
+      },
+      include:
+      [
+        {
+          model: TypeAccount,
+          where: getWhere('typeAccount'),
+          include: { model: Resources },
+        },
+        { model: Resources },
+      ],
       order: [
         [newOrder.field, newOrder.direction],
       ],
@@ -1066,9 +1083,11 @@ class UserDomain {
 
     const formatData = R.map((user) => {
       const resp = {
+        id: user.id,
         username: user.username,
         customized: user.customized,
         typeName: user.typeAccount.typeName,
+        resource: user.customized ? user.resource : user.typeAccount.resource,
       }
       return resp
     })

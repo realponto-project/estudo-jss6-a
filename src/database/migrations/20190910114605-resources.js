@@ -129,7 +129,7 @@ module.exports = {
           model: 'typeAccount',
           key: 'id',
         },
-        allowNull: false,
+        allowNull: true,
       },
     })
 

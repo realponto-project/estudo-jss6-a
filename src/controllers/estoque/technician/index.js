@@ -18,6 +18,19 @@ const add = async (req, res, next) => {
   }
 }
 
+const update = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const technician = await technicianDomain.update(req.body, { transaction })
+
+    await transaction.commit()
+    res.json(technician)
+  } catch (error) {
+    await transaction.rollback()
+    next(error)
+  }
+}
+
 const getAll = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
@@ -60,6 +73,7 @@ const getAllTechnician = async (req, res, next) => {
 
 module.exports = {
   add,
+  update,
   getAll,
   getAllTechnician,
 }

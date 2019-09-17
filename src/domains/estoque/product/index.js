@@ -418,6 +418,7 @@ module.exports = class ProductDomain {
         mark: product.mark.mark,
         manufacturer: product.mark.manufacturer.manufacturer,
         name: product.name,
+        serial: product.serial,
         type: product.equipType ? product.equipType.type : '-',
         createdAt: formatDateFunct(product.createdAt),
         updatedAt: formatDateFunct(product.updatedAt),
