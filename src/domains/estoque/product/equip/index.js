@@ -866,7 +866,7 @@ module.exports = class EquipDomain {
       transaction,
     })
 
-    console.log(JSON.parse(JSON.stringify(response)))
+    // console.log(JSON.parse(JSON.stringify(response)))
     return response
   }
 }

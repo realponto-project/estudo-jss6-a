@@ -390,33 +390,19 @@ module.exports = class OsDomain {
       }
     }
 
-    // console.log(reserve.date)
-
-    const query = {
-      filters: {
-        os: {
-          specific: {
-            date: { start: moment(reserve.date).format('L'), end: moment(reserve.date).format('L') },
-          },
-        },
-      },
-    }
-    const {
-      getWhere,
-    } = formatQuery(query)
-
-    // console.log(getWhere('os'))
-
     const reserveHasExist = await Os.findOne({
       where: {
-        ...getWhere('os'),
+        date: {
+          [operators.gte]: moment(reserve.date).startOf('day').toString(),
+          [operators.lte]: moment(reserve.date).endOf('day').toString(),
+        },
         razaoSocial: oldReserve.razaoSocial,
         cnpj: oldReserve.cnpj.replace(/\D/g, ''),
       },
       transaction,
     })
 
-    if (reserveHasExist) {
+    if (reserveHasExist && reserveHasExist.id !== bodyData.id) {
       field.message = true
       message.message = 'Há uma reserva nesta data para esta empresa'
       throw new FieldValidationError([{ field, message }])
