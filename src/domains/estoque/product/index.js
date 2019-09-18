@@ -8,7 +8,7 @@ const database = require('../../../database')
 const { FieldValidationError } = require('../../../helpers/errors')
 
 // // const EquipMark = database.model('equipMark')
-// const Type = database.model('type')
+const Equip = database.model('equip')
 const EquipType = database.model('equipType')
 const Mark = database.model('mark')
 const Product = database.model('product')
@@ -445,9 +445,16 @@ module.exports = class ProductDomain {
   }
 
   async getAllNames(options = {}) {
-    const { transaction = null } = options
+    const { query = null, transaction = null } = options
+
+    const newQuery = Object.assign({}, query)
+
+    const {
+      getWhere,
+    } = formatQuery(newQuery)
 
     const products = await Product.findAll({
+      where: getWhere('product'),
       attributes: ['id', 'name', 'serial'],
       order: [
         ['name', 'ASC'],
@@ -462,6 +469,26 @@ module.exports = class ProductDomain {
     }))
 
     return response
+  }
+
+  async getEquipsByEntrance(options = {}) {
+    const { query = null, transaction = null } = options
+
+    const equips = await Equip.findAll({
+      where: {
+        createdAt: {
+          [operators.gte]: moment(query.createdAt).subtract(5, 'seconds').toString(),
+          [operators.lte]: moment(query.createdAt).add(5, 'seconds').toString(),
+        },
+      },
+      attributes: ['serialNumber'],
+      order: [
+        ['serialNumber', 'ASC'],
+      ],
+      transaction,
+    })
+
+    return equips
   }
 
   async getProductByStockBase(options = {}) {

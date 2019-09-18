@@ -1,6 +1,6 @@
 /* eslint-disable array-callback-return */
 const R = require('ramda')
-const moment = require('moment')
+// const moment = require('moment')
 // const Sequelize = require('sequelize')
 
 // const { Op: operators } = Sequelize
@@ -15,6 +15,9 @@ const { FieldValidationError } = require('../../../../helpers/errors')
 // const EquipModel = database.model('equipModel')
 // const EquipMark = database.model('equipMark')
 // const EquipType = database.model('equipType')
+// const EquipModel = database.model('equipModel')
+const Product = database.model('product')
+const ProductBase = database.model('productBase')
 const Company = database.model('company')
 const Equip = database.model('equip')
 const User = database.model('user')
@@ -825,7 +828,7 @@ module.exports = class EquipDomain {
       where: {
         serialNumber,
       },
-      attributes: ['reserved', 'deletedAt', 'osPartId', 'freeMarketPartId'],
+      attributes: ['reserved', 'deletedAt', 'osPartId', 'freeMarketPartId', 'productBaseId'],
       include: [
         {
           model: OsParts,
@@ -836,6 +839,17 @@ module.exports = class EquipDomain {
             attributes: ['os'],
             model: Os,
           }],
+        },
+        {
+          model: ProductBase,
+          attributes: ['productId'],
+          include:
+          [
+            {
+              model: Product,
+              attributes: ['name'],
+            },
+          ],
         },
         {
           paranoid: false,
@@ -852,7 +866,7 @@ module.exports = class EquipDomain {
       transaction,
     })
 
-    // console.log(JSON.parse(JSON.stringify(response)))
+    console.log(JSON.parse(JSON.stringify(response)))
     return response
   }
 }

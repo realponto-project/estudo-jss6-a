@@ -98,7 +98,7 @@ module.exports = class KitDomain {
               reserved: (parseInt(productBase.reserved, 10) - count[item.productBaseId]).toString(),
             }
 
-            if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+            if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.reserved, 10) < 0) {
               field.productBaseUpdate = true
               message.productBaseUpdate = 'Número negativo não é valido'
               throw new FieldValidationError([{ field, message }])

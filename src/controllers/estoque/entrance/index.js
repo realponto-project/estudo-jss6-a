@@ -18,6 +18,19 @@ const add = async (req, res, next) => {
   }
 }
 
+const update = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const entrance = await entranceDomain.update(req.body, { transaction })
+
+    await transaction.commit()
+    res.json(entrance)
+  } catch (error) {
+    await transaction.rollback()
+    next(error)
+  }
+}
+
 const getAll = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
@@ -38,7 +51,22 @@ const getAll = async (req, res, next) => {
   }
 }
 
+const delet = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const deleteEntrance = await entranceDomain.delete(req.query.id, { transaction })
+
+    await transaction.commit()
+    res.json(deleteEntrance)
+  } catch (error) {
+    await transaction.rollback()
+    next()
+  }
+}
+
 module.exports = {
   add,
+  update,
   getAll,
+  delet,
 }
