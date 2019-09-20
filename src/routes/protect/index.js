@@ -19,6 +19,7 @@ const productRoute = require('./estoque/product')
 const technicianRoute = require('./estoque/technician')
 const reserveRoute = require('./estoque/reserve')
 const stockRoute = require('./estoque/stock')
+const notificationRoute = require('./estoque/notifications')
 
 router.use('/company', companyRoute)
 router.use('/equip/equipType', equipTypeRoute)
@@ -39,5 +40,6 @@ router.use('/product', productRoute)
 router.use('/technician', technicianRoute)
 router.use('/reserve', reserveRoute)
 router.use('/stock', stockRoute)
+router.use('/notification', notificationRoute)
 
 module.exports = router

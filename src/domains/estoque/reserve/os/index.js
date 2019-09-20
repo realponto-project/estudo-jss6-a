@@ -21,6 +21,7 @@ const Technician = database.model('technician')
 const Equip = database.model('equip')
 const KitOut = database.model('kitOut')
 const KitParts = database.model('kitParts')
+const Notification = database.model('notification')
 
 const { Op: operators } = Sequelize
 
@@ -154,7 +155,7 @@ module.exports = class OsDomain {
         const productBase = await ProductBase.findByPk(item.productBaseId, {
           include: [{
             model: Product,
-            attributes: ['serial'],
+            // attributes: ['serial'],
           }],
           transaction,
         })
@@ -240,6 +241,12 @@ module.exports = class OsDomain {
           field.productBaseUpdate = true
           message.productBaseUpdate = 'Número negativo não é valido'
           throw new FieldValidationError([{ field, message }])
+        }
+
+        if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+          const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+
+          await Notification.create({ message: messageNotification }, { transaction })
         }
 
         await productBase.update(productBaseUpdate, { transaction })
@@ -334,6 +341,12 @@ module.exports = class OsDomain {
           field.productBaseUpdate = true
           message.productBaseUpdate = 'Número negativo não é valido'
           throw new FieldValidationError([{ field, message }])
+        }
+
+        if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+          const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+
+          await Notification.create({ message: messageNotification }, { transaction })
         }
 
         await productBase.update(productBaseUpdate, { transaction })
@@ -452,6 +465,12 @@ module.exports = class OsDomain {
             message.productBaseUpdate = 'Número negativo não é valido'
             throw new FieldValidationError([{ field, message }])
           }
+
+          if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+            const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+
+            await Notification.create({ message: messageNotification }, { transaction })
+          }
           // console.log('osPartsReturn')
           const osPartsUpdate = {
             ...osPartsReturn,
@@ -542,6 +561,12 @@ module.exports = class OsDomain {
             throw new FieldValidationError([{ field, message }])
           }
 
+          if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+            const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+
+            await Notification.create({ message: messageNotification }, { transaction })
+          }
+
           await productBase.update(productBaseUpdate, { transaction })
         }
       })
@@ -582,6 +607,12 @@ module.exports = class OsDomain {
             field.productBaseUpdate = true
             message.productBaseUpdate = 'Número negativo não é valido'
             throw new FieldValidationError([{ field, message }])
+          }
+
+          if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+            const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+
+            await Notification.create({ message: messageNotification }, { transaction })
           }
 
           await productBase.update(productBaseUpdate, { transaction })
@@ -1056,6 +1087,12 @@ module.exports = class OsDomain {
       field.productBaseUpdate = true
       message.productBaseUpdate = 'Número negativo não é valido'
       throw new FieldValidationError([{ field, message }])
+    }
+
+    if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+      const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+
+      await Notification.create({ message: messageNotification }, { transaction })
     }
 
     await productBase.update(productBaseUpdate, { transaction })

@@ -21,6 +21,7 @@ const kitPartsOut = require('./estoque/reserve/kitPartsOut')
 const product = require('./estoque/product')
 const manufacturer = require('./estoque/product/manufacturer')
 const mark = require('./estoque/product/mark')
+const notification = require('./estoque/notification')
 const os = require('./estoque/reserve/os')
 const osParts = require('./estoque/reserve/osParts')
 const stockBase = require('./estoque/stockBase')
@@ -58,6 +59,7 @@ module.exports = [
   product,
   mark,
   manufacturer,
+  notification,
   os,
   osParts,
   stockBase,

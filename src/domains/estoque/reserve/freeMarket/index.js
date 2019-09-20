@@ -17,6 +17,7 @@ const Product = database.model('product')
 const ProductBase = database.model('productBase')
 const FreeMarket = database.model('freeMarket')
 const FreeMarketParts = database.model('freeMarketParts')
+const Notification = database.model('notification')
 
 module.exports = class FreeMarketDomain {
   async add(bodyData, options = {}) {
@@ -152,7 +153,6 @@ module.exports = class FreeMarketDomain {
         const productBase = await ProductBase.findByPk(item.productBaseId, {
           include: [{
             model: Product,
-            attributes: ['serial'],
           }],
           transaction,
         })
@@ -214,6 +214,12 @@ module.exports = class FreeMarketDomain {
           field.productBaseUpdate = true
           message.productBaseUpdate = 'Número negativo não é valido'
           throw new FieldValidationError([{ field, message }])
+        }
+
+        if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+          const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+
+          await Notification.create({ message: messageNotification }, { transaction })
         }
 
         await productBase.update(productBaseUpdate, { transaction })

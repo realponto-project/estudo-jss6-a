@@ -16,6 +16,7 @@ const Technician = database.model('technician')
 const KitParts = database.model('kitParts')
 const Product = database.model('product')
 const ProductBase = database.model('productBase')
+const Notification = database.model('notification')
 
 module.exports = class KitDomain {
   async add(bodyData, options = {}) {
@@ -152,6 +153,12 @@ module.exports = class KitDomain {
             field.productBaseUpdate = true
             message.productBaseUpdate = 'Número negativo não é valido'
             throw new FieldValidationError([{ field, message }])
+          }
+
+          if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+            const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+
+            await Notification.create({ message: messageNotification }, { transaction })
           }
 
           await productBase.update(productBaseUpdate, { transaction })
