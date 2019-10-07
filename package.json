@@ -12,8 +12,7 @@
     "start:stage": "./scripts/createTable && node ./src/server.js",
     "test": "jest --forceExit --detectOpenHandles",
     "lint": "eslint './**/*.js'",
-    "heroku-postbuild": "yarn install --production",
-    "heroku-migrations": "npx sequelize-cli db:migrate"
+    "heroku-postbuild": "yarn install --production && npx sequelize-cli db:migrate"
   },
   "dependencies": {
     "@fnando/cnpj": "^0.1.1",
