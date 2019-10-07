@@ -1,1 +1,1 @@
-web: yarn start
+web: npx sequelize-cli db:migrate
