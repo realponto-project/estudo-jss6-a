@@ -1,3 +1,4 @@
+require("dotenv").config();
 require("./helpers/loadenv");
 const Express = require("express");
 const bodyParser = require("body-parser");
