@@ -1,26 +1,26 @@
 {
   "development": {
     "username": "postgres",
-    "password": "stock",
-    "database": "stock",
-    "host": "db_stock",
-    "port": 5432,
+    "password": "estoque",
+    "database": "estoque",
+    "host": "localhost",
+    "port": 5402,
     "dialect": "postgres"
   },
   "test": {
     "username": "postgres",
-    "password": "stock",
-    "database": "stock",
-    "host": "db_stock",
-    "port": 5432,
+    "password": "estoque",
+    "database": "estoque",
+    "host": "localhost",
+    "port": 5402,
     "dialect": "postgres"
   },
   "production": {
     "username": "postgres",
-    "password": "stock",
-    "database": "stock",
-    "host": "db_stock",
-    "port": 5432,
+    "password": "estoque",
+    "database": "estoque",
+    "host": "localhost",
+    "port": 5402,
     "dialect": "postgres"
   }
 }
