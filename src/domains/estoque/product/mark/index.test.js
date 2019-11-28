@@ -14,7 +14,6 @@ describe('MarkDomain', () => {
 
   beforeAll(async () => {
     markMock = {
-      manufacturer: 'HP',
       mark: 'HP',
       responsibleUser: 'modrp',
     }
@@ -25,7 +24,6 @@ describe('MarkDomain', () => {
 
     expect(markCreated.mark).toBe(markMock.mark)
     expect(markCreated.responsibleUser).toBe(markMock.responsibleUser)
-    expect(markCreated.manufacturer.manufacturer).toBe(markMock.manufacturer)
 
     // await expect(markDomain.add(markMock))
     //   .rejects.toThrowError(new FieldValidationError())

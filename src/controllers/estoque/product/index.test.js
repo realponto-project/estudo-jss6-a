@@ -23,7 +23,6 @@ describe('productController', () => {
       username,
     }
     const mark = {
-      manufacturer: "LSD's",
       mark: 'LSD',
       responsibleUser: 'modrp',
     }

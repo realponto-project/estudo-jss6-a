@@ -27,7 +27,6 @@ const addOs = async (req, res, next) => {
 const updateOs = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
-    // console.log(req.body)
     const Os = await osDomain.update(req.body, { transaction })
 
     await transaction.commit()
@@ -41,7 +40,6 @@ const updateOs = async (req, res, next) => {
 const output = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
-    // console.log(req.body)
     const Os = await osDomain.output(req.body, { transaction })
 
     await transaction.commit()
@@ -90,7 +88,6 @@ const getAllKit = async (req, res, next) => {
 
     const kits = await kitDomain.getAll({ query, transaction })
 
-    // console.log(kits)
 
     await transaction.commit()
     res.json(kits)
@@ -112,7 +109,6 @@ const getKitDefaultValue = async (req, res, next) => {
 
     const kitDefault = await kitDomain.getKitDefaultValue({ query, transaction })
 
-    // console.log(kitDefault)
 
     await transaction.commit()
     res.json(kitDefault)
@@ -180,7 +176,6 @@ const getAllFreeMarket = async (req, res, next) => {
 
     const FreeMarket = await freeMarketDomain.getAll({ query, transaction })
 
-    // console.log(kits)
 
     await transaction.commit()
     res.json(FreeMarket)

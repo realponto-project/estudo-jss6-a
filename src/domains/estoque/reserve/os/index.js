@@ -1,5 +1,3 @@
-/* eslint-disable array-callback-return */
-/* eslint-disable max-len */
 const R = require('ramda')
 const moment = require('moment')
 const Sequelize = require('sequelize')
@@ -102,7 +100,9 @@ module.exports = class OsDomain {
       message.technician = 'Por favor o ID do tecnico'
     } else {
       const { technicianId } = bodyData
-      const technicianExist = await Technician.findByPk(technicianId, { transaction })
+      const technicianExist = await Technician.findByPk(technicianId, {
+        transaction,
+      })
 
       if (!technicianExist) {
         errors = true
@@ -115,13 +115,15 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }])
     }
 
-    // reserve.date = new Date(reserve.date)
-
     const reserveHasExist = await Os.findOne({
       where: {
         date: {
-          [operators.gte]: moment(reserve.date).startOf('day').toString(),
-          [operators.lte]: moment(reserve.date).endOf('day').toString(),
+          [operators.gte]: moment(reserve.date)
+            .startOf('day')
+            .toString(),
+          [operators.lte]: moment(reserve.date)
+            .endOf('day')
+            .toString(),
         },
         razaoSocial: reserve.razaoSocial,
         cnpj: reserve.cnpj.replace(/\D/g, ''),
@@ -129,7 +131,7 @@ module.exports = class OsDomain {
       transaction,
     })
 
-    if (reserveHasExist) {
+    if (reserveHasExist && process.env.NODE_ENV === 'production') {
       field.message = true
       message.message = 'Há uma reserva nesta data para esta empresa'
       throw new FieldValidationError([{ field, message }])
@@ -140,23 +142,24 @@ module.exports = class OsDomain {
     reserve.os = (reserveAll.length + 1).toString()
     reserve.cnpj = reserve.cnpj.replace(/\D/g, '')
 
-    // console.log(reserve, 'TEST')
-
     const reserveCreated = await Os.create(reserve, { transaction })
 
-    // console.log(JSON.parse(JSON.stringify(reserveCreated)))
-
-    // await reserveCreated.update({ ...reserveCreated, os: reserveCreated.id.toString() }, { transaction })
+    // await reserveCreated.update({
+    // ...reserveCreated,
+    //  os: reserveCreated.id.toString() }, {
+    //  transaction })
 
     if (bodyHasProp('osParts')) {
       const { osParts } = bodyData
 
       const osPartsCreattedPromises = osParts.map(async (item) => {
         const productBase = await ProductBase.findByPk(item.productBaseId, {
-          include: [{
-            model: Product,
-            // attributes: ['serial'],
-          }],
+          include: [
+            {
+              model: Product,
+              // attributes: ['serial'],
+            },
+          ],
           transaction,
         })
 
@@ -171,7 +174,9 @@ module.exports = class OsDomain {
           throw new FieldValidationError([{ field, message }])
         }
 
-        const osPartCreated = await OsParts.create(osPartsCreatted, { transaction })
+        const osPartCreated = await OsParts.create(osPartsCreatted, {
+          transaction,
+        })
 
         if (productBase.product.serial) {
           const { serialNumberArray } = item
@@ -210,12 +215,14 @@ module.exports = class OsDomain {
                 transaction,
               })
 
-              // console.log(JSON.parse(JSON.stringify(equip)))
-              await equip.update({
-                ...equip,
-                osPartId: osPartCreated.id,
-                reserved: true,
-              }, { transaction })
+              await equip.update(
+                {
+                  ...equip,
+                  osPartId: osPartCreated.id,
+                  reserved: true,
+                },
+                { transaction },
+              )
 
               // const equip1 = await Equip.findOne({
               //   where: {
@@ -225,28 +232,39 @@ module.exports = class OsDomain {
               //   },
               //   transaction,
               // })
-
-              // console.log(JSON.parse(JSON.stringify(equip1)))
             })
           }
         }
 
         const productBaseUpdate = {
           ...productBase,
-          available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
-          reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
+          available: (
+            parseInt(productBase.available, 10) - parseInt(item.amount, 10)
+          ).toString(),
+          reserved: (
+            parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
+          ).toString(),
         }
 
-        if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+        if (
+          parseInt(productBaseUpdate.available, 10) < 0
+          || parseInt(productBaseUpdate.available, 10) < 0
+        ) {
           field.productBaseUpdate = true
           message.productBaseUpdate = 'Número negativo não é valido'
           throw new FieldValidationError([{ field, message }])
         }
 
-        if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+        if (
+          parseInt(productBaseUpdate.available, 10)
+          < parseInt(productBase.product.minimumStock, 10)
+        ) {
           const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
 
-          await Notification.create({ message: messageNotification }, { transaction })
+          await Notification.create(
+            { message: messageNotification },
+            { transaction },
+          )
         }
 
         await productBase.update(productBaseUpdate, { transaction })
@@ -257,7 +275,6 @@ module.exports = class OsDomain {
     if (errors) {
       throw new FieldValidationError([{ field, message }])
     }
-    // console.log('teste 2')
 
     // const teste = await Os.findByPk(reserveCreated.id, {
     //   include: [
@@ -274,8 +291,6 @@ module.exports = class OsDomain {
     //   transaction,
     // })
 
-    // console.log(JSON.parse(JSON.stringify(teste)))
-
     const response = await Os.findByPk(reserveCreated.id, {
       include: [
         {
@@ -290,8 +305,6 @@ module.exports = class OsDomain {
       ],
       transaction,
     })
-
-    // console.log(JSON.parse(JSON.stringify(response)))
 
     return response
   }
@@ -315,7 +328,10 @@ module.exports = class OsDomain {
       })
 
       const osPartsPromise = osParts.map(async (item) => {
-        const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
+        const productBase = await ProductBase.findByPk(item.productBaseId, {
+          include: [Product],
+          transaction,
+        })
 
         const equips = await Equip.findAll({
           where: { osPartId: item.id },
@@ -323,30 +339,46 @@ module.exports = class OsDomain {
         })
 
         const equipUpdatePromise = equips.map(async (equip) => {
-          await equip.update({
-            ...equip,
-            reserved: false,
-          }, { transaction })
+          await equip.update(
+            {
+              ...equip,
+              reserved: false,
+            },
+            { transaction },
+          )
         })
 
         await Promise.all(equipUpdatePromise)
 
         const productBaseUpdate = {
           ...productBase,
-          available: (parseInt(productBase.available, 10) + parseInt(item.amount, 10)).toString(),
-          reserved: (parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)).toString(),
+          available: (
+            parseInt(productBase.available, 10) + parseInt(item.amount, 10)
+          ).toString(),
+          reserved: (
+            parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)
+          ).toString(),
         }
 
-        if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+        if (
+          parseInt(productBaseUpdate.available, 10) < 0
+          || parseInt(productBaseUpdate.available, 10) < 0
+        ) {
           field.productBaseUpdate = true
           message.productBaseUpdate = 'Número negativo não é valido'
           throw new FieldValidationError([{ field, message }])
         }
 
-        if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+        if (
+          parseInt(productBaseUpdate.available, 10)
+          < parseInt(productBase.product.minimumStock, 10)
+        ) {
           const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
 
-          await Notification.create({ message: messageNotification }, { transaction })
+          await Notification.create(
+            { message: messageNotification },
+            { transaction },
+          )
         }
 
         await productBase.update(productBaseUpdate, { transaction })
@@ -389,8 +421,6 @@ module.exports = class OsDomain {
       date: '',
     }
 
-    // console.log(bodyData)
-
     let errors = false
 
     if (reserveHasProp('date')) {
@@ -406,8 +436,12 @@ module.exports = class OsDomain {
     const reserveHasExist = await Os.findOne({
       where: {
         date: {
-          [operators.gte]: moment(reserve.date).startOf('day').toString(),
-          [operators.lte]: moment(reserve.date).endOf('day').toString(),
+          [operators.gte]: moment(reserve.date)
+            .startOf('day')
+            .toString(),
+          [operators.lte]: moment(reserve.date)
+            .endOf('day')
+            .toString(),
         },
         razaoSocial: oldReserve.razaoSocial,
         cnpj: oldReserve.cnpj.replace(/\D/g, ''),
@@ -415,14 +449,20 @@ module.exports = class OsDomain {
       transaction,
     })
 
-    if (reserveHasExist && reserveHasExist.id !== bodyData.id) {
+    if (
+      reserveHasExist
+      && reserveHasExist.id !== bodyData.id
+      && process.env.NODE_ENV !== 'test'
+    ) {
       field.message = true
       message.message = 'Há uma reserva nesta data para esta empresa'
       throw new FieldValidationError([{ field, message }])
     }
 
     if (reserveHasProp('technicianId')) {
-      const technician = await Technician.findByPk(reserve.technicianId, { transaction })
+      const technician = await Technician.findByPk(reserve.technicianId, {
+        transaction,
+      })
       if (!technician) {
         errors = true
         field.technicianId = true
@@ -439,44 +479,63 @@ module.exports = class OsDomain {
         transaction,
       })
 
-      // console.log(JSON.parse(JSON.stringify(osPartsAll)))
-
       const osPartsUpdatePromises = osParts.map(async (item) => {
         if (R.prop('id', item)) {
-          const osPartsReturn = await OsParts.findByPk(item.id, { transaction })
+          const osPartsReturn = await OsParts.findByPk(item.id, {
+            transaction,
+          })
 
           // eslint-disable-next-line consistent-return
           osPartsAll = await osPartsAll.filter((itemOld) => {
             if (itemOld.id !== item.id) {
               return itemOld.id
             }
+            return null
           })
 
-          const productBase = await ProductBase.findByPk(osPartsReturn.productBaseId, { transaction })
+          const productBase = await ProductBase.findByPk(
+            osPartsReturn.productBaseId,
+            { include: [Product], transaction },
+          )
 
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) + parseInt(osPartsReturn.amount, 10) - parseInt(item.amount, 10)).toString(),
-            reserved: (parseInt(productBase.reserved, 10) - parseInt(osPartsReturn.amount, 10) + parseInt(item.amount, 10)).toString(),
+            available: (
+              parseInt(productBase.available, 10)
+              + parseInt(osPartsReturn.amount, 10)
+              - parseInt(item.amount, 10)
+            ).toString(),
+            reserved: (
+              parseInt(productBase.reserved, 10)
+              - parseInt(osPartsReturn.amount, 10)
+              + parseInt(item.amount, 10)
+            ).toString(),
           }
 
-          if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+          if (
+            parseInt(productBaseUpdate.available, 10) < 0
+            || parseInt(productBaseUpdate.available, 10) < 0
+          ) {
             field.productBaseUpdate = true
             message.productBaseUpdate = 'Número negativo não é valido'
             throw new FieldValidationError([{ field, message }])
           }
 
-          if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+          if (
+            parseInt(productBaseUpdate.available, 10)
+            < parseInt(productBase.product.minimumStock, 10)
+          ) {
             const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
 
-            await Notification.create({ message: messageNotification }, { transaction })
+            await Notification.create(
+              { message: messageNotification },
+              { transaction },
+            )
           }
-          // console.log('osPartsReturn')
           const osPartsUpdate = {
             ...osPartsReturn,
             amount: item.amount,
           }
-
 
           await osPartsReturn.update(osPartsUpdate, { transaction })
           await productBase.update(productBaseUpdate, { transaction })
@@ -486,13 +545,17 @@ module.exports = class OsDomain {
             oId: bodyData.id,
           }
 
-          const osPartCreated = await OsParts.create(osPartsCreatted, { transaction })
+          const osPartCreated = await OsParts.create(osPartsCreatted, {
+            transaction,
+          })
 
           const productBase = await ProductBase.findByPk(item.productBaseId, {
-            include: [{
-              model: Product,
-              attributes: ['serial'],
-            }],
+            include: [
+              {
+                model: Product,
+                attributes: ['serial'],
+              },
+            ],
             transaction,
           })
 
@@ -540,39 +603,53 @@ module.exports = class OsDomain {
                   transaction,
                 })
 
-                await equip.update({
-                  ...equip,
-                  osPartId: osPartCreated.id,
-                  reserved: true,
-                }, { transaction })
+                await equip.update(
+                  {
+                    ...equip,
+                    osPartId: osPartCreated.id,
+                    reserved: true,
+                  },
+                  { transaction },
+                )
               })
             }
           }
 
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
-            reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
+            available: (
+              parseInt(productBase.available, 10) - parseInt(item.amount, 10)
+            ).toString(),
+            reserved: (
+              parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
+            ).toString(),
           }
 
-          if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+          if (
+            parseInt(productBaseUpdate.available, 10) < 0
+            || parseInt(productBaseUpdate.available, 10) < 0
+          ) {
             field.productBaseUpdate = true
             message.productBaseUpdate = 'Número negativo não é valido'
             throw new FieldValidationError([{ field, message }])
           }
 
-          if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+          if (
+            parseInt(productBaseUpdate.available, 10)
+            < parseInt(productBase.product.minimumStock, 10)
+          ) {
             const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
 
-            await Notification.create({ message: messageNotification }, { transaction })
+            await Notification.create(
+              { message: messageNotification },
+              { transaction },
+            )
           }
 
           await productBase.update(productBaseUpdate, { transaction })
         }
       })
       await Promise.all(osPartsUpdatePromises)
-
-      // console.log(JSON.parse(JSON.stringify(osPartsAll)))
 
       if (osPartsAll.length > 0) {
         const osPartsdeletePromises = osPartsAll.map(async (item) => {
@@ -584,35 +661,53 @@ module.exports = class OsDomain {
           })
 
           const equipUpdatePromise = equips.map(async (equip) => {
-            await equip.update({
-              ...equip,
-              reserved: false,
-              osPartId: null,
-            }, { transaction })
+            await equip.update(
+              {
+                ...equip,
+                reserved: false,
+                osPartId: null,
+              },
+              { transaction },
+            )
           })
-
-          // console.log(JSON.parse(JSON.stringify(item)))
 
           await Promise.all(equipUpdatePromise)
 
-          const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
+          const productBase = await ProductBase.findByPk(item.productBaseId, {
+            transaction,
+          })
 
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) + parseInt(osPartDelete.amount, 10)).toString(),
-            reserved: (parseInt(productBase.reserved, 10) - parseInt(osPartDelete.amount, 10)).toString(),
+            available: (
+              parseInt(productBase.available, 10)
+              + parseInt(osPartDelete.amount, 10)
+            ).toString(),
+            reserved: (
+              parseInt(productBase.reserved, 10)
+              - parseInt(osPartDelete.amount, 10)
+            ).toString(),
           }
 
-          if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+          if (
+            parseInt(productBaseUpdate.available, 10) < 0
+            || parseInt(productBaseUpdate.available, 10) < 0
+          ) {
             field.productBaseUpdate = true
             message.productBaseUpdate = 'Número negativo não é valido'
             throw new FieldValidationError([{ field, message }])
           }
 
-          if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+          if (
+            parseInt(productBaseUpdate.available, 10)
+            < parseInt(productBase.product.minimumStock, 10)
+          ) {
             const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
 
-            await Notification.create({ message: messageNotification }, { transaction })
+            await Notification.create(
+              { message: messageNotification },
+              { transaction },
+            )
           }
 
           await productBase.update(productBaseUpdate, { transaction })
@@ -627,8 +722,6 @@ module.exports = class OsDomain {
     if (errors) {
       throw new FieldValidationError([{ field, message }])
     }
-
-    // console.log(JSON.parse(JSON.stringify(oldReserve)))
 
     await oldReserve.update(reserveOs, { transaction })
 
@@ -647,7 +740,7 @@ module.exports = class OsDomain {
     const { query = null, transaction = null } = options
 
     const newQuery = Object.assign({}, query)
-    const newOrder = (query && query.order) ? query.order : inicialOrder
+    const newOrder = query && query.order ? query.order : inicialOrder
 
     if (newOrder.acendent) {
       newOrder.direction = 'DESC'
@@ -655,17 +748,16 @@ module.exports = class OsDomain {
       newOrder.direction = 'ASC'
     }
 
-    const required = R.prop('required', query) === undefined ? true : R.prop('required', query)
-    const paranoid = R.prop('paranoid', query) === undefined ? false : R.prop('paranoid', query)
+    const required = R.prop('required', query) === undefined
+      ? true
+      : R.prop('required', query)
+    const paranoid = R.prop('paranoid', query) === undefined
+      ? false
+      : R.prop('paranoid', query)
 
     const {
-      getWhere,
-      limit,
-      offset,
-      pageResponse,
+      getWhere, limit, offset, pageResponse,
     } = formatQuery(newQuery)
-
-    // console.log('tests')
 
     const os = await Os.findAndCountAll({
       where: getWhere('os'),
@@ -676,9 +768,11 @@ module.exports = class OsDomain {
         },
         {
           model: ProductBase,
-          include: [{
-            model: Product,
-          }],
+          include: [
+            {
+              model: Product,
+            },
+          ],
           required,
         },
         // {
@@ -686,20 +780,12 @@ module.exports = class OsDomain {
         //   required,
         // },
       ],
-      order: [
-        [newOrder.field, newOrder.direction],
-      ],
+      order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
       paranoid,
       transaction,
     })
-
-    // console.log('tests')
-    // console.log(paranoid)
-
-    // console.log(JSON.parse(JSON.stringify(os)))
-    // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
 
     const { rows } = os
 
@@ -728,7 +814,11 @@ module.exports = class OsDomain {
         output: item.output,
         missOut: item.missOut,
         return: item.return,
-        quantMax: (parseInt(item.amount, 10)) - (parseInt(item.return, 10)) - (parseInt(item.output, 10)) - (parseInt(item.missOut, 10)),
+        quantMax:
+          parseInt(item.amount, 10)
+          - parseInt(item.return, 10)
+          - parseInt(item.output, 10)
+          - parseInt(item.missOut, 10),
       }
       return resp
     })
@@ -752,9 +842,11 @@ module.exports = class OsDomain {
         include: [
           {
             model: ProductBase,
-            include: [{
-              model: Product,
-            }],
+            include: [
+              {
+                model: Product,
+              },
+            ],
           },
           {
             model: Os,
@@ -765,26 +857,27 @@ module.exports = class OsDomain {
         transaction,
       })
 
-      // console.log(JSON.parse(JSON.stringify(osParts[0].o.os)))
-
       const kitOuts = await KitOut.findAll({
         // where: { os: id.toString() },
         where: { os: osParts[0].o.os },
-        include: [{
-          model: KitParts,
-          include: [{
-            model: ProductBase,
-            include: [{
-              model: Product,
-            }],
-          }],
-        }],
+        include: [
+          {
+            model: KitParts,
+            include: [
+              {
+                model: ProductBase,
+                include: [
+                  {
+                    model: Product,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         transaction,
       })
 
-      // console.log(JSON.parse(JSON.stringify(kitOuts)))
-
-      // console.log(formatKitOut(kitOuts))
       const resp = formatProductDelete(osParts)
 
       Array.prototype.push.apply(resp, formatKitOut(kitOuts))
@@ -795,14 +888,9 @@ module.exports = class OsDomain {
     let notDelet = false
 
     const formatProduct = R.map(async (item) => {
-      notDelet = (item.osParts.output !== '0' || item.osParts.missOut !== '0' || item.osParts.return !== '0')
-
-      // console.log(notDelet)
-      // console.log(JSON.parse(JSON.stringify(item.osParts)))
-      // console.log(JSON.parse(JSON.stringify(item)))
-
-      // console.log(item.osParts.return !== '0')
-
+      notDelet = item.osParts.output !== '0'
+        || item.osParts.missOut !== '0'
+        || item.osParts.return !== '0'
       let equips = []
 
       if (item.product.serial) {
@@ -814,7 +902,10 @@ module.exports = class OsDomain {
         notDelet = parseInt(item.osParts.amount, 10) !== equips.length
       }
 
-      const quantMax = (parseInt(item.osParts.amount, 10)) - (parseInt(item.osParts.return, 10)) - (parseInt(item.osParts.output, 10)) - (parseInt(item.osParts.missOut, 10))
+      const quantMax = parseInt(item.osParts.amount, 10)
+        - parseInt(item.osParts.return, 10)
+        - parseInt(item.osParts.output, 10)
+        - parseInt(item.osParts.missOut, 10)
 
       const resp = {
         serialNumbers: equips,
@@ -851,11 +942,12 @@ module.exports = class OsDomain {
         os: item.os,
         createdAt: formatDateFunct(item.createdAt),
         // products: formatProduct(item.productBases),
-        products: item.productBases.length !== 0 ? await Promise.all(formatProduct(item.productBases)) : await formatProductNull(item.id),
-        notDelet: (osParts.length !== item.productBases.length) || notDelet,
+        products:
+          item.productBases.length !== 0
+            ? await Promise.all(formatProduct(item.productBases))
+            : await formatProductNull(item.id),
+        notDelet: osParts.length !== item.productBases.length || notDelet,
       }
-      // console.log(formatProduct(item.productBases))
-      // console.log(resp.os, resp.notDelet)
       return resp
     })
 
@@ -866,16 +958,12 @@ module.exports = class OsDomain {
       show = os.count
     }
 
-
     const response = {
       page: pageResponse,
       show,
       count: os.count,
       rows: osList,
     }
-
-    // console.log(response.rows[0].products)
-    // console.log(response.rows)
 
     return response
   }
@@ -930,8 +1018,6 @@ module.exports = class OsDomain {
       return resp
     })
 
-    // console.log(JSON.parse(JSON.stringify(osReturn.productBases)))
-
     const response = {
       razaoSocial: osReturn.razaoSocial,
       cnpj: osReturn.cnpj,
@@ -939,9 +1025,6 @@ module.exports = class OsDomain {
       technician: osReturn.technician.name,
       reserve: formatedReserve(osReturn.productBases),
     }
-
-    // console.log(JSON.parse(JSON.stringify(response)))
-    // console.log(response)
 
     return response
   }
@@ -967,7 +1050,9 @@ module.exports = class OsDomain {
       field.osPartsId = true
       message.osPartsId = 'Informe o id do produto.'
     } else {
-      const osPart = await OsParts.findByPk(bodyData.osPartsId, { transaction })
+      const osPart = await OsParts.findByPk(bodyData.osPartsId, {
+        transaction,
+      })
 
       if (!osPart) {
         errors = true
@@ -994,7 +1079,10 @@ module.exports = class OsDomain {
 
     const value = R.prop([key], add)
 
-    const total = (parseInt(osPart.amount, 10) - parseInt(osPart.output, 10) - parseInt(osPart.missOut, 10) - parseInt(osPart.return, 10))
+    const total = parseInt(osPart.amount, 10)
+      - parseInt(osPart.output, 10)
+      - parseInt(osPart.missOut, 10)
+      - parseInt(osPart.return, 10)
 
     if (parseInt(value, 10) > total) {
       errors = true
@@ -1004,10 +1092,12 @@ module.exports = class OsDomain {
     }
 
     const productBase = await ProductBase.findByPk(osPart.productBaseId, {
-      include: [{
-        model: Product,
-        attributes: ['serial'],
-      }],
+      include: [
+        {
+          model: Product,
+          attributes: ['serial'],
+        },
+      ],
       transaction,
     })
 
@@ -1051,19 +1141,25 @@ module.exports = class OsDomain {
           })
 
           if (key !== 'output') {
-            await equip.update({
-              ...equip,
-              osPartId: null,
-            }, { transaction })
+            await equip.update(
+              {
+                ...equip,
+                osPartId: null,
+              },
+              { transaction },
+            )
           }
 
           if (key !== 'return') {
             await equip.destroy({ transaction })
           } else {
-            await equip.update({
-              ...equip,
-              reserved: false,
-            }, { transaction })
+            await equip.update(
+              {
+                ...equip,
+                reserved: false,
+              },
+              { transaction },
+            )
           }
         })
       }
@@ -1072,27 +1168,44 @@ module.exports = class OsDomain {
     if (key === 'return') {
       productBaseUpdate = {
         ...productBase,
-        available: (parseInt(productBase.available, 10) + parseInt(value, 10)).toString(),
-        reserved: (parseInt(productBase.reserved, 10) - parseInt(value, 10)).toString(),
+        available: (
+          parseInt(productBase.available, 10) + parseInt(value, 10)
+        ).toString(),
+        reserved: (
+          parseInt(productBase.reserved, 10) - parseInt(value, 10)
+        ).toString(),
       }
     } else {
       productBaseUpdate = {
         ...productBase,
-        amount: (parseInt(productBase.amount, 10) - parseInt(value, 10)).toString(),
-        reserved: (parseInt(productBase.reserved, 10) - parseInt(value, 10)).toString(),
+        amount: (
+          parseInt(productBase.amount, 10) - parseInt(value, 10)
+        ).toString(),
+        reserved: (
+          parseInt(productBase.reserved, 10) - parseInt(value, 10)
+        ).toString(),
       }
     }
 
-    if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+    if (
+      parseInt(productBaseUpdate.available, 10) < 0
+      || parseInt(productBaseUpdate.available, 10) < 0
+    ) {
       field.productBaseUpdate = true
       message.productBaseUpdate = 'Número negativo não é valido'
       throw new FieldValidationError([{ field, message }])
     }
 
-    if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+    if (
+      parseInt(productBaseUpdate.available, 10)
+      < parseInt(productBase.product.minimumStock, 10)
+    ) {
       const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
 
-      await Notification.create({ message: messageNotification }, { transaction })
+      await Notification.create(
+        { message: messageNotification },
+        { transaction },
+      )
     }
 
     await productBase.update(productBaseUpdate, { transaction })
@@ -1104,16 +1217,20 @@ module.exports = class OsDomain {
 
     await osPart.update(osPartUpdate, { transaction })
 
-    const osPartsUpdate = await OsParts.findByPk(bodyData.osPartsId, { transaction })
+    const osPartsUpdate = await OsParts.findByPk(bodyData.osPartsId, {
+      transaction,
+    })
 
     if (total - parseInt(value, 10) === 0) {
       await osPartsUpdate.destroy({ transaction })
     }
 
     const os = await Os.findByPk(osPart.oId, {
-      include: [{
-        model: ProductBase,
-      }],
+      include: [
+        {
+          model: ProductBase,
+        },
+      ],
       transaction,
     })
 
@@ -1121,7 +1238,9 @@ module.exports = class OsDomain {
       await os.destroy({ transaction })
     }
 
-    const response = await OsParts.findByPk(bodyData.osPartsId, { transaction })
+    const response = await OsParts.findByPk(bodyData.osPartsId, {
+      transaction,
+    })
 
     return response
   }

@@ -12,6 +12,7 @@
     "start:stage": "./scripts/createTable && node ./src/server.js",
     "test": "jest --forceExit --detectOpenHandles",
     "lint": "eslint './**/*.js'",
+    "lint-fix": "eslint './**/*.js' --fix",
     "heroku-postbuild": "npm install --production"
   },
   "dependencies": {

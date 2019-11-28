@@ -25,11 +25,8 @@ module.exports = class AnalyzeDomain {
   async add(bodyData, options = {}) {
     const { transaction = null } = options
 
-    // console.log(bodyData)
-
     const analyze = R.omit(['id', 'observations'], bodyData)
 
-    // console.log(JSON.stringify(analyze))
 
     const analyzeNotHasProp = prop => R.not(R.has(prop, bodyData))
     const analyzeHasProp = prop => R.has(prop, analyze)
@@ -250,7 +247,6 @@ module.exports = class AnalyzeDomain {
       transaction,
     })
 
-    // console.log(JSON.stringify(response))
     return response
   }
 

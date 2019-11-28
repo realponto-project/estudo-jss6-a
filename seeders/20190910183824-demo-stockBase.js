@@ -1,7 +1,7 @@
-'use strict';
+
 
 module.exports = {
-  up: (queryInterface, Sequelize) => queryInterface.bulkInsert('stockBase', [
+  up: queryInterface => queryInterface.bulkInsert('stockBase', [
     {
       id: '586b4f99-768b-457f-81fb-65dea9196095',
       stockBase: 'REALPONTO',
@@ -22,5 +22,5 @@ module.exports = {
     },
   ], {}),
 
-  down: (queryInterface, Sequelize) => queryInterface.bulkDelete('stockBase', null, {}),
+  down: queryInterface => queryInterface.bulkDelete('stockBase', null, {}),
 }

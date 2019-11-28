@@ -20,11 +20,6 @@ module.exports = (sequelize) => {
   })
 
   mark.associate = (models) => {
-    mark.belongsTo(models.manufacturer, {
-      foreignKey: {
-        allowNull: false,
-      },
-    })
     mark.hasMany(models.product, {
       foreignKey: {
         allowNull: false,

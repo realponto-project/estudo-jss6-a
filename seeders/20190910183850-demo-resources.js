@@ -1,7 +1,7 @@
-'use strict';
+
 
 module.exports = {
-  up: (queryInterface, Sequelize) => queryInterface.bulkInsert('resources', [{
+  up: queryInterface => queryInterface.bulkInsert('resources', [{
     id: 'acf54130-5528-469d-9c63-5c8a0b336a1f',
     addCompany: true,
     addPart: true,
@@ -33,5 +33,5 @@ module.exports = {
     updatedAt: new Date(),
   }], {}),
 
-  down: (queryInterface, Sequelize) => queryInterface.bulkDelete('resources', null, {}),
+  down: queryInterface => queryInterface.bulkDelete('resources', null, {}),
 }

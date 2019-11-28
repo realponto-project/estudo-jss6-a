@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 const R = require('ramda')
 const moment = require('moment')
 // const axios = require('axios')
@@ -46,25 +45,40 @@ module.exports = class KitOutDomain {
 
     let errors = false
 
-    if (bodyDataNotHasProp('reposicao') || !bodyData.reposicao || /\D/.test(bodyData.reposicao)) {
+    if (
+      bodyDataNotHasProp('reposicao')
+      || !bodyData.reposicao
+      || /\D/.test(bodyData.reposicao)
+    ) {
       errors = true
       field.reposicao = true
       message.reposicao = 'Ação inválida'
     }
 
-    if (bodyDataNotHasProp('expedicao') || !bodyData.expedicao || /\D/.test(bodyData.expedicao)) {
+    if (
+      bodyDataNotHasProp('expedicao')
+      || !bodyData.expedicao
+      || /\D/.test(bodyData.expedicao)
+    ) {
       errors = true
       field.expedicao = true
       message.expedicao = 'Ação inválida'
     }
 
-    if (bodyDataNotHasProp('perda') || !bodyData.perda || /\D/.test(bodyData.perda)) {
+    if (
+      bodyDataNotHasProp('perda')
+      || !bodyData.perda
+      || /\D/.test(bodyData.perda)
+    ) {
       errors = true
       field.perda = true
       message.perda = 'Ação inválida'
     }
 
-    // if (bodyDataNotHasProp('amount') || !bodyData.amount || /\D/.test(bodyData.amount) || parseInt(bodyData.amount, 10) < 1) {
+    // if (bodyDataNotHasProp('amount')
+    // || !bodyData.amount
+    // || /\D/.test(bodyData.amount)
+    // || parseInt(bodyData.amount, 10) < 1) {
     //   errors = true
     //   field.amount = true
     //   message.amount = 'não é numero'
@@ -84,18 +98,19 @@ module.exports = class KitOutDomain {
         message.kitPartId = 'Técnico não encomtrado'
       }
     }
-
     if (errors) {
       throw new FieldValidationError([{ field, message }])
     }
 
     const kitPartExist = await KitParts.findByPk(bodyData.kitPartId, {
       attributes: ['kitId'],
-      include: [{
-        model: Kit,
-        attributes: ['technicianId'],
-        include: [{ model: Technician, attributes: ['name'] }],
-      }],
+      include: [
+        {
+          model: Kit,
+          attributes: ['technicianId'],
+          include: [{ model: Technician, attributes: ['name'] }],
+        },
+      ],
       transaction,
     })
 
@@ -112,10 +127,9 @@ module.exports = class KitOutDomain {
 
     const kitPart = await KitParts.findByPk(kitPartId, { transaction })
 
-    let productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
-
-    // console.log(JSON.parse(JSON.stringify(productBase)))
-    // console.log(JSON.parse(JSON.stringify(kitPart)))
+    let productBase = await ProductBase.findByPk(kitPart.productBaseId, {
+      transaction,
+    })
 
     if (perdaNumber > 0) {
       const { perda } = bodyData
@@ -131,13 +145,19 @@ module.exports = class KitOutDomain {
       const productBaseUpdate = {
         ...productBase,
         available: productBase.available,
-        amount: (parseInt(productBase.amount, 10) - parseInt(perda, 10)).toString(),
-        reserved: (parseInt(productBase.reserved, 10) - parseInt(perda, 10)).toString(),
+        amount: (
+          parseInt(productBase.amount, 10) - parseInt(perda, 10)
+        ).toString(),
+        reserved: (
+          parseInt(productBase.reserved, 10) - parseInt(perda, 10)
+        ).toString(),
       }
 
       await productBase.update(productBaseUpdate, { transaction })
 
-      productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
+      productBase = await ProductBase.findByPk(kitPart.productBaseId, {
+        transaction,
+      })
     }
 
     if (reposicaoNumber > 0) {
@@ -153,19 +173,24 @@ module.exports = class KitOutDomain {
 
       const productBaseUpdate = {
         ...productBase,
-        available: (parseInt(productBase.available, 10) - parseInt(reposicao, 10)).toString(),
-        reserved: (parseInt(productBase.reserved, 10) + parseInt(reposicao, 10)).toString(),
+        available: (
+          parseInt(productBase.available, 10) - parseInt(reposicao, 10)
+        ).toString(),
+        reserved: (
+          parseInt(productBase.reserved, 10) + parseInt(reposicao, 10)
+        ).toString(),
       }
 
       await productBase.update(productBaseUpdate, { transaction })
 
-      productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
+      productBase = await ProductBase.findByPk(kitPart.productBaseId, {
+        transaction,
+      })
     }
 
     if (expedicaoNumber > 0) {
       const { expedicao } = bodyData
 
-      // console.log(parseInt(expedicao, 10), parseInt(kitPart.amount, 10))
 
       if (parseInt(expedicao, 10) > parseInt(kitPart.amount, 10)) {
         field.expedicao = true
@@ -188,8 +213,6 @@ module.exports = class KitOutDomain {
         transaction,
       })
 
-      // console.log(JSON.parse(JSON.stringify(osExist)))
-
       if (!osExist) {
         field.os = true
         message.os = 'OS inválida'
@@ -200,14 +223,13 @@ module.exports = class KitOutDomain {
           message.os = 'OS encerrada'
           throw new FieldValidationError([{ field, message }])
         }
+
         if (kitPartExist.kit.technician.name !== osExist.technician.name) {
           field.os = true
           message.os = `O tecnico que está relacionado com a OS ${osExist.os} é o/a ${osExist.technician.name}`
           throw new FieldValidationError([{ field, message }])
         }
       }
-
-      // console.log(bodyData.kitPartId)
 
       const kitOutReturn = await KitOut.findOne({
         where: {
@@ -217,12 +239,12 @@ module.exports = class KitOutDomain {
         transaction,
       })
 
-      // console.log(JSON.parse(JSON.stringify(kitOutReturn)))
-
       if (kitOutReturn) {
         const kitOutUpdate = {
           ...kitOutReturn,
-          amount: (parseInt(kitOutReturn.amount, 10) + parseInt(expedicao, 10)).toString(),
+          amount: (
+            parseInt(kitOutReturn.amount, 10) + parseInt(expedicao, 10)
+          ).toString(),
         }
 
         await kitOutReturn.update(kitOutUpdate, { transaction })
@@ -237,17 +259,26 @@ module.exports = class KitOutDomain {
 
         const productBaseUpdate = {
           ...productBase,
-          amount: (parseInt(productBase.amount, 10) - parseInt(expedicao, 10)).toString(),
-          reserved: (parseInt(productBase.reserved, 10) - parseInt(expedicao, 10)).toString(),
+          amount: (
+            parseInt(productBase.amount, 10) - parseInt(expedicao, 10)
+          ).toString(),
+          reserved: (
+            parseInt(productBase.reserved, 10) - parseInt(expedicao, 10)
+          ).toString(),
         }
 
         await productBase.update(productBaseUpdate, { transaction })
 
-        productBase = await ProductBase.findByPk(kitPart.productBaseId, { transaction })
+        productBase = await ProductBase.findByPk(kitPart.productBaseId, {
+          transaction,
+        })
       }
     }
 
-    const amount = parseInt(kitPart.amount, 10) + reposicaoNumber - expedicaoNumber - perdaNumber
+    const amount = parseInt(kitPart.amount, 10)
+      + reposicaoNumber
+      - expedicaoNumber
+      - perdaNumber
 
     if (amount < 0) {
       field.amount = true
@@ -301,11 +332,11 @@ module.exports = class KitOutDomain {
     //       },
     //     })
 
-    //     const productBaseUpdate = {
-    //       ...productBase,
-    //       available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
-    //       reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
-    //     }
+    // const productBaseUpdate = {
+    //   ...productBase,
+    //   available: (parseInt(productBase.available, 10) - parseInt(item.amount, 10)).toString(),
+    //   reserved: (parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)).toString(),
+    // }
 
     //     await productBase.update(productBaseUpdate, { transaction })
     //   })
@@ -332,7 +363,7 @@ module.exports = class KitOutDomain {
     const { query = null, transaction = null } = options
 
     const newQuery = Object.assign({}, query)
-    const newOrder = (query && query.order) ? query.order : inicialOrder
+    const newOrder = query && query.order ? query.order : inicialOrder
 
     if (newOrder.acendent) {
       newOrder.direction = 'DESC'
@@ -341,10 +372,7 @@ module.exports = class KitOutDomain {
     }
 
     const {
-      getWhere,
-      limit,
-      offset,
-      pageResponse,
+      getWhere, limit, offset, pageResponse,
     } = formatQuery(newQuery)
 
     const kitOut = await KitOut.findAndCountAll({
@@ -357,19 +385,23 @@ module.exports = class KitOutDomain {
           include: [
             {
               model: ProductBase,
-              include: [{
-                model: Product,
-                where: getWhere('product'),
-              }],
+              include: [
+                {
+                  model: Product,
+                  where: getWhere('product'),
+                },
+              ],
               required: true,
             },
             {
               model: Kit,
               paranoid: false,
-              include: [{
-                model: Technician,
-                where: getWhere('technician'),
-              }],
+              include: [
+                {
+                  model: Technician,
+                  where: getWhere('technician'),
+                },
+              ],
               required: true,
             },
           ],
@@ -385,19 +417,11 @@ module.exports = class KitOutDomain {
         // //   required,
         // // },
       ],
-      order: [
-        [newOrder.field, newOrder.direction],
-      ],
+      order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
       transaction,
     })
-
-    // console.log(paranoid)
-
-    // console.log(JSON.parse(JSON.stringify(kitOut)))
-    // console.log(JSON.parse(JSON.stringify(kitOut.rows[0].kitPart)))
-    // console.log(JSON.parse(JSON.stringify(os.rows[0].productBases)))
 
     const { rows } = kitOut
 
@@ -433,7 +457,9 @@ module.exports = class KitOutDomain {
         // technicianId: item.technicianId,
         // os: item.os,
         // products: formatProduct(item.productBases),
-        // products: item.productBases.products.length !== 0 ? formatProduct(item.productBases.products) : await formatProductNull(item.id),
+        // products: item.productBases.products.length !== 0 ?
+        // formatProduct(item.productBases.products) :
+        // await formatProductNull(item.id),
       }
       return resp
     })
@@ -445,15 +471,12 @@ module.exports = class KitOutDomain {
       show = kitOut.count
     }
 
-
     const response = {
       page: pageResponse,
       show,
       count: kitOut.count,
       rows: kitOutList,
     }
-
-    // console.log(response)
 
     return response
   }

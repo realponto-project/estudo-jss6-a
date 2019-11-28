@@ -12,7 +12,6 @@ const database = require('../../database')
 const Product = database.model('product')
 // const User = database.model('user')
 const Mark = database.model('mark')
-const Manufacturer = database.model('manufacturer')
 const StockBase = database.model('stockBase')
 const ProductBase = database.model('productBase')
 const Notification = database.model('notification')
@@ -29,7 +28,7 @@ module.exports = class StockDomain {
     const { query = null, transaction = null } = options
 
     const newQuery = Object.assign({}, query)
-    const newOrder = (query && query.order) ? query.order : inicialOrder
+    const newOrder = query && query.order ? query.order : inicialOrder
 
     if (newOrder.acendent) {
       newOrder.direction = 'DESC'
@@ -38,13 +37,8 @@ module.exports = class StockDomain {
     }
 
     const {
-      getWhere,
-      limit,
-      offset,
-      pageResponse,
+      getWhere, limit, offset, pageResponse,
     } = formatQuery(newQuery)
-
-    // console.log(getWhere('manufacturer'))
 
     const entrances = await ProductBase.findAndCountAll({
       // where: getWhere('productBase'),
@@ -60,14 +54,8 @@ module.exports = class StockDomain {
           include: [
             {
               model: Mark,
-              attributes: ['manufacturerId'],
+              attributes: [],
               required: true,
-              include: [{
-                model: Manufacturer,
-                attributes: ['manufacturer'],
-                where: getWhere('manufacturer'),
-                required: true,
-              }],
             },
           ],
           required: true,
@@ -85,8 +73,6 @@ module.exports = class StockDomain {
       offset,
       transaction,
     })
-
-    // console.log(JSON.parse(JSON.stringify(entrances)))
 
     const { rows } = entrances
 
@@ -114,22 +100,18 @@ module.exports = class StockDomain {
         available: entrance.available,
         name: entrance.product.name,
         category: entrance.product.category,
-        manufacturer: entrance.product.mark.manufacturer.manufacturer,
         stockBase: entrance.stockBase.stockBase,
-      // oldAmount: entrance.oldAmount,
+        // oldAmount: entrance.oldAmount,
       }
       return resp
     })
 
     const entrancesList = formatData(rows)
 
-    // console.log(JSON.parse(JSON.stringify(entrances.rows[0].product.part)))
-
     let show = limit
     if (entrances.count < show) {
       show = entrances.count
     }
-
 
     const response = {
       page: pageResponse,
@@ -137,8 +119,6 @@ module.exports = class StockDomain {
       count: entrances.count,
       rows: entrancesList,
     }
-
-    // console.log(response)
 
     return response
   }
@@ -153,7 +133,7 @@ module.exports = class StockDomain {
     const { query = null, transaction = null } = options
 
     const newQuery = Object.assign({}, query)
-    const newOrder = (query && query.order) ? query.order : inicialOrder
+    const newOrder = query && query.order ? query.order : inicialOrder
 
     if (newOrder.acendent) {
       newOrder.direction = 'DESC'
@@ -162,17 +142,12 @@ module.exports = class StockDomain {
     }
 
     const {
-      getWhere,
-      limit,
-      offset,
-      pageResponse,
+      limit, offset, pageResponse,
     } = formatQuery(newQuery)
 
     const notifications = await Notification.findAndCountAll({
       // attributes: ['id', 'amount', 'available'],
-      order: [
-        [newOrder.field, newOrder.direction],
-      ],
+      order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
       transaction,
@@ -203,7 +178,6 @@ module.exports = class StockDomain {
     if (notifications.count < show) {
       show = notifications.count
     }
-
 
     const response = {
       page: pageResponse,

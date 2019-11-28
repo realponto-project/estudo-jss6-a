@@ -30,7 +30,6 @@ describe('reserveOsDomain', () => {
 
   beforeAll(async () => {
     const mark = {
-      manufacturer: 'DC',
       mark: 'DC',
       responsibleUser: 'modrp',
     }
@@ -106,7 +105,6 @@ describe('reserveOsDomain', () => {
 
   test('create reserve OS', async () => {
     const reserveMock = {
-      os: '123458942',
       razaoSocial: 'test Company',
       cnpj: '47629199000185',
       date: new Date(2019, 10, 23),
@@ -127,7 +125,6 @@ describe('reserveOsDomain', () => {
 
   test('Delete reserve OS', async () => {
     const reserveMock = {
-      os: '16834356',
       razaoSocial: 'test Company',
       cnpj: '47629199000185',
       date: new Date(2019, 10, 23),

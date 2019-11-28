@@ -12,7 +12,6 @@ const Equip = database.model('equip')
 const EquipType = database.model('equipType')
 const Mark = database.model('mark')
 const Product = database.model('product')
-const Manufacturer = database.model('manufacturer')
 const ProductBase = database.model('productBase')
 const StockBase = database.model('stockBase')
 
@@ -72,7 +71,11 @@ module.exports = class ProductDomain {
       errors = true
       field.category = true
       message.category = 'categoria não foi passada'
-    } else if (product.category !== 'peca' && product.category !== 'equipamento' && product.category !== 'outros') {
+    } else if (
+      product.category !== 'peca'
+      && product.category !== 'equipamento'
+      && product.category !== 'outros'
+    ) {
       errors = true
       field.category = true
       message.category = 'categoria inválida'
@@ -103,7 +106,9 @@ module.exports = class ProductDomain {
       errors = true
       field.quantMin = true
       message.quantMin = 'Por favor informe a quantidade'
-    } else if (product.minimumStock !== product.minimumStock.replace(/\D/gi, '')) {
+    } else if (
+      product.minimumStock !== product.minimumStock.replace(/\D/gi, '')
+    ) {
       errors = true
       field.quantMin = true
       message.quantMin = 'número invalido.'
@@ -162,10 +167,7 @@ module.exports = class ProductDomain {
     const productCreated = await Product.create(product, { transaction })
 
     const response = await Product.findByPk(productCreated.id, {
-      include: [
-        { model: Mark },
-        { model: EquipType },
-      ],
+      include: [{ model: Mark }, { model: EquipType }],
       transaction,
     })
 
@@ -233,7 +235,11 @@ module.exports = class ProductDomain {
       errors = true
       field.category = true
       message.category = 'categoria não foi passada'
-    } else if (product.category !== 'peca' && product.category !== 'equipamento' && product.category !== 'outros') {
+    } else if (
+      product.category !== 'peca'
+      && product.category !== 'equipamento'
+      && product.category !== 'outros'
+    ) {
       errors = true
       field.category = true
       message.category = 'categoria inválida'
@@ -264,7 +270,9 @@ module.exports = class ProductDomain {
       errors = true
       field.quantMin = true
       message.quantMin = 'Por favor informe a quantidade'
-    } else if (product.minimumStock !== product.minimumStock.replace(/\D/gi, '')) {
+    } else if (
+      product.minimumStock !== product.minimumStock.replace(/\D/gi, '')
+    ) {
       errors = true
       field.quantMin = true
       message.quantMin = 'número invalido.'
@@ -328,10 +336,7 @@ module.exports = class ProductDomain {
     await oldProduct.update(newProduct, { transaction })
 
     const response = await Product.findByPk(bodyData.id, {
-      include: [
-        { model: Mark },
-        { model: EquipType },
-      ],
+      include: [{ model: Mark }, { model: EquipType }],
       transaction,
     })
 
@@ -348,7 +353,7 @@ module.exports = class ProductDomain {
     const { query = null, transaction = null } = options
 
     const newQuery = Object.assign({}, query)
-    const newOrder = (query && query.order) ? query.order : inicialOrder
+    const newOrder = query && query.order ? query.order : inicialOrder
 
     if (newOrder.acendent) {
       newOrder.direction = 'DESC'
@@ -357,10 +362,7 @@ module.exports = class ProductDomain {
     }
 
     const {
-      getWhere,
-      limit,
-      offset,
-      pageResponse,
+      getWhere, limit, offset, pageResponse,
     } = formatQuery(newQuery)
 
     const products = await Product.findAndCountAll({
@@ -369,20 +371,15 @@ module.exports = class ProductDomain {
         {
           model: Mark,
           where: getWhere('mark'),
-          include: [{
-            model: Manufacturer,
-          }],
           required: true,
         },
         {
           model: EquipType,
           where: getWhere('equipType'),
-          required: newQuery.filters.equipType.specific.type,
+          required: newQuery.filters && newQuery.filters.equipType.specific.type,
         },
       ],
-      order: [
-        [newOrder.field, newOrder.direction],
-      ],
+      order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
       transaction,
@@ -416,7 +413,6 @@ module.exports = class ProductDomain {
         minimumStock: product.minimumStock,
         amount: product.amount,
         mark: product.mark.mark,
-        manufacturer: product.mark.manufacturer.manufacturer,
         name: product.name,
         serial: product.serial,
         type: product.equipType ? product.equipType.type : '-',
@@ -433,7 +429,6 @@ module.exports = class ProductDomain {
       show = products.count
     }
 
-
     const response = {
       page: pageResponse,
       show,
@@ -449,16 +444,12 @@ module.exports = class ProductDomain {
 
     const newQuery = Object.assign({}, query)
 
-    const {
-      getWhere,
-    } = formatQuery(newQuery)
+    const { getWhere } = formatQuery(newQuery)
 
     const products = await Product.findAll({
       where: getWhere('product'),
       attributes: ['id', 'name', 'serial'],
-      order: [
-        ['name', 'ASC'],
-      ],
+      order: [['name', 'ASC']],
       transaction,
     })
 
@@ -477,14 +468,16 @@ module.exports = class ProductDomain {
     const equips = await Equip.findAll({
       where: {
         createdAt: {
-          [operators.gte]: moment(query.createdAt).subtract(5, 'seconds').toString(),
-          [operators.lte]: moment(query.createdAt).add(5, 'seconds').toString(),
+          [operators.gte]: moment(query.createdAt)
+            .subtract(5, 'seconds')
+            .toString(),
+          [operators.lte]: moment(query.createdAt)
+            .add(5, 'seconds')
+            .toString(),
         },
       },
       attributes: ['serialNumber'],
-      order: [
-        ['serialNumber', 'ASC'],
-      ],
+      order: [['serialNumber', 'ASC']],
       transaction,
     })
 

@@ -21,7 +21,6 @@ describe('entranceDomain', () => {
 
   beforeAll(async () => {
     const mark = {
-      manufacturer: 'DELL',
       mark: 'DELL',
       responsibleUser: 'modrp',
     }

@@ -37,33 +37,33 @@ describe('analysisPartController', () => {
   // let entryEquipmentCreated = null
 
   // beforeAll(async () => {
-    // equipMarkMock = {
-    //   type: 'catraca',
-    //   mark: 'DC',
-    //   responsibleUser: 'modrp',
-    // }
+  // equipMarkMock = {
+  //   type: 'catraca',
+  //   mark: 'DC',
+  //   responsibleUser: 'modrp',
+  // }
 
-    // const markMock = await equipTypeDomain.addMark(equipMarkMock)
+  // const markMock = await equipTypeDomain.addMark(equipMarkMock)
 
-    // equipModelMock = {
-    //   equipMarkId: markMock.id,
-    //   model: 'DC 2.0',
-    //   description: '',
-    //   responsibleUser: 'modrp',
-    // }
+  // equipModelMock = {
+  //   equipMarkId: markMock.id,
+  //   model: 'DC 2.0',
+  //   description: '',
+  //   responsibleUser: 'modrp',
+  // }
 
-    // const modelMock = await equipTypeDomain.addModel(equipModelMock)
+  // const modelMock = await equipTypeDomain.addModel(equipModelMock)
 
-    // partMock = {
-    //   item: 'celular',
-    //   description: '',
-    //   costPrice: '100,00',
-    //   salePrice: '150,00',
-    //   equipModels: [{ id: modelMock.id }],
-    //   responsibleUser: 'modrp',
-    // }
+  // partMock = {
+  //   item: 'celular',
+  //   description: '',
+  //   costPrice: '100,00',
+  //   salePrice: '150,00',
+  //   equipModels: [{ id: modelMock.id }],
+  //   responsibleUser: 'modrp',
+  // }
 
-    // const partCreated = await partDomain.add(partMock)
+  // const partCreated = await partDomain.add(partMock)
 
   //   companyMock = {
   //     razaoSocial: 'testes analysisPartController LTDA',
@@ -173,7 +173,8 @@ describe('analysisPartController', () => {
   // })
 
   // test('create', async () => {
-  //   const response = await request().post('/api/analyze/analysisPart', analysisPartMock, { headers })
+  // const response = await request()
+  //   .post('/api/analyze/analysisPart', analysisPartMock, { headers })
 
   //   const { statusCode } = response
 
@@ -182,7 +183,8 @@ describe('analysisPartController', () => {
   // })
 
   // test('analysisPartUpdate', async () => {
-  //   const response = await request().put('/api/analyze/analysisPartUpdate', bodyData, { headers })
+  //   const response = await request()
+  // .put('/api/analyze/analysisPartUpdate', bodyData, { headers })
 
   //   const { body, statusCode } = response
 

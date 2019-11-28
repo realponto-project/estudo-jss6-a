@@ -4,19 +4,11 @@
 const Promise = require('bluebird')
 const axios = require('axios')
 const {
-  applySpec,
-  defaultTo,
-  pick,
-  prop,
-  toLower,
+  applySpec, defaultTo, pick, prop, toLower,
 } = require('ramda')
 
 const defaultToEmptyObject = defaultTo({})
-const pickValuesFromResponse = pick([
-  'data',
-  'status',
-  'headers',
-])
+const pickValuesFromResponse = pick(['data', 'status', 'headers'])
 const transformResponseProps = applySpec({
   body: prop('data'),
   statusCode: prop('status'),
@@ -25,7 +17,7 @@ const transformResponseProps = applySpec({
 
 const getRequest = (config = {}) => {
   const defaultConfig = {
-    baseURL: 'http://localhost:5302',
+    baseURL: 'http://localhost:5312',
     headers: defaultToEmptyObject(),
     params: defaultToEmptyObject(),
     timeout: 10000,
@@ -34,14 +26,19 @@ const getRequest = (config = {}) => {
   const axiosConfig = { ...defaultConfig, ...config }
   const axiosIntance = axios.create(axiosConfig)
 
-  const makeRequest = (url, method = 'get', data = {}, params = {}, headers = {}) => Promise
-    .resolve({
-      url,
-      method: toLower(method),
-      data,
-      params,
-      headers,
-    })
+  const makeRequest = (
+    url,
+    method = 'get',
+    data = {},
+    params = {},
+    headers = {},
+  ) => Promise.resolve({
+    url,
+    method: toLower(method),
+    data,
+    params,
+    headers,
+  })
     .then(axiosIntance.request)
     .then(pickValuesFromResponse)
     .catch(prop('response'))
@@ -49,19 +46,13 @@ const getRequest = (config = {}) => {
 
   const requestWithoutBody = methodName => (
     url,
-    {
-      headers = {},
-      params = {},
-    } = {},
+    { headers = {}, params = {} } = {},
   ) => makeRequest(url, methodName, null, params, headers)
 
   const requestWithBody = methodName => (
     url,
     body = {},
-    {
-      headers = {},
-      params = {},
-    } = {},
+    { headers = {}, params = {} } = {},
   ) => makeRequest(url, methodName, body, params, headers)
 
   return {
