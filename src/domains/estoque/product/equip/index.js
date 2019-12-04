@@ -320,7 +320,6 @@ module.exports = class EquipDomain {
       rows: equipsList,
     }
 
-    // console.log(response)
 
     return response
   }
@@ -437,18 +436,13 @@ module.exports = class EquipDomain {
 
   //   // const searchCompanyIds = extractId(searchCompany)
   //   // const searchEquipIds = extractId(searchEquip)
-  //   // // console.log(searchCompanyIds)
-  //   // // console.log(searchEquipIds)
 
   //   // Array.prototype.push.apply(searchCompanyIds, searchEquipIds)
-  //   // console.log(searchCompanyIds)
 
   //   // // searchCompanyIds.filter((este, i) => searchCompanyIds.indexOf(este) === i)
 
 
   //   // const novaArr = searchCompanyIds.filter((este, i) => searchCompanyIds.indexOf(este) === i)
-
-  //   // console.log(novaArr)
 
 
   //   // // const findByPkSearchArray = R.map(async (item) => {
@@ -508,7 +502,6 @@ module.exports = class EquipDomain {
 
   //   // const newRows = []
 
-  //   // // console.log(searchCompanyIds)
 
   //   // await Promise.all(
   //   //   searchCompanyIds.map(async (item) => {
@@ -537,7 +530,6 @@ module.exports = class EquipDomain {
   //   //   }),
   //   // )
 
-  //   // // console.log(newRows)
 
   //   // const formatData = R.map((equip) => {
   //   //   const resp = {
@@ -586,7 +578,6 @@ module.exports = class EquipDomain {
   //   //   rows: equipsList,
   //   // }
 
-  //   // // console.log(response)
 
   //   // return response
 
@@ -614,7 +605,8 @@ module.exports = class EquipDomain {
 
   //   let global = ''
 
-  //  if (R.prop('filters', query) && R.prop('global', query.filters)) global = query.filters.global.replace(/\W/gi, '')
+  //  if (R.prop('filters', query) && R.prop('global', query.filters))
+  // global = query.filters.global.replace(/\W/gi, '')
 
   //   const globalSearch = R.map((equip) => {
   //     const resp = {
@@ -866,7 +858,6 @@ module.exports = class EquipDomain {
       transaction,
     })
 
-    // console.log(JSON.parse(JSON.stringify(response)))
     return response
   }
 }

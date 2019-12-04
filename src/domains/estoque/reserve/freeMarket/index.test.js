@@ -1,5 +1,3 @@
-// // const R = require('ramda')
-
 const FreeMarketDomain = require('.')
 // const TechnicianDomain = require('../../technician')
 // const CarDomain = require('../../technician/car')
@@ -31,7 +29,6 @@ describe('freeMarketDomain', () => {
 
   beforeAll(async () => {
     const mark = {
-      manufacturer: 'FLIP',
       mark: 'FLIP',
       responsibleUser: 'modrp',
     }
@@ -97,9 +94,9 @@ describe('freeMarketDomain', () => {
     })
   })
 
-  test('test', async () => {
+  test('create', async () => {
     const freeMarketMock = {
-      trackingCode: 'AA123456789BR',
+      trackingCode: 'AA123454889BR',
       name: 'TEST',
       zipCode: '09930210',
       state: 'SP',
@@ -117,7 +114,16 @@ describe('freeMarketDomain', () => {
       ],
     }
 
-    await freeMarketDomain.add(freeMarketMock)
+    const response = await freeMarketDomain.add(freeMarketMock)
+
+    expect(response.trackingCode).toBe(freeMarketMock.trackingCode)
+    expect(response.name).toBe(freeMarketMock.name)
+    expect(response.zipCode).toBe(freeMarketMock.zipCode)
+    expect(response.state).toBe(freeMarketMock.state)
+    expect(response.city).toBe(freeMarketMock.city)
+    expect(response.street).toBe(freeMarketMock.street)
+    expect(response.number).toBe(freeMarketMock.number)
+    expect(response.cnpjOrCpf).toBe(freeMarketMock.cnpjOrCpf)
   })
 
   test('getAll', async () => {

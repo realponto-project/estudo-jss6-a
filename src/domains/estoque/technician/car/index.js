@@ -6,7 +6,6 @@ const database = require('../../../../database')
 const { FieldValidationError } = require('../../../../helpers/errors')
 
 // const Mark = database.model('mark')
-// const Manufacturer = database.model('manufacturer')
 const Car = database.model('car')
 
 
@@ -94,7 +93,6 @@ module.exports = class CarDomain {
     //   model: 'CELTA',
     // })
 
-    // console.log(JSON.parse(JSON.stringify(test)))
 
     if (cars.length === 0) return []
 

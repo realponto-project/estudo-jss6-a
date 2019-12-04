@@ -71,7 +71,6 @@ const getAll = async (req, res, next) => {
     }
     const users = await userDomain.getAll({ query, transaction })
 
-    // console.log(users)
 
     await transaction.commit()
     res.json(users)

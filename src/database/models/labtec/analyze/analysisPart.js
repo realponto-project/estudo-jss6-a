@@ -1,47 +1,47 @@
-const Sequelize = require("sequelize");
+const Sequelize = require('sequelize')
 
-module.exports = sequelize => {
-  const analysisPart = sequelize.define("analysisPart", {
+module.exports = (sequelize) => {
+  const analysisPart = sequelize.define('analysisPart', {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
 
     description: {
       type: Sequelize.STRING,
-      allowNull: false
+      allowNull: false,
     },
 
     discount: {
       type: Sequelize.STRING,
-      allowNull: true
+      allowNull: true,
     },
 
     effectivePrice: {
       type: Sequelize.STRING,
-      allowNull: true
+      allowNull: true,
     },
 
     finalPrice: {
       type: Sequelize.STRING,
-      allowNull: true
+      allowNull: true,
     },
 
     approved: {
       type: Sequelize.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
     },
 
     responsibleUser: {
       type: Sequelize.STRING,
-      allowNull: false
-    }
-  });
+      allowNull: false,
+    },
+  })
 
   // analysisPart.associate = (models) => {
   //   analysisPart.belongsTo(models.part)
   // }
 
-  return analysisPart;
-};
+  return analysisPart
+}

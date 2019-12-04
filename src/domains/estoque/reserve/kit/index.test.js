@@ -45,7 +45,6 @@ describe('kitDomain', () => {
     await technicianDomain.add(technicianMock)
 
     const mark = {
-      manufacturer: 'HONDA',
       mark: 'HONDA',
       responsibleUser: 'modrp',
     }

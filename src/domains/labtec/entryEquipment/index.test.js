@@ -16,8 +16,6 @@
 // const equipDomain = new EquipDomain()
 
 describe('entryEquipmentDomain', () => {
-
-
   test('true', () => {
     expect(true).toBe(true)
   })

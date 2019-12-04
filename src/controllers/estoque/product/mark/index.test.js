@@ -7,7 +7,6 @@ describe('markController', () => {
 
   beforeAll(async () => {
     markMock = {
-      manufacturer: 'TESTE6',
       mark: 'TESTE6',
       responsibleUser: 'modrp',
     }
@@ -36,7 +35,6 @@ describe('markController', () => {
     expect(statusCode).toBe(200)
     expect(body.mark).toBe(markMock.mark)
     expect(body.responsibleUser).toBe(markMock.responsibleUser)
-    expect(body.manufacturer.manufacturer).toBe(markMock.manufacturer)
   })
 
   test('getAll', async () => {

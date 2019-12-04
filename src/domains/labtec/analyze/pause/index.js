@@ -56,7 +56,6 @@ module.exports = class PauseDomain {
 
     const response = await Pause.findByPk(pauseCreated.id, { transaction })
 
-    // console.log(JSON.stringify(response))
     return response
   }
 }

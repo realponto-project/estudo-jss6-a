@@ -1,7 +1,7 @@
-'use strict';
+
 
 module.exports = {
-  up: (queryInterface, Sequelize) => queryInterface.bulkInsert('user', [{
+  up: queryInterface => queryInterface.bulkInsert('user', [{
     id: '5bb177b7-0a9e-4d03-bf03-844d4e05763e',
     username: 'modrp',
     customized: false,
@@ -13,5 +13,5 @@ module.exports = {
     updatedAt: new Date(),
   }], {}),
 
-  down: (queryInterface, Sequelize) => queryInterface.bulkDelete('user', null, {}),
+  down: queryInterface => queryInterface.bulkDelete('user', null, {}),
 }

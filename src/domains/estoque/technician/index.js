@@ -7,7 +7,6 @@ const database = require('../../../database')
 const { FieldValidationError } = require('../../../helpers/errors')
 
 // const Mark = database.model('mark')
-// const Manufacturer = database.model('manufacturer')
 const Car = database.model('car')
 const Technician = database.model('technician')
 const Kit = database.model('kit')
@@ -158,8 +157,6 @@ module.exports = class TechnicianDomain {
       include: [{ model: Car }],
       transaction,
     })
-
-    console.log(JSON.parse(JSON.stringify(oldTechnician)))
 
     // throw new FieldValidationError()
 
@@ -389,7 +386,6 @@ module.exports = class TechnicianDomain {
 
     const { rows } = technical
 
-    // console.log(JSON.parse(JSON.stringify(rows.cars)))
 
     if (rows.length === 0) {
       return {

@@ -14,7 +14,6 @@ const equipModelDomain = new EquipModelDomain()
 describe('productDomain', () => {
   beforeAll(async () => {
     const mark = {
-      manufacturer: 'HDR',
       mark: 'HRD',
       responsibleUser: 'modrp',
     }

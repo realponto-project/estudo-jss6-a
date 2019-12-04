@@ -159,7 +159,6 @@ module.exports = class ProcessDomain {
 
     const { rows } = process
 
-    // console.log(JSON.stringify(rows))
 
     if (rows.length === 0) {
       return {
@@ -170,7 +169,6 @@ module.exports = class ProcessDomain {
       }
     }
 
-    // console.log(JSON.stringify(rows))
 
     const formatDateFunct = (date) => {
       moment.locale('pt-br')

@@ -15,7 +15,6 @@ const Entrance = database.model('entrance')
 const Product = database.model('product')
 const User = database.model('user')
 const Mark = database.model('mark')
-const Manufacturer = database.model('manufacturer')
 // const Part = database.model('part')
 // const EquipModel = database.model('equipModel')
 const StockBase = database.model('stockBase')
@@ -651,7 +650,6 @@ module.exports = class TechnicianDomain {
       pageResponse,
     } = formatQuery(newQuery)
 
-    // console.log(getWhere('part'))
 
     const entrances = await Entrance.findAndCountAll({
       where: getWhere('entrance'),
@@ -665,9 +663,6 @@ module.exports = class TechnicianDomain {
           include: [
             {
               model: Mark,
-              include: [{
-                model: Manufacturer,
-              }],
             },
           ],
           // or: true,
@@ -682,7 +677,6 @@ module.exports = class TechnicianDomain {
       transaction,
     })
 
-    // console.log(JSON.parse(JSON.stringify(entrances)))
 
     const { rows } = entrances
 
@@ -722,15 +716,14 @@ module.exports = class TechnicianDomain {
           minimumStock: entrance.product.minimumStock,
           amount: entrance.product.amount,
           mark: entrance.product.mark.mark,
-          manufacturer: entrance.product.mark.manufacturer.manufacturer,
           // eslint-disable-next-line max-len
           name: entrance.product.name,
           createdAtNotFormatted: entrance.createdAt,
           createdAt: formatDateFunct(entrance.createdAt),
         }
-        // console.log(JSON.parse(JSON.stringify(entrance.product)))
         return resp
       }
+      return ''
     })
 
     const entrancesList = formatData(rows)
@@ -751,8 +744,6 @@ module.exports = class TechnicianDomain {
       rows: entrancesList,
     }
 
-    // console.log(response.count)
-    // console.log(entrancesList.length)
 
     return response
   }

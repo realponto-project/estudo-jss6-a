@@ -7,6 +7,7 @@ const MarkDomain = require('../../../product/mark')
 const ProductDomain = require('../../../product')
 const CompanyDomain = require('../../../../general/company')
 const EntranceDomain = require('../../../entrance')
+const OsDomain = require('../../os')
 const KitDomain = require('../')
 
 const database = require('../../../../../database')
@@ -19,14 +20,17 @@ const markDomain = new MarkDomain()
 const productDomain = new ProductDomain()
 const companyDomain = new CompanyDomain()
 const entranceDomain = new EntranceDomain()
+const osDomain = new OsDomain()
 const kitDomain = new KitDomain()
 
+const Kit = database.model('kit')
 const KitParts = database.model('kitParts')
 const ProductBase = database.model('productBase')
 const StockBase = database.model('stockBase')
 
 describe('kitOutDomain', () => {
   let kitParts = null
+  let reserveOs = null
 
   beforeAll(async () => {
     const carMock = {
@@ -44,10 +48,9 @@ describe('kitOutDomain', () => {
       external: true,
     }
 
-    await technicianDomain.add(technicianMock)
+    const technicianCreated = await technicianDomain.add(technicianMock)
 
     const mark = {
-      manufacturer: 'KONOHA',
       mark: 'KONOHA',
       responsibleUser: 'modrp',
     }
@@ -104,15 +107,37 @@ describe('kitOutDomain', () => {
     })
 
     const reserveMock = {
-      kitParts: [{
-        productBaseId: productBase.id,
-        amount: '5',
-      }],
+      kitParts: [
+        {
+          productBaseId: productBase.id,
+          amount: '5',
+        },
+      ],
     }
 
     await kitDomain.add(reserveMock)
 
-    kitParts = await KitParts.findOne({ transaction: null })
+    kitParts = await KitParts.findOne({
+      include: [{
+        model: Kit,
+        where: { technicianId: technicianCreated.id },
+      }],
+      transaction: null,
+    })
+
+    const reserveMockOs = {
+      razaoSocial: 'test Company kitout',
+      cnpj: '47629199000185',
+      date: new Date(2019, 10, 23),
+      technicianId: technicianCreated.id,
+      osParts: [
+        {
+          productBaseId: productBase.id,
+          amount: '1',
+        },
+      ],
+    }
+    reserveOs = await osDomain.add(reserveMockOs)
   })
 
   test('reserva kitOut', async () => {
@@ -129,7 +154,7 @@ describe('kitOutDomain', () => {
       reposicao: '3',
       expedicao: '2',
       perda: '1',
-      os: '1',
+      os: reserveOs.os,
       kitPartId: kitParts.id,
     }
 

@@ -25,9 +25,7 @@ module.exports = class NotificationDomain {
     }
 
     const {
-      getWhere,
       limit,
-      offset,
       pageResponse,
     } = formatQuery(newQuery)
 

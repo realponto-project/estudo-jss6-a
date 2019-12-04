@@ -43,7 +43,6 @@ class LoginDomain {
 
     const checkPwd = await login.checkPassword(password)
 
-    // console.log(checkPwd)
 
     // const checkPwd = await bcrypt.compare(password, login.password)
 

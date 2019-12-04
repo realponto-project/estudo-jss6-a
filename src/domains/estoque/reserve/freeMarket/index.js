@@ -157,8 +157,6 @@ module.exports = class FreeMarketDomain {
           transaction,
         })
 
-        // console.log(JSON.parse(JSON.stringify(productBase)))
-
         if (productBase.product.serial) {
           const { serialNumberArray } = item
 
@@ -342,8 +340,6 @@ module.exports = class FreeMarketDomain {
       count: freeMarket.count,
       rows: freeMarketList,
     }
-
-    // console.log(response)
 
     return response
   }

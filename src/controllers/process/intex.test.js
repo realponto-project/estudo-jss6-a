@@ -11,8 +11,6 @@
 // const equipDomain = new EquipDomain()
 
 describe('processcontroller', () => {
-
-
   test('true', () => {
     expect(true).toBe(true)
   })

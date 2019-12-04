@@ -110,7 +110,6 @@ describe('entryEquipmentControllers', () => {
   //   }
   // })
 
-
   test('true', () => {
     expect(true).toBe(true)
   })

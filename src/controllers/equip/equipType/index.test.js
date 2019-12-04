@@ -53,7 +53,8 @@ describe('equipTypeController', () => {
   })
 
   // test('create', async () => {
-  //   const response = await request().post('/api/equip/equipType/addModel', equipTypeMock, { headers })
+  //   const response = await request().
+  // post('/api/equip/equipType/addModel', equipTypeMock, { headers })
 
   //   const { body, statusCode } = response
 
@@ -71,7 +72,8 @@ describe('equipTypeController', () => {
   //     responsibleUser: 'modrp',
   //   }
 
-  //   const response = await request().post('/api/equip/equipType/addMark', equipMarkMock, { headers })
+  //   const response = await request().
+  // post('/api/equip/equipType/addMark', equipMarkMock, { headers })
 
   //   const { body, statusCode } = response
 
@@ -93,7 +95,8 @@ describe('equipTypeController', () => {
   // })
 
   // test('getAllMarkByType', async () => {
-  //   const response = await request().get('/api/equip/equipType/getAllMarkByType', { headers, params })
+  //   const response = await request()
+  // .get('/api/equip/equipType/getAllMarkByType', { headers, params })
 
   //   const { statusCode } = response
 
@@ -101,7 +104,8 @@ describe('equipTypeController', () => {
   // })
 
   // test('getAllModelByMark', async () => {
-  //   const response = await request().get('/api/equip/equipType/getAllModelByMark', { headers, params })
+  //   const response = await request()
+  // .get('/api/equip/equipType/getAllModelByMark', { headers, params })
 
   //   const { statusCode } = response
 

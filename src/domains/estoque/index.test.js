@@ -17,7 +17,6 @@ const entranceDomain = new EntranceDomain()
 describe('stockDomain', () => {
   beforeAll(async () => {
     const mark = {
-      manufacturer: 'MARCA X',
       mark: 'MARCA X',
       responsibleUser: 'modrp',
     }
@@ -68,7 +67,6 @@ describe('stockDomain', () => {
   test('getAll', async () => {
     const strocks = await stockDomain.getAll()
 
-    // console.log(strocks)
     expect(strocks.rows.length > 0).toBeTruthy()
   })
 })

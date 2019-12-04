@@ -4,7 +4,6 @@ const TypeAccount = require('./typeAccount')
 const userDomain = new UserDomain()
 const typeAccount = new TypeAccount()
 
-
 describe('create user', () => {
   let typeAccountMock = null
 
@@ -41,6 +40,39 @@ describe('create user', () => {
       updateRos: false,
     }
     await typeAccount.add(typeAccountMock)
+
+    const userMock = {
+      username: 'teste01',
+      typeName: 'TECNICO',
+      customized: false,
+      addCompany: true,
+      addPart: true,
+      addAnalyze: true,
+      addEquip: true,
+      addEntry: true,
+      addEquipType: false,
+      tecnico: false,
+      addAccessories: false,
+      addUser: false,
+      addTypeAccount: false,
+      responsibleUser: 'modrp',
+      addTec: false,
+      addCar: false,
+      addMark: false,
+      addType: false,
+      addProd: false,
+      addFonr: false,
+      addEntr: false,
+      addKit: false,
+      addKitOut: false,
+      addOutPut: false,
+      addROs: false,
+      addRML: false,
+      gerROs: false,
+      delROs: false,
+      updateRos: false,
+    }
+    await userDomain.user_Create(userMock)
   })
 
   test('create', async () => {
@@ -246,7 +278,7 @@ describe('create user', () => {
 
   test('getAll', async () => {
     const users = await userDomain.getAll()
-    expect(users.length > 0).toBeTruthy()
+    expect(users.rows.length > 0).toBeTruthy()
   })
 })
 

@@ -27,7 +27,6 @@ describe('etraceController', () => {
     }
 
     const mark = {
-      manufacturer: 'LG',
       mark: 'LG',
       responsibleUser: 'modrp',
     }

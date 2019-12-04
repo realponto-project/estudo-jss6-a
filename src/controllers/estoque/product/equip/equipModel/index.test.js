@@ -2,7 +2,6 @@ const request = require('../../../../../helpers/request')
 
 // const database = require('../../../database')
 
-// const Manufacturer = database.model('manufacturer')
 
 describe('equipModelController', () => {
   let equipTypeMock = null

@@ -49,19 +49,15 @@ module.exports = class KitDomain {
       transaction,
     })
 
-    // console.log(bodyData)
-
-    // console.log(JSON.parse(JSON.stringify(technicial)))
-
     const oldKit = await Kit.findAll({
-      include: [{
-        model: Technician,
-        // required: true,
-      }],
+      include: [
+        {
+          model: Technician,
+          // required: true,
+        },
+      ],
       transaction,
     })
-
-    // console.log(JSON.parse(JSON.stringify(oldKit)))
 
     let count = {}
     let count1 = {}
@@ -74,32 +70,35 @@ module.exports = class KitDomain {
           transaction,
         })
 
-        // console.log(JSON.parse(JSON.stringify(oldKitParts)))
-
         const kitPartsDeletePromises = oldKitParts.map(async (item) => {
           if (itemOldKit.technicianId) {
-            const productBase = await ProductBase.findByPk(item.productBaseId, { transaction })
-
-            // console.log(JSON.parse(JSON.stringify(productBase)))
+            const productBase = await ProductBase.findByPk(item.productBaseId, {
+              transaction,
+            })
 
             count = {
               ...count,
-              [item.productBaseId]: count[item.productBaseId] ? count[item.productBaseId] : 0,
+              [item.productBaseId]: count[item.productBaseId]
+                ? count[item.productBaseId]
+                : 0,
             }
 
             count[item.productBaseId] += parseInt(item.amount, 10)
 
-            // console.log(JSON.parse(JSON.stringify(item)))
-
-            // console.log(count)
-
             const productBaseUpdate = {
               ...productBase,
-              available: (parseInt(productBase.available, 10) + count[item.productBaseId]).toString(),
-              reserved: (parseInt(productBase.reserved, 10) - count[item.productBaseId]).toString(),
+              available: (
+                parseInt(productBase.available, 10) + count[item.productBaseId]
+              ).toString(),
+              reserved: (
+                parseInt(productBase.reserved, 10) - count[item.productBaseId]
+              ).toString(),
             }
 
-            if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.reserved, 10) < 0) {
+            if (
+              parseInt(productBaseUpdate.available, 10) < 0
+              || parseInt(productBaseUpdate.reserved, 10) < 0
+            ) {
               field.productBaseUpdate = true
               message.productBaseUpdate = 'Número negativo não é valido'
               throw new FieldValidationError([{ field, message }])
@@ -118,13 +117,17 @@ module.exports = class KitDomain {
     }
 
     const kitCreatedPromise = technicial.map(async (itemTec) => {
-      const kitCreated = await Kit.create({ technicianId: itemTec.id }, { transaction })
+      const kitCreated = await Kit.create(
+        { technicianId: itemTec.id },
+        { transaction },
+      )
 
       if (bodyHasProp('kitParts')) {
         const { kitParts } = bodyData
 
         const kitPartsCreattedPromises = kitParts.map(async (item) => {
           const productBase = await ProductBase.findByPk(item.productBaseId, {
+            include: [Product],
             transaction,
           })
 
@@ -138,27 +141,42 @@ module.exports = class KitDomain {
 
           count1 = {
             ...count1,
-            [item.productBaseId]: count1[item.productBaseId] ? count1[item.productBaseId] : 0,
+            [item.productBaseId]: count1[item.productBaseId]
+              ? count1[item.productBaseId]
+              : 0,
           }
 
           count1[item.productBaseId] += parseInt(item.amount, 10)
 
           const productBaseUpdate = {
             ...productBase,
-            available: (parseInt(productBase.available, 10) - count1[item.productBaseId]).toString(),
-            reserved: (parseInt(productBase.reserved, 10) + count1[item.productBaseId]).toString(),
+            available: (
+              parseInt(productBase.available, 10) - count1[item.productBaseId]
+            ).toString(),
+            reserved: (
+              parseInt(productBase.reserved, 10) + count1[item.productBaseId]
+            ).toString(),
           }
 
-          if (parseInt(productBaseUpdate.available, 10) < 0 || parseInt(productBaseUpdate.available, 10) < 0) {
+          if (
+            parseInt(productBaseUpdate.available, 10) < 0
+            || parseInt(productBaseUpdate.available, 10) < 0
+          ) {
             field.productBaseUpdate = true
             message.productBaseUpdate = 'Número negativo não é valido'
             throw new FieldValidationError([{ field, message }])
           }
 
-          if (parseInt(productBaseUpdate.available, 10) < parseInt(productBase.product.minimumStock, 10)) {
+          if (
+            parseInt(productBaseUpdate.available, 10)
+            < parseInt(productBase.product.minimumStock, 10)
+          ) {
             const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
 
-            await Notification.create({ message: messageNotification }, { transaction })
+            await Notification.create(
+              { message: messageNotification },
+              { transaction },
+            )
           }
 
           await productBase.update(productBaseUpdate, { transaction })
@@ -192,9 +210,11 @@ module.exports = class KitDomain {
     }
 
     const response = await Kit.findAll({
-      include: [{
-        model: Product,
-      }],
+      include: [
+        {
+          model: Product,
+        },
+      ],
       transaction,
     })
 
@@ -211,7 +231,7 @@ module.exports = class KitDomain {
     const { query = null, transaction = null } = options
 
     const newQuery = Object.assign({}, query)
-    const newOrder = (query && query.order) ? query.order : inicialOrder
+    const newOrder = query && query.order ? query.order : inicialOrder
 
     if (newOrder.acendent) {
       newOrder.direction = 'DESC'
@@ -220,14 +240,8 @@ module.exports = class KitDomain {
     }
 
     const {
-      getWhere,
-      limit,
-      offset,
-      pageResponse,
+      getWhere, limit, offset, pageResponse,
     } = formatQuery(newQuery)
-
-    // console.log(newQuery.filters.technician.specific.name)
-    // console.log(getWhere('entrance'))
 
     const entrances = await KitParts.findAndCountAll({
       where: getWhere('kitParts'),
@@ -247,21 +261,23 @@ module.exports = class KitDomain {
           include: [
             {
               model: Technician,
-              where: { name: { [operators.eq]: newQuery.filters.technician.specific.name } },
+              where: newQuery.filters && {
+                name: {
+                  [operators.eq]:
+                    newQuery.filters
+                    && newQuery.filters.technician.specific.name,
+                },
+              },
             },
           ],
           required: true,
         },
       ],
-      order: [
-        [newOrder.field, newOrder.direction],
-      ],
+      order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
       transaction,
     })
-
-    // console.log(JSON.parse(JSON.stringify(entrances.rows)))
 
     const { rows } = entrances
 
@@ -296,10 +312,11 @@ module.exports = class KitDomain {
         // minimumStock: entrance.product.minimumStock,
         // amount: entrance.product.amount,
         // mark: entrance.product.mark.mark,
-        // manufacturer: entrance.product.mark.manufacturer.manufacturer,
         // // eslint-disable-next-line max-len
         name: entrance.productBase ? entrance.productBase.product.name : null,
-        quantMax: entrance.productBase ? parseInt(entrance.productBase.available, 10) : null,
+        quantMax: entrance.productBase
+          ? parseInt(entrance.productBase.available, 10)
+          : null,
         updatedAt: formatDateFunct(entrance.updatedAt),
       }
       return resp
@@ -323,7 +340,6 @@ module.exports = class KitDomain {
       rows: entrancesList,
     }
 
-    // console.log(response)
 
     return response
   }
@@ -338,7 +354,7 @@ module.exports = class KitDomain {
     const { query = null, transaction = null } = options
 
     const newQuery = Object.assign({}, query)
-    const newOrder = (query && query.order) ? query.order : inicialOrder
+    const newOrder = query && query.order ? query.order : inicialOrder
 
     if (newOrder.acendent) {
       newOrder.direction = 'DESC'
@@ -347,14 +363,8 @@ module.exports = class KitDomain {
     }
 
     const {
-      getWhere,
-      limit,
-      offset,
-      pageResponse,
+      getWhere, limit, offset, pageResponse,
     } = formatQuery(newQuery)
-
-    // console.log(query)
-    // console.log(getWhere('entrance'))
 
     const kitParts = await KitParts.findAndCountAll({
       where: getWhere('kitParts'),
@@ -375,16 +385,11 @@ module.exports = class KitDomain {
           required: true,
         },
       ],
-      order: [
-        [newOrder.field, newOrder.direction],
-      ],
+      order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
       transaction,
     })
-
-    // console.log(JSON.parse(JSON.stringify(kitParts)))
-    // console.log(JSON.parse(JSON.stringify(kitParts.rows)))
 
     const { rows } = kitParts
 
@@ -412,7 +417,6 @@ module.exports = class KitDomain {
         // minimumStock: kitPart.product.minimumStock,
         // amount: kitPart.product.amount,
         // mark: kitPart.product.mark.mark,
-        // manufacturer: kitPart.product.mark.manufacturer.manufacturer,
         // // eslint-disable-next-line max-len
         // createdAt: formatDateFunct(kitPart.createdAt),
       }
@@ -436,8 +440,6 @@ module.exports = class KitDomain {
       count: kitParts.count,
       rows: kitPartsList,
     }
-
-    // console.log(response)
 
     return response
   }

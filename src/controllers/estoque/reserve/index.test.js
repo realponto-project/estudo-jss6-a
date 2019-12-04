@@ -2,17 +2,18 @@ const request = require('../../../helpers/request')
 
 const database = require('../../../database')
 
+const Kit = database.model('kit')
 const KitParts = database.model('kitParts')
 const ProductBase = database.model('productBase')
 const StockBase = database.model('stockBase')
 // const { FieldValidationError } = require('../../../helpers/errors')
-
 
 describe('reserveController', () => {
   let headers = null
   let product = null
   let technician = null
   let productBase = null
+  let reserveOs = null
 
   beforeAll(async () => {
     const loginBody = {
@@ -31,7 +32,6 @@ describe('reserveController', () => {
     }
 
     const mark = {
-      manufacturer: 'MI',
       mark: 'MI',
       responsibleUser: 'modrp',
     }
@@ -67,7 +67,9 @@ describe('reserveController', () => {
       relation: 'fornecedor',
     }
 
-    const company = await request().post('/api/company', companyMock, { headers })
+    const company = await request().post('/api/company', companyMock, {
+      headers,
+    })
 
     const entranceMock = {
       amountAdded: '50',
@@ -94,7 +96,9 @@ describe('reserveController', () => {
       external: true,
     }
 
-    technician = await request().post('/api/technician', technicianMock, { headers })
+    technician = await request().post('/api/technician', technicianMock, {
+      headers,
+    })
 
     productBase = await ProductBase.findOne({
       where: {
@@ -103,11 +107,27 @@ describe('reserveController', () => {
       include: [{ model: StockBase, where: { stockBase: 'REALPONTO' } }],
       transacition: null,
     })
+
+    const reserveOsMock = {
+      razaoSocial: 'test Company',
+      cnpj: '47629199000185',
+      date: new Date(2019, 10, 23),
+      technicianId: technician.body.id,
+      osParts: [
+        {
+          productBaseId: productBase.id,
+          amount: '1',
+        },
+      ],
+    }
+
+    reserveOs = await request().post('/api/reserve/OS', reserveOsMock, {
+      headers,
+    })
   })
 
   test('create reserva Os', async () => {
     const reserveMock = {
-      os: '6941652',
       razaoSocial: 'test Company',
       cnpj: '47629199000185',
       date: new Date(2019, 10, 23),
@@ -120,7 +140,9 @@ describe('reserveController', () => {
       ],
     }
 
-    const response = await request().post('/api/reserve/OS', reserveMock, { headers })
+    const response = await request().post('/api/reserve/OS', reserveMock, {
+      headers,
+    })
 
     const { body, statusCode } = response
 
@@ -146,7 +168,11 @@ describe('reserveController', () => {
       ],
     }
 
-    const reserveCreated = await request().post('/api/reserve/OS', reserveMock, { headers })
+    const reserveCreated = await request().post(
+      '/api/reserve/OS',
+      reserveMock,
+      { headers },
+    )
 
     const outputmock = {
       osPartsId: reserveCreated.body.productBases[0].osParts.id,
@@ -155,9 +181,9 @@ describe('reserveController', () => {
       },
     }
 
-    const response = await request().put('/api/reserve/output', outputmock, { headers })
-
-    // console.log(response)
+    const response = await request().put('/api/reserve/output', outputmock, {
+      headers,
+    })
 
 
     const { statusCode } = response
@@ -180,9 +206,14 @@ describe('reserveController', () => {
       ],
     }
 
-    const Os = await request().post('/api/reserve/OS', reserveMock, { headers })
+    const Os = await request().post('/api/reserve/OS', reserveMock, {
+      headers,
+    })
 
-    const response = await request().delete('/api/reserve/OS', { params: { osId: Os.body.id }, headers })
+    const response = await request().delete('/api/reserve/OS', {
+      params: { osId: Os.body.id },
+      headers,
+    })
 
     const { body, statusCode } = response
 
@@ -216,7 +247,6 @@ describe('reserveController', () => {
 
   test('getOsByOs', async () => {
     const reserveMock = {
-      os: '6846384867',
       razaoSocial: 'test Company',
       cnpj: '47629199000185',
       date: new Date(2019, 10, 23),
@@ -229,9 +259,16 @@ describe('reserveController', () => {
       ],
     }
 
-    const reserveOsCreated = await request().post('/api/reserve/OS', reserveMock, { headers })
+    const reserveOsCreated = await request().post(
+      '/api/reserve/OS',
+      reserveMock,
+      { headers },
+    )
 
-    const response = await request().get('/api/reserve/getOsByOs', { headers, params: { os: reserveOsCreated.body.id } })
+    const response = await request().get('/api/reserve/getOsByOs', {
+      headers,
+      params: { os: reserveOsCreated.body.os },
+    })
 
     const { body, statusCode } = response
 
@@ -242,24 +279,29 @@ describe('reserveController', () => {
 
   test('create reserva kit', async () => {
     const reserveMock = {
-      kitParts: [{
-        productBaseId: productBase.id,
-        amount: '2',
-      }],
+      kitParts: [
+        {
+          productBaseId: productBase.id,
+          amount: '2',
+        },
+      ],
     }
 
-    const response = await request().post('/api/reserve/kit', reserveMock, { headers })
+    const response = await request().post('/api/reserve/kit', reserveMock, {
+      headers,
+    })
 
     const { body, statusCode } = response
 
-    // console.log(body)
 
     expect(statusCode).toBe(200)
     expect(body.length > 0).toBe(true)
   })
 
   test('getKitDefaultValue', async () => {
-    const response = await request().get('/api/reserve/kitDefaultValue', { headers })
+    const response = await request().get('/api/reserve/kitDefaultValue', {
+      headers,
+    })
 
     const { statusCode } = response
 
@@ -267,17 +309,25 @@ describe('reserveController', () => {
   })
 
   test('create reserva kitOut', async () => {
-    const kitParts = await KitParts.findOne()
+    const kitParts = await KitParts.findOne({
+      include: [{
+        model: Kit,
+        where: { technicianId: technician.body.id },
+      }],
+      transacition: null,
+    })
 
     const reserveMock = {
       reposicao: '3',
       expedicao: '2',
       perda: '1',
-      os: '945682',
+      os: reserveOs.body.os,
       kitPartId: kitParts.id,
     }
 
-    const response = await request().post('/api/reserve/kitOut', reserveMock, { headers })
+    const response = await request().post('/api/reserve/kitOut', reserveMock, {
+      headers,
+    })
 
     const { body, statusCode } = response
 
@@ -316,7 +366,11 @@ describe('reserveController', () => {
       ],
     }
 
-    const response = await request().post('/api/reserve/freeMarket', reserveMock, { headers })
+    const response = await request().post(
+      '/api/reserve/freeMarket',
+      reserveMock,
+      { headers },
+    )
 
     const { body, statusCode } = response
 
@@ -326,7 +380,9 @@ describe('reserveController', () => {
   })
 
   test('getAllKit', async () => {
-    const response = await request().get('/api/reserve/freeMarket', { headers })
+    const response = await request().get('/api/reserve/freeMarket', {
+      headers,
+    })
 
     const { statusCode } = response
 
