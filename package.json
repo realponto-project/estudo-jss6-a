@@ -46,6 +46,7 @@
     "sequelize-cli": "^5.4.0",
     "uuid": "^3.3.2",
     "validator": "^10.11.0",
+    "web-push": "^3.4.1",
     "yarn": "^1.12.3"
   },
   "devDependencies": {

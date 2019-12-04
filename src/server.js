@@ -1,3 +1,4 @@
+
 require('dotenv').config()
 require('./helpers/loadenv')
 const Express = require('express')
@@ -21,6 +22,30 @@ app.use(bodyParser.json())
 app.use('/oapi', loginRoute)
 app.use('/api', auth, protectRoute)
 
+
+const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
+const privateVapidKey = process.env.PRIVATE_VAPID_KEY;
+
+webpush.setVapidDetails(
+  "mailto:teste@test.com",
+  publicVapidKey,
+  privateVapidKey
+);
+
+app.post("/subscribe", (req, res) => {
+  const subscription = req.body;
+
+  // console.log(req);
+
+  res.status(201).json({});
+
+  const payload = JSON.stringify({ title: "Push Test" });
+
+  webpush
+    .sendNotification(subscription, payload)
+    .catch(err => console.log("sendNotification" + err));
+});
+
 /* error handlers */
 app.use((err, req, res) => {
   //eslint-disable-line
@@ -33,6 +58,8 @@ app.use((err, req, res) => {
   res.status(formattedError.status || 500)
   res.json(formattedError)
 })
+
+// app.post("push-not", (req, res) => {});
 
 databaseHelper.isDatabaseConnected().then(() => {
   const { PORT } = process.env
