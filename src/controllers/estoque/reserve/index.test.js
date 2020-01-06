@@ -126,6 +126,30 @@ describe('reserveController', () => {
     })
   })
 
+  test('create reserva Tecnico interno', async () => {
+    const reserveMock = {
+      razaoSocial: 'test Interno',
+      date: new Date(),
+      technicianId: technician.body.id,
+      technicianReserveParts: [
+        {
+          productBaseId: productBase.id,
+          amount: '1',
+        },
+      ],
+    }
+
+    const response = await request().post('/api/reserve/RInterno', reserveMock, {
+      headers,
+    })
+
+    const { body, statusCode } = response
+
+    expect(statusCode).toBe(200)
+    expect(body.razaoSocial).toBe(reserveMock.razaoSocial)
+  })
+
+
   test('create reserva Os', async () => {
     const reserveMock = {
       razaoSocial: 'test Company',
@@ -259,7 +283,7 @@ describe('reserveController', () => {
       ],
     }
 
-    const reserveOsCreated = await request().post(
+    await request().post(
       '/api/reserve/OS',
       reserveMock,
       { headers },
@@ -267,7 +291,7 @@ describe('reserveController', () => {
 
     const response = await request().get('/api/reserve/getOsByOs', {
       headers,
-      params: { os: reserveOsCreated.body.os },
+      params: { os: reserveMock.razaoSocial },
     })
 
     const { body, statusCode } = response
@@ -351,12 +375,6 @@ describe('reserveController', () => {
     const reserveMock = {
       trackingCode: 'AA123456789BR',
       name: 'TEST',
-      zipCode: '09930210',
-      state: 'SP',
-      city: 'SAO PAULO',
-      neighborhood: 'TABOAO',
-      street: 'PARAMARIBO',
-      number: '215',
       cnpjOrCpf: '46700988888',
       freeMarketParts: [
         {

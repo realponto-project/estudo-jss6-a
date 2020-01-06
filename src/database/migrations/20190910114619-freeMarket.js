@@ -19,50 +19,6 @@ module.exports = {
         allowNull: false,
       },
 
-      zipCode: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        set(oldValue) {
-          // eslint-disable-next-line no-useless-escape
-          const newValue = oldValue.replace(/\.|-/gi, '')
-          this.setDataValue('zipCode', newValue)
-        },
-      },
-
-      state: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-
-      city: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-
-      neighborhood: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-
-      street: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-
-      number: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-
-      complement: {
-        type: Sequelize.STRING,
-      },
-
-
-      referencePoint: {
-        type: Sequelize.STRING,
-      },
-
       cnpjOrCpf: {
         type: Sequelize.STRING,
         allowNull: true,

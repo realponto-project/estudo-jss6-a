@@ -4,12 +4,27 @@ const OsDomain = require('../../../domains/estoque/reserve/os')
 const KitDomain = require('../../../domains/estoque/reserve/kit')
 const KitOutDomain = require('../../../domains/estoque/reserve/kit/kitOut')
 const FreeMarketDomain = require('../../../domains/estoque/reserve/freeMarket')
+const TechnicianReserveDomain = require('../../../domains/estoque/reserve/technician');
 const database = require('../../../database')
 
 const osDomain = new OsDomain()
 const kitDomain = new KitDomain()
 const kitOutDomain = new KitOutDomain()
 const freeMarketDomain = new FreeMarketDomain()
+const technicianReserveDomain = new TechnicianReserveDomain()
+
+const addRInterno = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const technicianReserve = await technicianReserveDomain.add(req.body, { transaction })
+
+    await transaction.commit()
+    res.json(technicianReserve)
+  } catch (error) {
+    await transaction.rollback()
+    next(error)
+  }
+}
 
 const addOs = async (req, res, next) => {
   const transaction = await database.transaction()
@@ -220,6 +235,7 @@ const getOsByOs = async (req, res, next) => {
 }
 
 module.exports = {
+  addRInterno,
   addOs,
   output,
   updateOs,

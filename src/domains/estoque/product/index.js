@@ -74,7 +74,7 @@ module.exports = class ProductDomain {
     } else if (
       product.category !== 'peca'
       && product.category !== 'equipamento'
-      && product.category !== 'outros'
+      && product.category !== 'acessorios'
     ) {
       errors = true
       field.category = true
@@ -238,7 +238,7 @@ module.exports = class ProductDomain {
     } else if (
       product.category !== 'peca'
       && product.category !== 'equipamento'
-      && product.category !== 'outros'
+      && product.category !== 'acessorios'
     ) {
       errors = true
       field.category = true
@@ -502,7 +502,7 @@ module.exports = class ProductDomain {
             category: { [operators.eq]: 'peca' },
           },
           {
-            category: { [operators.eq]: 'outros' },
+            category: { [operators.eq]: 'acessorios' },
           },
         ],
       }

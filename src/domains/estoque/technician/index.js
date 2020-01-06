@@ -441,6 +441,10 @@ module.exports = class TechnicianDomain {
 
     const technician = await Technician.findAll({
       where: newQuery,
+      include: [{
+        model: Car,
+        attributes: ['plate'],
+      }],
       attributes: ['id', 'name'],
       order: [
         ['name', 'ASC'],

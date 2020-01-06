@@ -1,4 +1,3 @@
-
 const login = require('./general/user/login')
 const resources = require('./general/user/resources')
 const session = require('./general/user/session')
@@ -25,6 +24,8 @@ const os = require('./estoque/reserve/os')
 const osParts = require('./estoque/reserve/osParts')
 const stockBase = require('./estoque/stockBase')
 const technician = require('./estoque/technician')
+const technicianReserve = require('./estoque/reserve/technicianReserve')
+const technicianReserveParts = require('./estoque/reserve/technicianReserveParts')
 const productBase = require('./estoque/stockBase/productBase')
 
 const analyze = require('./labtec/analyze')
@@ -35,7 +36,6 @@ const process = require('./labtec/process')
 const time = require('./labtec/process/time')
 
 module.exports = [
-
   login,
   resources,
   session,
@@ -62,6 +62,8 @@ module.exports = [
   osParts,
   stockBase,
   technician,
+  technicianReserve,
+  technicianReserveParts,
   productBase,
 
   analyze,

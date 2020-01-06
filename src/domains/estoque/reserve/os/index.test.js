@@ -183,7 +183,6 @@ describe('reserveOsDomain', () => {
 
   test('getAll', async () => {
     const reserveMock = {
-      os: '3463846441',
       razaoSocial: 'test Company',
       cnpj: '47629199000185',
       date: new Date(2019, 10, 23),
@@ -196,9 +195,9 @@ describe('reserveOsDomain', () => {
       ],
     }
 
-    const reserveOsCreated = await osDomain.add(reserveMock)
+    await osDomain.add(reserveMock)
 
-    const os = await osDomain.getOsByOs(reserveOsCreated.id)
+    const os = await osDomain.getOsByOs(reserveMock.razaoSocial)
 
     expect(os).toBeTruthy()
   })

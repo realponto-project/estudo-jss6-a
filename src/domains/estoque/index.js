@@ -46,7 +46,7 @@ module.exports = class StockDomain {
       include: [
         {
           model: Product,
-          attributes: ['name', 'category'],
+          attributes: ['name', 'category', 'minimumStock'],
           where: getWhere('product'),
           // order: [
           //   ['name', 'ASC'],
@@ -54,7 +54,7 @@ module.exports = class StockDomain {
           include: [
             {
               model: Mark,
-              attributes: [],
+              attributes: ['mark'],
               required: true,
             },
           ],
@@ -100,8 +100,9 @@ module.exports = class StockDomain {
         available: entrance.available,
         name: entrance.product.name,
         category: entrance.product.category,
+        minimumStock: entrance.product.minimumStock,
+        manufacturer: entrance.product.mark.mark,
         stockBase: entrance.stockBase.stockBase,
-        // oldAmount: entrance.oldAmount,
       }
       return resp
     })
@@ -141,9 +142,7 @@ module.exports = class StockDomain {
       newOrder.direction = 'ASC'
     }
 
-    const {
-      limit, offset, pageResponse,
-    } = formatQuery(newQuery)
+    const { limit, offset, pageResponse } = formatQuery(newQuery)
 
     const notifications = await Notification.findAndCountAll({
       // attributes: ['id', 'amount', 'available'],

@@ -968,7 +968,7 @@ module.exports = class OsDomain {
     return response
   }
 
-  async getOsByOs(os, options = {}) {
+  async getOsByOs(razaoSocial, options = {}) {
     const { transaction = null } = options
 
     const formatDateFunct = (date) => {
@@ -978,7 +978,7 @@ module.exports = class OsDomain {
     }
 
     const osReturn = await Os.findOne({
-      where: { os },
+      where: { razaoSocial },
       include: [
         {
           model: Technician,

@@ -14,7 +14,7 @@ module.exports = {
       },
 
       category: {
-        type: Sequelize.ENUM(['peca', 'equipamento', 'outros']),
+        type: Sequelize.ENUM(['peca', 'equipamento', 'acessorios']),
         allowNull: false,
       },
 
