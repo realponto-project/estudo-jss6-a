@@ -23,28 +23,28 @@ app.use('/oapi', loginRoute)
 app.use('/api', auth, protectRoute)
 
 
-const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
-const privateVapidKey = process.env.PRIVATE_VAPID_KEY;
+// const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
+// const privateVapidKey = process.env.PRIVATE_VAPID_KEY;
 
-webpush.setVapidDetails(
-  "mailto:teste@test.com",
-  publicVapidKey,
-  privateVapidKey
-);
+// webpush.setVapidDetails(
+//   "mailto:teste@test.com",
+//   publicVapidKey,
+//   privateVapidKey
+// );
 
-app.post("/subscribe", (req, res) => {
-  const subscription = req.body;
+// app.post("/subscribe", (req, res) => {
+//   const subscription = req.body;
 
-  // console.log(req);
+//   // console.log(req);
 
-  res.status(201).json({});
+//   res.status(201).json({});
 
-  const payload = JSON.stringify({ title: "Push Test" });
+//   const payload = JSON.stringify({ title: "Push Test" });
 
-  webpush
-    .sendNotification(subscription, payload)
-    .catch(err => console.log("sendNotification" + err));
-});
+//   webpush
+//     .sendNotification(subscription, payload)
+//     .catch(err => console.log("sendNotification" + err));
+// });
 
 /* error handlers */
 app.use((err, req, res) => {

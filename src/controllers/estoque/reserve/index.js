@@ -4,7 +4,8 @@ const OsDomain = require('../../../domains/estoque/reserve/os')
 const KitDomain = require('../../../domains/estoque/reserve/kit')
 const KitOutDomain = require('../../../domains/estoque/reserve/kit/kitOut')
 const FreeMarketDomain = require('../../../domains/estoque/reserve/freeMarket')
-const TechnicianReserveDomain = require('../../../domains/estoque/reserve/technician');
+const TechnicianReserveDomain = require('../../../domains/estoque/reserve/technician')
+const StatusExpeditionDomain = require('../../../domains/estoque/reserve/os/statusExpedition')
 const database = require('../../../database')
 
 const osDomain = new OsDomain()
@@ -12,6 +13,7 @@ const kitDomain = new KitDomain()
 const kitOutDomain = new KitOutDomain()
 const freeMarketDomain = new FreeMarketDomain()
 const technicianReserveDomain = new TechnicianReserveDomain()
+const statusExpeditionDomain = new StatusExpeditionDomain()
 
 const addRInterno = async (req, res, next) => {
   const transaction = await database.transaction()
@@ -234,6 +236,66 @@ const getOsByOs = async (req, res, next) => {
   }
 }
 
+const addStatusExpedition = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const status = await statusExpeditionDomain.add(req.body, { transaction })
+
+    await transaction.commit()
+    res.json(status)
+  } catch (error) {
+    await transaction.rollback()
+    next(error)
+  }
+}
+
+const updateStatusExpedition = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const status = await statusExpeditionDomain.update(req.body, { transaction })
+
+    await transaction.commit()
+    res.json(status)
+  } catch (error) {
+    await transaction.rollback()
+    next(error)
+  }
+}
+
+
+const deleteStatusExpedition = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    const status = await statusExpeditionDomain.delete(req.query.id, { transaction })
+
+    await transaction.commit()
+    res.json(status)
+  } catch (error) {
+    await transaction.rollback()
+    next(error)
+  }
+}
+
+const getAllStatusExpedition = async (req, res, next) => {
+  const transaction = await database.transaction()
+  try {
+    let query
+    if (R.has('query', req)) {
+      if (R.has('query', req.query)) {
+        query = JSON.parse(req.query.query)
+      }
+    }
+
+    const entrances = await statusExpeditionDomain.getAll({ query, transaction })
+
+    await transaction.commit()
+    res.json(entrances)
+  } catch (error) {
+    await transaction.rollback()
+    next()
+  }
+}
+
 module.exports = {
   addRInterno,
   addOs,
@@ -249,5 +311,9 @@ module.exports = {
   getAllFreeMarket,
   getAllOs,
   getOsByOs,
-//   getAll,
+  addStatusExpedition,
+  updateStatusExpedition,
+  deleteStatusExpedition,
+  getAllStatusExpedition,
+  //   getAll,
 }

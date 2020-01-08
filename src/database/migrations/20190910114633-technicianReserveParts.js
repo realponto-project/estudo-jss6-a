@@ -1,7 +1,7 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    const osParts = queryInterface.createTable('osParts', {
+    const technicianReserveParts = queryInterface.createTable('technicianReserveParts', {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -13,20 +13,6 @@ module.exports = {
         allowNull: false,
       },
 
-      return: {
-        type: Sequelize.STRING,
-        defaultValue: '0',
-      },
-
-      output: {
-        type: Sequelize.STRING,
-        defaultValue: '0',
-      },
-
-      missOut: {
-        type: Sequelize.STRING,
-        defaultValue: '0',
-      },
       createdAt: {
         defaultValue: Sequelize.NOW,
         type: Sequelize.DATE,
@@ -41,7 +27,8 @@ module.exports = {
         defaultValue: null,
         type: Sequelize.DATE,
       },
-      oId: {
+
+      technicianReserveId: {
         type: Sequelize.UUID,
         references: {
           model: 'os',
@@ -65,25 +52,15 @@ module.exports = {
         },
         allowNull: true,
       },
-
-      statusExpeditionId: {
-        type: Sequelize.UUID,
-        references: {
-          model: 'statusExpedition',
-          key: 'id',
-        },
-        allowNull: true,
-      },
     })
 
-    osParts.associate = (models) => {
-      // osParts.belongsTo(models.product)
-      osParts.belongsTo(models.os)
-      osParts.belongsTo(models.productBase)
+    technicianReserveParts.associate = (models) => {
+      technicianReserveParts.belongsTo(models.product)
+      technicianReserveParts.belongsTo(models.technicianReserve)
+      technicianReserveParts.belongsTo(models.productBase)
     }
-
-    return osParts
+    return technicianReserveParts
   },
 
-  down: queryInterface => queryInterface.dropTable('osParts'),
+  down: queryInterface => queryInterface.dropTable('technicianReserveParts'),
 }

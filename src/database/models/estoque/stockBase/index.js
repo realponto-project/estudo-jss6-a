@@ -1,22 +1,27 @@
-const Sequelize = require('sequelize')
+const Sequelize = require("sequelize");
 
-module.exports = (sequelize) => {
-  const stockBase = sequelize.define('stockBase', {
+module.exports = sequelize => {
+  const stockBase = sequelize.define("stockBase", {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
-      primaryKey: true,
+      primaryKey: true
     },
 
     stockBase: {
-      type: Sequelize.ENUM(['REALPONTO', 'NOVAREAL', 'PONTOREAL']),
-      allowNull: false,
-    },
-  })
+      type: Sequelize.ENUM([
+        "REALPONTO",
+        "NOVAREAL",
+        "PONTOREAL",
+        "EMPRESTIMO"
+      ]),
+      allowNull: false
+    }
+  });
 
-  stockBase.associate = (models) => {
-    stockBase.belongsToMany(models.product, { through: 'productBase' })
-  }
+  stockBase.associate = models => {
+    stockBase.belongsToMany(models.product, { through: "productBase" });
+  };
 
-  return stockBase
-}
+  return stockBase;
+};
