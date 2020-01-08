@@ -1,68 +1,76 @@
 /* eslint-disable array-callback-return */
-const R = require('ramda')
+const R = require("ramda");
 // const moment = require('moment')
 // const Sequelize = require('sequelize')
 
 // const { Op: operators } = Sequelize
 // const { Op: operators } = Sequelize
 
-const formatQuery = require('../../../../helpers/lazyLoad')
+const formatQuery = require("../../../../helpers/lazyLoad");
 
-const database = require('../../../../database')
+const database = require("../../../../database");
 
-const { FieldValidationError } = require('../../../../helpers/errors')
+const { FieldValidationError } = require("../../../../helpers/errors");
 
 // const EquipModel = database.model('equipModel')
 // const EquipMark = database.model('equipMark')
 // const EquipType = database.model('equipType')
 // const EquipModel = database.model('equipModel')
-const Product = database.model('product')
-const ProductBase = database.model('productBase')
-const Company = database.model('company')
-const Equip = database.model('equip')
-const User = database.model('user')
-const OsParts = database.model('osParts')
-const Os = database.model('os')
-const FreeMarketParts = database.model('freeMarketParts')
-const FreeMarket = database.model('freeMarket')
-
+const Product = database.model("product");
+const ProductBase = database.model("productBase");
+const Company = database.model("company");
+const Equip = database.model("equip");
+const User = database.model("user");
+const OsParts = database.model("osParts");
+const Os = database.model("os");
+const FreeMarketParts = database.model("freeMarketParts");
+const FreeMarket = database.model("freeMarket");
+const StockBase = database.model("stockBase");
 
 module.exports = class EquipDomain {
   async add(bodyData, options = {}) {
-    const { transaction = null } = options
+    const { transaction = null } = options;
 
-    const equip = R.omit(['id'], bodyData)
+    const equip = R.omit(
+      ["id", "productId", "stockBase", "serialNumbers"],
+      bodyData
+    );
 
-    const equipNotHasProp = prop => R.not(R.has(prop, equip))
+    const equipNotHasProp = prop => R.not(R.has(prop, equip));
+    const NotHasProp = (prop, obj) => R.not(R.has(prop, obj));
 
     const field = {
+      productId: false,
+      stockBase: false,
+      serialNumbers: false
       // equipModelId: false,
-      companyId: false,
-      serialNumber: false,
-      corLeitor: false,
-      tipoCracha: false,
-      details: false,
-      responsibleUser: false,
-      proximidade: false,
-      bio: false,
-      barras: false,
-      cartografico: false,
-    }
+      // companyId: false,
+      // corLeitor: false,
+      // tipoCracha: false,
+      // details: false,
+      // responsibleUser: false,
+      // proximidade: false,
+      // bio: false,
+      // barras: false,
+      // cartografico: false,
+    };
     const message = {
+      productId: "",
+      stockBase: "",
+      serialNumbers: ""
       // equipModelId: '',
-      companyId: '',
-      serialNumber: '',
-      corLeitor: '',
-      tipoCracha: '',
-      details: '',
-      responsibleUser: '',
-      proximidade: '',
-      bio: '',
-      barras: '',
-      cartografico: '',
-    }
+      // companyId: '',
+      // corLeitor: '',
+      // tipoCracha: '',
+      // details: '',
+      // responsibleUser: '',
+      // proximidade: '',
+      // bio: '',
+      // barras: '',
+      // cartografico: '',
+    };
 
-    let errors = false
+    let errors = false;
 
     // if (equipNotHasProp('equipModelId') || !equip.equipModelId) {
     //   errors = true
@@ -81,167 +89,234 @@ module.exports = class EquipDomain {
     //   }
     // }
 
-    if (equipNotHasProp('companyId') || !equip.companyId) {
-      errors = true
+    // if (equipNotHasProp('companyId') || !equip.companyId) {
+    //   errors = true
 
-      field.cnpj = true
-      message.cnpj = 'Cnpj não cadastrado'
+    //   field.cnpj = true
+    //   message.cnpj = 'Cnpj não cadastrado'
 
-      field.companyId = true
-      message.companyId = 'Por favor selecione uma empresa.'
+    //   field.companyId = true
+    //   message.companyId = 'Por favor selecione uma empresa.'
+    // } else {
+    //   const companyReturned = await Company.findOne({
+    //     where: { id: equip.companyId },
+    //     transaction,
+    //   })
+
+    //   if (!companyReturned) {
+    //     errors = true
+    //     field.companyId = true
+    //     message.companyId = 'Essa empresa não existe.'
+    //   }
+    // }
+
+    if (NotHasProp("productId", bodyData) || !bodyData.productId) {
+      errors = true;
+      field.productId = true;
+      message.productId = "Por favor informe productId.";
     } else {
-      const companyReturned = await Company.findOne({
-        where: { id: equip.companyId },
-        transaction,
-      })
+      const productBase = await Product.findByPk(bodyData.productId, {
+        transaction
+      });
 
-      if (!companyReturned) {
-        errors = true
-        field.companyId = true
-        message.companyId = 'Essa empresa não existe.'
+      if (!productBase) {
+        errors = true;
+        field.productId = true;
+        message.productId = "productId inválid.";
       }
     }
 
-    if (equipNotHasProp('serialNumber') || !equip.serialNumber) {
-      errors = true
-      field.serialNumber = true
-      message.serialNumber = 'Por favor informe o número de série.'
+    if (NotHasProp("stockBase", bodyData) || !bodyData.stockBase) {
+      errors = true;
+      field.stockBase = true;
+      message.stockBase = "Por favor informe stockBase.";
+    } else {
+      const stockBase = await StockBase.findOne({
+        where: { stockBase: bodyData.stockBase },
+        transaction
+      });
+
+      if (stockBase) {
+        errors = true;
+        field.stockBase = true;
+        message.stockBase = "stockBase inválid.";
+      }
+    }
+
+    if (NotHasProp("serialNumber", bodyData) || !bodyData.serialNumber) {
+      errors = true;
+      field.serialNumber = true;
+      message.serialNumber = "Por favor informe os números de série.";
     } else {
       const serialNumberReturned = await Equip.findOne({
         where: { serialNumber: equip.serialNumber },
-        transaction,
-      })
+        transaction
+      });
 
       if (serialNumberReturned) {
-        errors = true
-        field.serialNumber = true
-        message.serialNumber = 'Esse equipamento já está cadastrado.'
+        errors = true;
+        field.serialNumber = true;
+        message.serialNumber = "Esse equipamento já está cadastrado.";
       }
     }
 
-    if (equipNotHasProp('proximidade') || typeof equip.proximidade !== 'boolean') {
-      errors = true
-      field.proximidade = true
-      message.proximidade = 'proximidade não é um booleano'
-    }
-    if (equipNotHasProp('bio') || typeof equip.bio !== 'boolean') {
-      errors = true
-      field.bio = true
-      message.bio = 'bio não é um booleano'
-    }
-    if (equipNotHasProp('barras') || typeof equip.barras !== 'boolean') {
-      errors = true
-      field.barras = true
-      message.barras = 'barras não é um booleano'
-    }
-    if (equipNotHasProp('cartografico') || typeof equip.cartografico !== 'boolean') {
-      errors = true
-      field.cartografico = true
-      message.cartografico = 'cartografico não é um booleano'
-    }
+    // if (NotHasProp("serialNumbers", bodyData) || !bodyData.serialNumbers) {
+    //   errors = true;
+    //   field.serialNumbers = true;
+    //   message.serialNumbers = "Por favor informe os números de série.";
+    // } else {
+    //   if (equip.serialNumbers.filter(item => !item)) {
+    //     errors = true;
+    //     field.serialNumbers = true;
+    //     message.serialNumbers = "há item vazio";
+    //   }
 
-    if (equipNotHasProp('corLeitor')
-    || (equip.corLeitor !== 'Branco'
-    && equip.corLeitor !== 'Vermelho'
-    && equip.corLeitor !== 'Azul'
-    && equip.corLeitor !== 'Verde'
-    && equip.corLeitor !== 'NaoSeAplica')) {
-      errors = true
-      field.corLeitor = true
-      message.corLeitor = 'leitor inválido.'
-    }
+    //   // const serialNumberReturned = await Equip.findOne({
+    //   //   where: { serialNumber: equip.serialNumber },
+    //   //   transaction,
+    //   // })
 
-    if (equipNotHasProp('tipoCracha')
-    || (equip.tipoCracha !== 'Hid'
-    && equip.tipoCracha !== 'Mifare'
-    && equip.tipoCracha !== 'Wiegand'
-    && equip.tipoCracha !== 'Abatrack'
-    && equip.tipoCracha !== 'Sarial'
-    && equip.tipoCracha !== 'NaoSeAplica')) {
-      errors = true
-      field.tipoCracha = true
-      message.tipoCracha = 'leitor inválido.'
-    }
+    //   // if (serialNumberReturned) {
+    //   //   errors = true
+    //   //   field.serialNumber = true
+    //   //   message.serialNumber = 'Esse equipamento já está cadastrado.'
+    //   // }
+    // }
 
-    if (equipNotHasProp('responsibleUser')) {
-      errors = true
-      field.responsibleUser = true
-      message.responsibleUser = 'username não está sendo passado.'
-    } else if (bodyData.responsibleUser) {
-      const { responsibleUser } = bodyData
+    // if (equipNotHasProp('proximidade') || typeof equip.proximidade !== 'boolean') {
+    //   errors = true
+    //   field.proximidade = true
+    //   message.proximidade = 'proximidade não é um booleano'
+    // }
+    // if (equipNotHasProp('bio') || typeof equip.bio !== 'boolean') {
+    //   errors = true
+    //   field.bio = true
+    //   message.bio = 'bio não é um booleano'
+    // }
+    // if (equipNotHasProp('barras') || typeof equip.barras !== 'boolean') {
+    //   errors = true
+    //   field.barras = true
+    //   message.barras = 'barras não é um booleano'
+    // }
+    // if (equipNotHasProp('cartografico') || typeof equip.cartografico !== 'boolean') {
+    //   errors = true
+    //   field.cartografico = true
+    //   message.cartografico = 'cartografico não é um booleano'
+    // }
 
-      const user = await User.findOne({
-        where: { username: responsibleUser },
-        transaction,
-      })
+    // if (equipNotHasProp('corLeitor')
+    // || (equip.corLeitor !== 'Branco'
+    // && equip.corLeitor !== 'Vermelho'
+    // && equip.corLeitor !== 'Azul'
+    // && equip.corLeitor !== 'Verde'
+    // && equip.corLeitor !== 'NaoSeAplica')) {
+    //   errors = true
+    //   field.corLeitor = true
+    //   message.corLeitor = 'leitor inválido.'
+    // }
 
-      if (!user) {
-        errors = true
-        field.responsibleUser = true
-        message.responsibleUser = 'username inválido.'
-      }
-    } else {
-      errors = true
-      field.responsibleUser = true
-      message.responsibleUser = 'username não pode ser nulo.'
-    }
+    // if (equipNotHasProp('tipoCracha')
+    // || (equip.tipoCracha !== 'Hid'
+    // && equip.tipoCracha !== 'Mifare'
+    // && equip.tipoCracha !== 'Wiegand'
+    // && equip.tipoCracha !== 'Abatrack'
+    // && equip.tipoCracha !== 'Sarial'
+    // && equip.tipoCracha !== 'NaoSeAplica')) {
+    //   errors = true
+    //   field.tipoCracha = true
+    //   message.tipoCracha = 'leitor inválido.'
+    // }
+
+    // if (equipNotHasProp('responsibleUser')) {
+    //   errors = true
+    //   field.responsibleUser = true
+    //   message.responsibleUser = 'username não está sendo passado.'
+    // } else if (bodyData.responsibleUser) {
+    //   const { responsibleUser } = bodyData
+
+    //   const user = await User.findOne({
+    //     where: { username: responsibleUser },
+    //     transaction,
+    //   })
+
+    //   if (!user) {
+    //     errors = true
+    //     field.responsibleUser = true
+    //     message.responsibleUser = 'username inválido.'
+    //   }
+    // } else {
+    //   errors = true
+    //   field.responsibleUser = true
+    //   message.responsibleUser = 'username não pode ser nulo.'
+    // }
 
     if (errors) {
-      throw new FieldValidationError([{ field, message }])
+      console.log(field, message);
+      throw new FieldValidationError([{ field, message }]);
     }
 
-    const equipCreated = await Equip.create(equip, { transaction })
+    const { productId, stockBase } = bodyData;
 
-    const response = await Equip.findByPk(equipCreated.id, {
+    const productBase = await ProductBase.findOne({
+      where: { productId },
       include: [
         {
-          model: Company,
-        },
-        // {
-        //   model: EquipModel,
-        //   include: [
-        //     {
-        //       model: EquipMark,
-        //       include: [{
-        //         model: EquipType,
-        //       }],
-        //     },
-        //   ],
-        // },
+          model: StockBase,
+          where: { stockBase }
+        }
       ],
-      transaction,
-    })
+      transaction
+    });
 
-    return response
+    equip.productBaseId = productBase.id;
+
+    const equipCreated = await Equip.create(equip, { transaction });
+
+    // const response = await Equip.findByPk(equipCreated.id, {
+    //   // include: [
+    //   //   {
+    //   //     model: Company,
+    //   //   },
+    //   // {
+    //   //   model: EquipModel,
+    //   //   include: [
+    //   //     {
+    //   //       model: EquipMark,
+    //   //       include: [{
+    //   //         model: EquipType,
+    //   //       }],
+    //   //     },
+    //   //   ],
+    //   // },
+    //   // ],
+    //   transaction,
+    // })
+
+    return equipCreated;
   }
 
   async getAll(options = {}) {
     const inicialOrder = {
-      field: 'createdAt',
+      field: "createdAt",
       acendent: true,
-      direction: 'DESC',
-    }
+      direction: "DESC"
+    };
 
-    const { query = null, transaction = null } = options
+    const { query = null, transaction = null } = options;
 
-    const newQuery = Object.assign({}, query)
-    const newOrder = (query && query.order) ? query.order : inicialOrder
+    const newQuery = Object.assign({}, query);
+    const newOrder = query && query.order ? query.order : inicialOrder;
 
     if (newOrder.acendent) {
-      newOrder.direction = 'DESC'
+      newOrder.direction = "DESC";
     } else {
-      newOrder.direction = 'ASC'
+      newOrder.direction = "ASC";
     }
 
-    const {
-      getWhere,
-      limit,
-      offset,
-      pageResponse,
-    } = formatQuery(newQuery)
+    const { getWhere, limit, offset, pageResponse } = formatQuery(newQuery);
 
     const equips = await Equip.findAndCountAll({
-      where: getWhere('equip'),
+      where: getWhere("equip"),
       // attributes: ['id'],
       include: [
         // {
@@ -263,19 +338,21 @@ module.exports = class EquipDomain {
         //   }],
         // },
       ],
-      order: [
-        [newOrder.field, newOrder.direction],
-      ],
+      order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
-      transaction,
-    })
+      transaction
+    });
 
-    const { rows } = equips
+    const { rows } = equips;
 
-    const formatData = R.map((equip) => {
+    // console.log(JSON.parse(JSON.stringify(rows)));
+
+    const formatData = R.map(equip => {
       const resp = {
         id: equip.id,
+        serialNumber: equip.serialNumber,
+        razaoSocial: equip.razaoSocial
         // companyId: equip.companyId,
         // equipModelId: equip.equipModelId,
         // razaoSocial: equip.company.razaoSocial,
@@ -305,23 +382,21 @@ module.exports = class EquipDomain {
         // responsibleUser: equip.responsibleUser,
         // createdAt: formatDateFunct(equip.createdAt),
         // updatedAt: formatDateFunct(equip.updatedAt),
-      }
+      };
 
-      return resp
-    })
+      return resp;
+    });
 
-    const equipsList = formatData(rows)
-
+    const equipsList = formatData(rows);
 
     const response = {
       page: pageResponse,
       show: limit,
       count: equipsList.length,
-      rows: equipsList,
-    }
+      rows: equipsList
+    };
 
-
-    return response
+    return response;
   }
 
   // async getAll(options = {}) {
@@ -382,7 +457,6 @@ module.exports = class EquipDomain {
 
   //   // const global = query.filters.global.replace(/\W/gi, '')
 
-
   //   // const searchEquip = await Equip.findAndCountAll({
   //   //   where: { serialNumber: { [operators.iRegexp]: global } },
   //   //   attributes: ['id'],
@@ -441,9 +515,7 @@ module.exports = class EquipDomain {
 
   //   // // searchCompanyIds.filter((este, i) => searchCompanyIds.indexOf(este) === i)
 
-
   //   // const novaArr = searchCompanyIds.filter((este, i) => searchCompanyIds.indexOf(este) === i)
-
 
   //   // // const findByPkSearchArray = R.map(async (item) => {
   //   // //   const equip = await Equip.findByPk(item, {
@@ -499,9 +571,7 @@ module.exports = class EquipDomain {
   //   // //   return resp
   //   // // })
 
-
   //   // const newRows = []
-
 
   //   // await Promise.all(
   //   //   searchCompanyIds.map(async (item) => {
@@ -525,11 +595,9 @@ module.exports = class EquipDomain {
 
   //   //     const equipFormated = formatedJSON(equip)
 
-
   //   //     newRows.push(equipFormated)
   //   //   }),
   //   // )
-
 
   //   // const formatData = R.map((equip) => {
   //   //   const resp = {
@@ -570,7 +638,6 @@ module.exports = class EquipDomain {
 
   //   // const equipsList = formatData(newRows)
 
-
   //   // const response = {
   //   //   // page: pageResponse,
   //   //   // show: limit,
@@ -578,9 +645,7 @@ module.exports = class EquipDomain {
   //   //   rows: equipsList,
   //   // }
 
-
   //   // return response
-
 
   //   const { rows } = equips
 
@@ -665,18 +730,18 @@ module.exports = class EquipDomain {
   // }
 
   async update(bodyData, options = {}) {
-    const { transaction = null } = options
+    const { transaction = null } = options;
 
-    const equip = R.omit(['id'], bodyData)
+    const equip = R.omit(["id"], bodyData);
 
-    const oldEquip = await Equip.findByPk(bodyData.id)
+    const oldEquip = await Equip.findByPk(bodyData.id);
 
-    const newEquip = JSON.parse(JSON.stringify(oldEquip))
+    const newEquip = JSON.parse(JSON.stringify(oldEquip));
 
-    Object.assign(newEquip, R.omit(['mark', 'type', 'model'], equip))
+    Object.assign(newEquip, R.omit(["mark", "type", "model"], equip));
 
     // const equipNotHasProp = prop => R.not(R.has(prop, equip))
-    const newEquipNotHasProp = prop => R.not(R.has(prop, newEquip))
+    const newEquipNotHasProp = prop => R.not(R.has(prop, newEquip));
 
     const field = {
       // equipModelId: false,
@@ -689,83 +754,96 @@ module.exports = class EquipDomain {
       proximidade: false,
       bio: false,
       barras: false,
-      cartografico: false,
-    }
+      cartografico: false
+    };
     const message = {
       // equipModelId: '',
-      companyId: '',
-      serialNumber: '',
-      corLeitor: '',
-      tipoCracha: '',
-      details: '',
-      responsibleUser: '',
-      proximidade: '',
-      bio: '',
-      barras: '',
-      cartografico: '',
-    }
+      companyId: "",
+      serialNumber: "",
+      corLeitor: "",
+      tipoCracha: "",
+      details: "",
+      responsibleUser: "",
+      proximidade: "",
+      bio: "",
+      barras: "",
+      cartografico: ""
+    };
 
-    let errors = false
+    let errors = false;
 
-    if (newEquipNotHasProp('serialNumber') || !newEquip.serialNumber) {
-      errors = true
-      field.serialNumber = true
-      message.serialNumber = 'informe o número de série.'
+    if (newEquipNotHasProp("serialNumber") || !newEquip.serialNumber) {
+      errors = true;
+      field.serialNumber = true;
+      message.serialNumber = "informe o número de série.";
     } else {
       const serialNumberReturned = await Equip.findOne({
         where: { serialNumber: newEquip.serialNumber },
-        transaction,
-      })
+        transaction
+      });
 
-      if (serialNumberReturned && newEquip.serialNumber !== oldEquip.serialNumber) {
-        errors = true
-        field.serialNumber = true
-        message.serialNumber = 'já está cadastrado.'
+      if (
+        serialNumberReturned &&
+        newEquip.serialNumber !== oldEquip.serialNumber
+      ) {
+        errors = true;
+        field.serialNumber = true;
+        message.serialNumber = "já está cadastrado.";
       }
     }
 
-    if (newEquipNotHasProp('proximidade') || typeof newEquip.proximidade !== 'boolean') {
-      errors = true
-      field.proximidade = true
-      message.proximidade = 'proximidade não é um booleano'
+    if (
+      newEquipNotHasProp("proximidade") ||
+      typeof newEquip.proximidade !== "boolean"
+    ) {
+      errors = true;
+      field.proximidade = true;
+      message.proximidade = "proximidade não é um booleano";
     }
-    if (newEquipNotHasProp('bio') || typeof newEquip.bio !== 'boolean') {
-      errors = true
-      field.bio = true
-      message.bio = 'bio não é um booleano'
+    if (newEquipNotHasProp("bio") || typeof newEquip.bio !== "boolean") {
+      errors = true;
+      field.bio = true;
+      message.bio = "bio não é um booleano";
     }
-    if (newEquipNotHasProp('barras') || typeof newEquip.barras !== 'boolean') {
-      errors = true
-      field.barras = true
-      message.barras = 'barras não é um booleano'
+    if (newEquipNotHasProp("barras") || typeof newEquip.barras !== "boolean") {
+      errors = true;
+      field.barras = true;
+      message.barras = "barras não é um booleano";
     }
-    if (newEquipNotHasProp('cartografico') || typeof newEquip.cartografico !== 'boolean') {
-      errors = true
-      field.cartografico = true
-      message.cartografico = 'cartografico não é um booleano'
-    }
-
-    if (newEquipNotHasProp('corLeitor')
-    || (newEquip.corLeitor !== 'Branco'
-    && newEquip.corLeitor !== 'Vermelho'
-    && newEquip.corLeitor !== 'Azul'
-    && newEquip.corLeitor !== 'Verde'
-    && newEquip.corLeitor !== 'NaoSeAplica')) {
-      errors = true
-      field.corLeitor = true
-      message.corLeitor = 'leitor inválido.'
+    if (
+      newEquipNotHasProp("cartografico") ||
+      typeof newEquip.cartografico !== "boolean"
+    ) {
+      errors = true;
+      field.cartografico = true;
+      message.cartografico = "cartografico não é um booleano";
     }
 
-    if (newEquipNotHasProp('tipoCracha')
-    || (newEquip.tipoCracha !== 'Hid'
-    && newEquip.tipoCracha !== 'Mifare'
-    && newEquip.tipoCracha !== 'Wiegand'
-    && newEquip.tipoCracha !== 'Abatrack'
-    && newEquip.tipoCracha !== 'Sarial'
-    && newEquip.tipoCracha !== 'NaoSeAplica')) {
-      errors = true
-      field.tipoCracha = true
-      message.tipoCracha = 'leitor inválido.'
+    if (
+      newEquipNotHasProp("corLeitor") ||
+      (newEquip.corLeitor !== "Branco" &&
+        newEquip.corLeitor !== "Vermelho" &&
+        newEquip.corLeitor !== "Azul" &&
+        newEquip.corLeitor !== "Verde" &&
+        newEquip.corLeitor !== "NaoSeAplica")
+    ) {
+      errors = true;
+      field.corLeitor = true;
+      message.corLeitor = "leitor inválido.";
+    }
+
+    if (
+      newEquipNotHasProp("tipoCracha") ||
+      (newEquip.tipoCracha !== "Hid" &&
+        newEquip.tipoCracha !== "Mifare" &&
+        newEquip.tipoCracha !== "Wiegand" &&
+        newEquip.tipoCracha !== "Abatrack" &&
+        newEquip.tipoCracha !== "Sarial" &&
+        newEquip.tipoCracha !== "NaoSeAplica")
+    ) {
+      errors = true;
+      field.tipoCracha = true;
+      message.tipoCracha = "leitor inválido.";
     }
 
     // if (equipNotHasProp('type') || !equip.type) {
@@ -805,59 +883,68 @@ module.exports = class EquipDomain {
     // }
 
     if (errors) {
-      throw new FieldValidationError([{ field, message }])
+      throw new FieldValidationError([{ field, message }]);
     }
 
-    const response = await oldEquip.update(newEquip, { transaction })
+    const response = await oldEquip.update(newEquip, { transaction });
 
-    return response
+    return response;
   }
 
-
   async getOneBySerialNumber(serialNumber, options = {}) {
-    const { transaction = null } = options
+    const { transaction = null } = options;
     const response = await Equip.findOne({
       where: {
-        serialNumber,
+        serialNumber
       },
-      attributes: ['reserved', 'deletedAt', 'osPartId', 'freeMarketPartId', 'productBaseId'],
+      attributes: [
+        "id",
+        "reserved",
+        "deletedAt",
+        "osPartId",
+        "freeMarketPartId",
+        "productBaseId"
+      ],
       include: [
         {
           model: OsParts,
           paranoid: false,
-          attributes: ['oId'],
-          include: [{
-            paranoid: false,
-            attributes: ['os'],
-            model: Os,
-          }],
+          attributes: ["oId"],
+          include: [
+            {
+              paranoid: false,
+              attributes: ["os"],
+              model: Os
+            }
+          ]
         },
         {
           model: ProductBase,
-          attributes: ['productId'],
-          include:
-          [
+          attributes: ["productId"],
+          include: [
             {
               model: Product,
-              attributes: ['name'],
-            },
-          ],
+              attributes: ["name"]
+            }
+          ]
         },
         {
           paranoid: false,
           model: FreeMarketParts,
-          attributes: ['freeMarketId'],
-          include: [{
-            paranoid: false,
-            attributes: ['trackingCode'],
-            model: FreeMarket,
-          }],
-        },
+          attributes: ["freeMarketId"],
+          include: [
+            {
+              paranoid: false,
+              attributes: ["trackingCode"],
+              model: FreeMarket
+            }
+          ]
+        }
       ],
       paranoid: false,
-      transaction,
-    })
+      transaction
+    });
 
-    return response
+    return response;
   }
-}
+};

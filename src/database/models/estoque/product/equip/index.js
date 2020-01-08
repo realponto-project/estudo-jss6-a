@@ -40,7 +40,6 @@
 //       allowNull: false,
 //     },
 
-
 //     details: {
 //       type: Sequelize.STRING,
 //       allowNull: true,
@@ -68,38 +67,47 @@
 //   return equip
 // }
 
+const Sequelize = require("sequelize");
 
-const Sequelize = require('sequelize')
-
-module.exports = (sequelize) => {
-  const equip = sequelize.define('equip', {
+module.exports = sequelize => {
+  const equip = sequelize.define("equip", {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
-      primaryKey: true,
+      primaryKey: true
     },
 
     serialNumber: {
       type: Sequelize.STRING,
       allowNull: false,
-      unique: true,
+      unique: true
     },
 
     reserved: {
       type: Sequelize.BOOLEAN,
-      defaultValue: false,
+      defaultValue: false
     },
-  })
 
-  equip.associate = (models) => {
+    inClient: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false
+    },
+
+    loan: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false
+    }
+  });
+
+  equip.associate = models => {
     equip.belongsTo(models.productBase, {
       foreignKey: {
-        allowNull: false,
-      },
-    })
-    equip.belongsTo(models.osParts)
-    equip.belongsTo(models.freeMarketParts)
-  }
+        allowNull: false
+      }
+    });
+    equip.belongsTo(models.osParts);
+    equip.belongsTo(models.freeMarketParts);
+  };
 
-  return equip
-}
+  return equip;
+};

@@ -39,6 +39,11 @@ module.exports = (sequelize) => {
     osParts.belongsTo(models.product)
     osParts.belongsTo(models.os)
     osParts.belongsTo(models.productBase)
+    osParts.belongsTo(models.statusExpedition, {
+      foreignKey: {
+        allowNull: false,
+      },
+    })
   }
 
   return osParts

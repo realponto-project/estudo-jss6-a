@@ -1,27 +1,30 @@
-const db = require('../../database')
+const db = require("../../database");
 
-const TypeAccount = require('../../domains/auth/user/typeAccount')
-const UserDomain = require('../../domains/auth/user')
+const TypeAccount = require("../../domains/auth/user/typeAccount");
+const UserDomain = require("../../domains/auth/user");
+const StatusExpeditionDomain = require("../../domains/estoque/reserve/os/statusExpedition");
 
-const typeAccount = new TypeAccount()
-const userDomain = new UserDomain()
+const typeAccount = new TypeAccount();
+const userDomain = new UserDomain();
+const statusExpeditionDomain = new StatusExpeditionDomain();
 
-const StockBase = db.model('stockBase')
+const StockBase = db.model("stockBase");
 
-const dropAllTable = () => db.dropAllSchemas()
+const dropAllTable = () => db.dropAllSchemas();
 
-const isDatabaseConnected = () => db.authenticate()
+const isDatabaseConnected = () => db.authenticate();
 
-const forceCreateTables = () => isDatabaseConnected().then(() => db.sync({ force: true }))
+const forceCreateTables = () =>
+  isDatabaseConnected().then(() => db.sync({ force: true }));
 
-const dropAndDisconnectDatabase = () => db.close()
+const dropAndDisconnectDatabase = () => db.close();
 
 const createUserAdmin = async () => {
   // const User = db.model('user')
   // const Login = db.model('login')
 
   const typeAccountMock = {
-    typeName: 'ADM2',
+    typeName: "ADM2",
     addCompany: true,
     addPart: true,
     addAnalyze: true,
@@ -32,7 +35,7 @@ const createUserAdmin = async () => {
     addAccessories: true,
     addUser: true,
     addTypeAccount: true,
-    responsibleUser: 'modrp',
+    responsibleUser: "modrp",
     stock: true,
     labTec: true,
     addTec: true,
@@ -49,14 +52,14 @@ const createUserAdmin = async () => {
     addRML: true,
     gerROs: true,
     delROs: true,
-    updateRos: true,
-  }
+    updateRos: true
+  };
 
-  await typeAccount.add(typeAccountMock)
+  await typeAccount.add(typeAccountMock);
 
   const userAdmin = {
-    username: 'modrp',
-    typeName: 'ADM2',
+    username: "modrp",
+    typeName: "ADM2",
     customized: true,
     addCompany: true,
     addPart: true,
@@ -68,7 +71,7 @@ const createUserAdmin = async () => {
     addAccessories: true,
     addUser: true,
     addTypeAccount: true,
-    responsibleUser: 'modrp',
+    responsibleUser: "modrp",
     addTec: true,
     addCar: true,
     addMark: true,
@@ -83,19 +86,22 @@ const createUserAdmin = async () => {
     addRML: true,
     gerROs: true,
     delROs: true,
-    updateRos: true,
-  }
-  await userDomain.user_Create(userAdmin)
+    updateRos: true
+  };
+  await userDomain.user_Create(userAdmin);
 
-  await StockBase.create({ stockBase: 'REALPONTO' })
-  await StockBase.create({ stockBase: 'NOVAREAL' })
-  await StockBase.create({ stockBase: 'PONTOREAL' })
-}
+  await StockBase.create({ stockBase: "EMPRESTIMO" });
+  await StockBase.create({ stockBase: "REALPONTO" });
+  await StockBase.create({ stockBase: "NOVAREAL" });
+  await StockBase.create({ stockBase: "PONTOREAL" });
+
+  await statusExpeditionDomain.add({ status: "venda" });
+};
 
 module.exports = {
   isDatabaseConnected,
   forceCreateTables,
   dropAndDisconnectDatabase,
   dropAllTable,
-  createUserAdmin,
-}
+  createUserAdmin
+};

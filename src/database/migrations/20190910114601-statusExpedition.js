@@ -1,21 +1,17 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    const notification = queryInterface.createTable('notification', {
+    const statusExpedition = queryInterface.createTable('statusExpedition', {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
       },
 
-      message: {
-        type: Sequelize.TEXT,
+      status: {
+        type: Sequelize.STRING,
         allowNull: false,
-      },
-
-      viewed: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true,
+        unique: true,
       },
 
       createdAt: {
@@ -34,7 +30,9 @@ module.exports = {
       },
     })
 
-    return notification
+
+    return statusExpedition
   },
-  down: queryInterface => queryInterface.dropTable('notification'),
+
+  down: queryInterface => queryInterface.dropTable('statusExpedition'),
 }

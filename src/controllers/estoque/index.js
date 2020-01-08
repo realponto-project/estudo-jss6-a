@@ -5,7 +5,6 @@ const database = require('../../database')
 
 const stockDomain = new StockDomain()
 
-
 const getAll = async (req, res, next) => {
   const transaction = await database.transaction()
   try {
