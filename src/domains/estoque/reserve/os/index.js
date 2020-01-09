@@ -114,6 +114,7 @@ module.exports = class OsDomain {
     }
 
     if (errors) {
+      console.log(field, message);
       throw new FieldValidationError([{ field, message }]);
     }
 
@@ -136,6 +137,7 @@ module.exports = class OsDomain {
     if (reserveHasExist && process.env.NODE_ENV === "production") {
       field.message = true;
       message.message = "Há uma reserva nesta data para esta empresa";
+      console.log(field, message);
       throw new FieldValidationError([{ field, message }]);
     }
 
@@ -158,6 +160,7 @@ module.exports = class OsDomain {
         if (!HasProp("status", item) || !item.status) {
           field.status = true;
           message.status = "status cannot null";
+          console.log(field, message);
           throw new FieldValidationError([{ field, message }]);
         }
 
@@ -169,6 +172,7 @@ module.exports = class OsDomain {
         if (!status) {
           field.status = true;
           message.status = "status inválid";
+          console.log(field, message);
           throw new FieldValidationError([{ field, message }]);
         }
 
@@ -194,6 +198,7 @@ module.exports = class OsDomain {
         }
 
         if (errors) {
+          console.log(field, message);
           throw new FieldValidationError([{ field, message }]);
         }
 
@@ -226,6 +231,7 @@ module.exports = class OsDomain {
                 errors = true;
                 field.serialNumber = true;
                 message.serialNumber = `este equipamento não esta cadastrado nessa base de estoque/ ${serialNumber} ja esta reservado`;
+                console.log(field, message);
                 throw new FieldValidationError([{ field, message }]);
               }
             });

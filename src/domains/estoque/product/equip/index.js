@@ -26,6 +26,8 @@ const Os = database.model("os");
 const FreeMarketParts = database.model("freeMarketParts");
 const FreeMarket = database.model("freeMarket");
 const StockBase = database.model("stockBase");
+const Emprestimo = database.model("emprestimo");
+const Mark = database.model("mark");
 
 module.exports = class EquipDomain {
   async add(bodyData, options = {}) {
@@ -251,7 +253,6 @@ module.exports = class EquipDomain {
     // }
 
     if (errors) {
-      console.log(field, message);
       throw new FieldValidationError([{ field, message }]);
     }
 
@@ -319,11 +320,20 @@ module.exports = class EquipDomain {
       where: getWhere("equip"),
       // attributes: ['id'],
       include: [
-        // {
-        //   model: Company,
-        //   where: getWhere('company'),
-        //   // attributes: [],
-        // },
+        {
+          model: ProductBase,
+          include: [
+            {
+              model: Product,
+              include: [
+                {
+                  model: Mark
+                }
+              ]
+            }
+          ]
+          // attributes: [],
+        }
         // {
         //   model: EquipModel,
         //   // attributes: [],
@@ -349,10 +359,17 @@ module.exports = class EquipDomain {
     // console.log(JSON.parse(JSON.stringify(rows)));
 
     const formatData = R.map(equip => {
+      // console.log(JSON.parse(JSON.stringify(equip.productBase)));
+
       const resp = {
         id: equip.id,
         serialNumber: equip.serialNumber,
-        razaoSocial: equip.razaoSocial
+        razaoSocial: equip.razaoSocial,
+        name: equip.productBase && equip.productBase.product.name,
+        mark:
+          equip.productBase &&
+          equip.productBase.product.mark &&
+          equip.productBase.product.mark.mark
         // companyId: equip.companyId,
         // equipModelId: equip.equipModelId,
         // razaoSocial: equip.company.razaoSocial,

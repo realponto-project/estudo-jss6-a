@@ -31,42 +31,44 @@ const add = async (req, res, next) => {
 //   }
 // }
 
-// const getAll = async (req, res, next) => {
-//   const transaction = await database.transaction()
-//   try {
-//     let query
-//     if (R.has('query', req)) {
-//       if (R.has('query', req.query)) {
-//         query = JSON.parse(req.query.query)
-//       }
-//     }
+const getAll = async (req, res, next) => {
+  const transaction = await database.transaction();
+  try {
+    let query;
+    if (R.has("query", req)) {
+      if (R.has("query", req.query)) {
+        query = JSON.parse(req.query.query);
+      }
+    }
 
-//     const entrances = await entranceDomain.getAll({ query, transaction })
+    const emprestimo = await emprestimoDomain.getAll({ query, transaction });
 
-//     await transaction.commit()
-//     res.json(entrances)
-//   } catch (error) {
-//     await transaction.rollback()
-//     next()
-//   }
-// }
+    await transaction.commit();
+    res.json(emprestimo);
+  } catch (error) {
+    await transaction.rollback();
+    next();
+  }
+};
 
-// const delet = async (req, res, next) => {
-//   const transaction = await database.transaction()
-//   try {
-//     const deleteEntrance = await entranceDomain.delete(req.query.id, { transaction })
+const delet = async (req, res, next) => {
+  const transaction = await database.transaction();
+  try {
+    const deleteEmprestimo = await emprestimoDomain.delete(req.query.id, {
+      transaction
+    });
 
-//     await transaction.commit()
-//     res.json(deleteEntrance)
-//   } catch (error) {
-//     await transaction.rollback()
-//     next()
-//   }
-// }
+    await transaction.commit();
+    res.json(deleteEmprestimo);
+  } catch (error) {
+    await transaction.rollback();
+    next();
+  }
+};
 
 module.exports = {
-  add
+  add,
   // update,
-  // getAll,
-  // delet,
+  getAll,
+  delet
 };
