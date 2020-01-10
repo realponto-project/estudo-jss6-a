@@ -29,6 +29,7 @@ const technicianReserveParts = require("./estoque/reserve/technicianReserveParts
 const productBase = require("./estoque/stockBase/productBase");
 const statusExpedition = require("./estoque/reserve/statusExpedition");
 const emprestimo = require("./estoque/emprestimo");
+const conserto = require("./estoque/conserto");
 
 const analyze = require("./labtec/analyze");
 const analysisPart = require("./labtec/analyze/analysisPart");
@@ -69,6 +70,7 @@ module.exports = [
   productBase,
   statusExpedition,
   emprestimo,
+  conserto,
 
   analyze,
   analysisPart,

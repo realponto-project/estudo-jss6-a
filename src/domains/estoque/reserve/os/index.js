@@ -2,13 +2,12 @@ const R = require("ramda");
 const moment = require("moment");
 const Sequelize = require("sequelize");
 // const axios = require('axios')
-
 const Cnpj = require("@fnando/cnpj/dist/node");
 
 const formatQuery = require("../../../../helpers/lazyLoad");
 const database = require("../../../../database");
-
 const { FieldValidationError } = require("../../../../helpers/errors");
+const ConsertoDomain = require("../../conserto");
 
 const Os = database.model("os");
 const OsParts = database.model("osParts");
@@ -21,12 +20,17 @@ const KitOut = database.model("kitOut");
 const KitParts = database.model("kitParts");
 // const Notification = database.model('notification')
 const StatusExpedition = database.model("statusExpedition");
+const Conserto = database.model("conserto");
 
 const { Op: operators } = Sequelize;
+
+const consertoDomain = new ConsertoDomain();
 
 module.exports = class OsDomain {
   async add(bodyData, options = {}) {
     const { transaction = null } = options;
+
+    console.log(bodyData);
 
     const reserve = R.omit(["id", "osParts"], bodyData);
 
@@ -176,128 +180,147 @@ module.exports = class OsDomain {
           throw new FieldValidationError([{ field, message }]);
         }
 
-        const productBase = await ProductBase.findByPk(item.productBaseId, {
-          include: [
-            {
-              model: Product
-            }
-          ],
-          transaction
-        });
+        if (item.status === "CONSERTO") {
+          // console.log(item);
+          const conserto = await consertoDomain.add(item, { transaction });
 
-        const osPartsCreatted = {
-          ...item,
-          statusExpeditionId: status.id,
-          oId: reserveCreated.id
-        };
+          const osPartsCreatted = {
+            amount: "1",
+            consertoId: conserto.id,
+            statusExpeditionId: status.id,
+            oId: reserveCreated.id
+          };
 
-        if (!productBase) {
-          errors = true;
-          field.peca = true;
-          message.peca = "produto não oconst a na base de dados";
-        }
+          const osPartCreated = await OsParts.create(osPartsCreatted, {
+            transaction
+          });
 
-        if (errors) {
-          console.log(field, message);
-          throw new FieldValidationError([{ field, message }]);
-        }
-
-        const osPartCreated = await OsParts.create(osPartsCreatted, {
-          transaction
-        });
-
-        if (productBase.product.serial) {
-          const { serialNumberArray } = item;
-
-          if (serialNumberArray.length !== parseInt(item.amount, 10)) {
-            errors = true;
-            field.serialNumbers = true;
-            message.serialNumbers =
-              "quantidade adicionada nãop condiz com a quantidade de números de série.";
-          }
-
-          if (serialNumberArray.length > 0) {
-            await serialNumberArray.map(async serialNumber => {
-              const equip = await Equip.findOne({
-                where: {
-                  serialNumber,
-                  reserved: false,
-                  productBaseId: productBase.id
-                },
-                transaction
-              });
-
-              if (!equip) {
-                errors = true;
-                field.serialNumber = true;
-                message.serialNumber = `este equipamento não esta cadastrado nessa base de estoque/ ${serialNumber} ja esta reservado`;
-                console.log(field, message);
-                throw new FieldValidationError([{ field, message }]);
+          // console.log(JSON.parse(JSON.stringify(osPartCreated)));
+          // throw new FieldValidationError([{ field, message }]);
+        } else {
+          const productBase = await ProductBase.findByPk(item.productBaseId, {
+            include: [
+              {
+                model: Product
               }
-            });
-            await serialNumberArray.map(async serialNumber => {
-              const equip = await Equip.findOne({
-                where: {
-                  serialNumber,
-                  reserved: false,
-                  productBaseId: productBase.id
-                },
-                transaction
-              });
+            ],
+            transaction
+          });
 
-              await equip.update(
-                {
-                  ...equip,
-                  osPartId: osPartCreated.id,
-                  reserved: true
-                },
-                { transaction }
-              );
+          const osPartsCreatted = {
+            ...item,
+            statusExpeditionId: status.id,
+            oId: reserveCreated.id
+          };
 
-              // const equip1 = await Equip.findOne({
-              //   where: {
-              //     serialNumber,
-              //     reserved: false,
-              //     productBaseId: productBase.id,
-              //   },
-              //   transaction,
-              // })
-            });
+          if (!productBase) {
+            errors = true;
+            field.peca = true;
+            message.peca = "produto não oconst a na base de dados";
           }
+
+          if (errors) {
+            console.log(field, message);
+            throw new FieldValidationError([{ field, message }]);
+          }
+
+          const osPartCreated = await OsParts.create(osPartsCreatted, {
+            transaction
+          });
+
+          if (productBase.product.serial) {
+            const { serialNumberArray } = item;
+
+            if (serialNumberArray.length !== parseInt(item.amount, 10)) {
+              errors = true;
+              field.serialNumbers = true;
+              message.serialNumbers =
+                "quantidade adicionada nãop condiz com a quantidade de números de série.";
+            }
+
+            if (serialNumberArray.length > 0) {
+              await serialNumberArray.map(async serialNumber => {
+                const equip = await Equip.findOne({
+                  where: {
+                    serialNumber,
+                    reserved: false,
+                    productBaseId: productBase.id
+                  },
+                  transaction
+                });
+
+                if (!equip) {
+                  errors = true;
+                  field.serialNumber = true;
+                  message.serialNumber = `este equipamento não esta cadastrado nessa base de estoque/ ${serialNumber} ja esta reservado`;
+                  console.log(field, message);
+                  throw new FieldValidationError([{ field, message }]);
+                }
+              });
+              await serialNumberArray.map(async serialNumber => {
+                const equip = await Equip.findOne({
+                  where: {
+                    serialNumber,
+                    reserved: false,
+                    productBaseId: productBase.id
+                  },
+                  transaction
+                });
+
+                await equip.update(
+                  {
+                    ...equip,
+                    osPartId: osPartCreated.id,
+                    reserved: true
+                  },
+                  { transaction }
+                );
+
+                // const equip1 = await Equip.findOne({
+                //   where: {
+                //     serialNumber,
+                //     reserved: false,
+                //     productBaseId: productBase.id,
+                //   },
+                //   transaction,
+                // })
+              });
+            }
+          }
+
+          const productBaseUpdate = {
+            ...productBase,
+            available: (
+              parseInt(productBase.available, 10) - parseInt(item.amount, 10)
+            ).toString(),
+            reserved: (
+              parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
+            ).toString()
+          };
+
+          if (
+            parseInt(productBaseUpdate.available, 10) < 0 ||
+            parseInt(productBaseUpdate.available, 10) < 0
+          ) {
+            field.productBaseUpdate = true;
+            message.productBaseUpdate = "Número negativo não é valido";
+            throw new FieldValidationError([{ field, message }]);
+          }
+
+          // if (
+          //   parseInt(productBaseUpdate.available, 10)
+          //   < parseInt(productBase.product.minimumStock, 10)
+          // ) {
+          //   const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+
+          //   await Notification.create(
+          //     { message: messageNotification },
+          //     { transaction },
+          //   )
+          // }
+
+          await productBase.update(productBaseUpdate, { transaction });
         }
-
-        const productBaseUpdate = {
-          ...productBase,
-          available: (
-            parseInt(productBase.available, 10) - parseInt(item.amount, 10)
-          ).toString(),
-          reserved: (
-            parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
-          ).toString()
-        };
-
-        if (
-          parseInt(productBaseUpdate.available, 10) < 0 ||
-          parseInt(productBaseUpdate.available, 10) < 0
-        ) {
-          field.productBaseUpdate = true;
-          message.productBaseUpdate = "Número negativo não é valido";
-          throw new FieldValidationError([{ field, message }]);
-        }
-
-        // if (
-        //   parseInt(productBaseUpdate.available, 10)
-        //   < parseInt(productBase.product.minimumStock, 10)
-        // ) {
-        //   const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
-
-        //   await Notification.create(
-        //     { message: messageNotification },
-        //     { transaction },
-        //   )
-        // }
-
-        await productBase.update(productBaseUpdate, { transaction });
       });
       await Promise.all(osPartsCreattedPromises);
     }
@@ -808,9 +831,9 @@ module.exports = class OsDomain {
           required
         }
         // {
-        //   model: Product,
-        //   required,
-        // },
+        //   model: Product
+        //   // required,
+        // }
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,
@@ -820,6 +843,8 @@ module.exports = class OsDomain {
     });
 
     const { rows } = os;
+
+    // console.log(JSON.parse(JSON.stringify(rows)));
 
     if (rows.length === 0) {
       return {
@@ -890,6 +915,8 @@ module.exports = class OsDomain {
         transaction
       });
 
+      console.log(JSON.parse(JSON.stringify(osParts)));
+
       const kitOuts = await KitOut.findAll({
         // where: { os: id.toString() },
         where: { os: osParts[0].o.os },
@@ -923,6 +950,8 @@ module.exports = class OsDomain {
     let notDelet = false;
 
     const formatProduct = R.map(async item => {
+      // console.log(JSON.parse(JSON.stringify(item)));
+
       const status = await StatusExpedition.findByPk(
         item.osParts.statusExpeditionId,
         {
@@ -974,13 +1003,19 @@ module.exports = class OsDomain {
         where: {
           oId: item.id
         },
-        attributes: [],
+        include: [
+          {
+            model: Conserto
+          }
+        ],
+        attributes: ["consertoId", "id"],
         paranoid: false,
         transaction
       });
 
-      // console.log(JSON.parse(JSON.stringify(osParts)))
+      console.log(JSON.parse(JSON.stringify(osParts)));
       // console.log(JSON.parse(JSON.stringify(item.productBases)))
+      // console.log(JSON.parse(JSON.stringify(item)));
 
       const resp = {
         id: item.id,

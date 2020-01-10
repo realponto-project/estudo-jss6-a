@@ -373,8 +373,8 @@ module.exports = class ProductDomain {
         },
         {
           model: EquipType,
-          where: getWhere("equipType"),
-          required: newQuery.filters && newQuery.filters.equipType.specific.type
+          where: getWhere("equipType")
+          // required: newQuery.filters && newQuery.filters.equipType.specific.type
         }
       ],
       order: [[newOrder.field, newOrder.direction]],
