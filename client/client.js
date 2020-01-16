@@ -12,9 +12,7 @@ async function send() {
   });
 
   console.log(register);
-
   console.log("Service Worker Registered...");
-
   console.log("Registering Push...");
   const subscription = await register.pushManager.subscribe({
     userVisibleOnly: true,
@@ -22,7 +20,6 @@ async function send() {
   });
 
   console.log("Push Registered...");
-
   console.log("Send Push...");
 
   // console.log(JSON.stringify(subscription));

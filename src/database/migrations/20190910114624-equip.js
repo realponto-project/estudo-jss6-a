@@ -23,6 +23,11 @@ module.exports = {
         defaultValue: false
       },
 
+      loan: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
+
       createdAt: {
         defaultValue: Sequelize.NOW,
         type: Sequelize.DATE

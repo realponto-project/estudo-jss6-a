@@ -151,6 +151,7 @@ module.exports = class EmprestimoDomain {
       include: [
         {
           model: Equip,
+          where: getWhere("equip"),
           include: [
             {
               model: ProductBase,
@@ -176,13 +177,11 @@ module.exports = class EmprestimoDomain {
 
     const { rows } = emprestimos;
 
-    // console.log(JSON.parse(JSON.stringify(rows)));
-
     if (rows.length === 0) {
       return {
         page: null,
         show: 0,
-        count: entrances.count,
+        count: emprestimos.count,
         rows: []
       };
     }
@@ -227,6 +226,7 @@ module.exports = class EmprestimoDomain {
       rows: emprestimoList
     };
 
+    console.log(response);
     return response;
   }
 

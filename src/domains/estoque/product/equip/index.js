@@ -356,11 +356,7 @@ module.exports = class EquipDomain {
 
     const { rows } = equips;
 
-    // console.log(JSON.parse(JSON.stringify(rows)));
-
     const formatData = R.map(equip => {
-      // console.log(JSON.parse(JSON.stringify(equip.productBase)));
-
       const resp = {
         id: equip.id,
         serialNumber: equip.serialNumber,

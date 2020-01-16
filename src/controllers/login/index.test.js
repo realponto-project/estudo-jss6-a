@@ -1,17 +1,17 @@
-const request = require('../../helpers/request')
-const UserDomain = require('../../domains/auth/user')
-const TypeAccount = require('../../domains/auth/user/typeAccount')
+const request = require("../../helpers/request");
+const UserDomain = require("../../domains/auth/user");
+const TypeAccount = require("../../domains/auth/user/typeAccount");
 
-const userDomain = new UserDomain()
-const typeAccount = new TypeAccount()
+const userDomain = new UserDomain();
+const typeAccount = new TypeAccount();
 
-describe('logincontroller', () => {
-  let user = null
-  let userMock = null
+describe("logincontroller", () => {
+  let user = null;
+  let userMock = null;
 
   beforeAll(async () => {
     const typeAccountMock = {
-      typeName: 'TESTE5',
+      typeName: "TESTE5",
       addCompany: true,
       addPart: true,
       addAnalyze: true,
@@ -22,7 +22,7 @@ describe('logincontroller', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       stock: false,
       labTec: true,
       addTec: false,
@@ -40,13 +40,14 @@ describe('logincontroller', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
+      addStatus: false
+    };
 
-    await typeAccount.add(typeAccountMock)
+    await typeAccount.add(typeAccountMock);
 
     userMock = {
-      username: 'teste5',
-      typeName: 'TESTE5',
+      username: "teste5",
+      typeName: "TESTE5",
       customized: false,
       addCompany: true,
       addPart: true,
@@ -58,7 +59,7 @@ describe('logincontroller', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       addTec: false,
       addCar: false,
       addMark: false,
@@ -74,157 +75,157 @@ describe('logincontroller', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
+      addStatus: false
+    };
 
-    user = await userDomain.user_Create(userMock)
-  })
+    user = await userDomain.user_Create(userMock);
+  });
 
-  test('try login with correct data', async () => {
+  test("try login with correct data", async () => {
     const loginBody = {
       username: userMock.username,
       password: userMock.username,
-      typeAccount: { labTec: true },
-    }
+      typeAccount: { labTec: true }
+    };
 
-    const response = await request().post('/oapi/login', loginBody)
+    const response = await request().post("/oapi/login", loginBody);
 
-    expect(response.statusCode).toBe(200)
-    expect(response.body.username).toBe(loginBody.username)
-    expect(response.body.name).toBe(user.name)
-    expect(response.body.userId).toBe(user.id)
-    expect(response.body.token).toBeTruthy()
-    expect(response.body.email).toBe(user.email)
-  })
+    expect(response.statusCode).toBe(200);
+    expect(response.body.username).toBe(loginBody.username);
+    expect(response.body.name).toBe(user.name);
+    expect(response.body.userId).toBe(user.id);
+    expect(response.body.token).toBeTruthy();
+    expect(response.body.email).toBe(user.email);
+  });
 
-  test('try login with incorrect username', async () => {
+  test("try login with incorrect username", async () => {
     const loginBody = {
-      username: 'naocadastrado1322103',
-      password: 'baasdfa',
-      typeAccount: { labTec: true },
-    }
+      username: "naocadastrado1322103",
+      password: "baasdfa",
+      typeAccount: { labTec: true }
+    };
 
-    const response = await request().post('/oapi/login', loginBody)
+    const response = await request().post("/oapi/login", loginBody);
 
-    expect(response.statusCode).toBe(401)
+    expect(response.statusCode).toBe(401);
     // expect(response.body.name).toBe('User UNAUTHORIZED')
-  })
+  });
 
-  test('try login with incorrect password', async () => {
-    const loginBody = {
-      password: userMock.username,
-      username: 'incorrectpass',
-      typeAccount: { labTec: true },
-    }
-
-    const response = await request().post('/oapi/login', loginBody)
-
-    expect(response.statusCode).toBe(401)
-    // expect(response.body.name).toBe('User UNAUTHORIZED')
-  })
-
-  test('try login with password equal null', async () => {
+  test("try login with incorrect password", async () => {
     const loginBody = {
       password: userMock.username,
-      username: '',
-      typeAccount: { labTec: true },
-    }
+      username: "incorrectpass",
+      typeAccount: { labTec: true }
+    };
 
-    const response = await request().post('/oapi/login', loginBody)
+    const response = await request().post("/oapi/login", loginBody);
 
-    expect(response.statusCode).toBe(401)
+    expect(response.statusCode).toBe(401);
     // expect(response.body.name).toBe('User UNAUTHORIZED')
-  })
+  });
 
-  test('try login with username equal null', async () => {
-    const loginBody = {
-      username: '',
-      password: userMock.username,
-      typeAccount: { labTec: true },
-    }
-
-    const response = await request().post('/oapi/login', loginBody)
-
-    expect(response.statusCode).toBe(401)
-    // expect(response.body.name).toBe('User UNAUTHORIZED')
-  })
-
-  test('try login with username omited', async () => {
+  test("try login with password equal null", async () => {
     const loginBody = {
       password: userMock.username,
-      typeAccount: { labTec: true },
-    }
+      username: "",
+      typeAccount: { labTec: true }
+    };
 
-    const response = await request().post('/oapi/login', loginBody)
+    const response = await request().post("/oapi/login", loginBody);
 
-    expect(response.statusCode).toBe(401)
+    expect(response.statusCode).toBe(401);
     // expect(response.body.name).toBe('User UNAUTHORIZED')
-  })
+  });
 
-  test('try login with password omited', async () => {
+  test("try login with username equal null", async () => {
+    const loginBody = {
+      username: "",
+      password: userMock.username,
+      typeAccount: { labTec: true }
+    };
+
+    const response = await request().post("/oapi/login", loginBody);
+
+    expect(response.statusCode).toBe(401);
+    // expect(response.body.name).toBe('User UNAUTHORIZED')
+  });
+
+  test("try login with username omited", async () => {
+    const loginBody = {
+      password: userMock.username,
+      typeAccount: { labTec: true }
+    };
+
+    const response = await request().post("/oapi/login", loginBody);
+
+    expect(response.statusCode).toBe(401);
+    // expect(response.body.name).toBe('User UNAUTHORIZED')
+  });
+
+  test("try login with password omited", async () => {
     const loginBody = {
       username: userMock.username,
-      typeAccount: { labTec: true },
-    }
+      typeAccount: { labTec: true }
+    };
 
-    const response = await request().post('/oapi/login', loginBody)
+    const response = await request().post("/oapi/login", loginBody);
 
-    expect(response.statusCode).toBe(401)
+    expect(response.statusCode).toBe(401);
     // expect(response.body.name).toBe('User UNAUTHORIZED')
-  })
+  });
 
-  test('logout', async () => {
+  test("logout", async () => {
     const loginBody = {
       username: userMock.username,
       password: userMock.username,
-      typeAccount: { labTec: true },
-    }
+      typeAccount: { labTec: true }
+    };
 
-    const response = await request().post('/oapi/login', loginBody)
+    const response = await request().post("/oapi/login", loginBody);
+
+    const params = {
+      token: response.body.token
+    };
+
+    const logout = await request().delete("/oapi/logout", { params });
+
+    expect(logout.statusCode).toBe(200);
+    expect(logout.body.logout).toBe(true);
+  });
+
+  test("auth true", async () => {
+    const loginBody = {
+      username: userMock.username,
+      password: userMock.username,
+      typeAccount: { labTec: true }
+    };
+
+    const response = await request().post("/oapi/login", loginBody);
 
     const params = {
       token: response.body.token,
-    }
+      username: response.body.username
+    };
 
-    const logout = await request().delete('/oapi/logout', { params })
+    const auth = await request().get("/oapi/auth", { params });
 
-    expect(logout.statusCode).toBe(200)
-    expect(logout.body.logout).toBe(true)
-  })
+    const { body, statusCode } = auth;
 
-  test('auth true', async () => {
-    const loginBody = {
-      username: userMock.username,
-      password: userMock.username,
-      typeAccount: { labTec: true },
-    }
+    expect(statusCode).toBe(200);
+    expect(body).toBe(true);
+  });
 
-    const response = await request().post('/oapi/login', loginBody)
-
+  test("auth false", async () => {
     const params = {
-      token: response.body.token,
-      username: response.body.username,
-    }
+      token: "",
+      username: ""
+    };
 
+    const auth = await request().get("/oapi/auth", { params });
 
-    const auth = await request().get('/oapi/auth', { params })
+    const { body, statusCode } = auth;
 
-    const { body, statusCode } = auth
-
-    expect(statusCode).toBe(200)
-    expect(body).toBe(true)
-  })
-
-  test('auth false', async () => {
-    const params = {
-      token: '',
-      username: '',
-    }
-
-    const auth = await request().get('/oapi/auth', { params })
-
-    const { body, statusCode } = auth
-
-    expect(statusCode).toBe(200)
-    expect(body).toBe(false)
-  })
-})
+    expect(statusCode).toBe(200);
+    expect(body).toBe(false);
+  });
+});

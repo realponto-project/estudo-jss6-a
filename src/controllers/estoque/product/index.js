@@ -41,7 +41,6 @@ const getAll = async (req, res, next) => {
       }
     }
 
-    console.log("test");
     const products = await productDomain.getAll({ query, transaction });
 
     await transaction.commit();

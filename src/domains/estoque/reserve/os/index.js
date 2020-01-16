@@ -30,8 +30,6 @@ module.exports = class OsDomain {
   async add(bodyData, options = {}) {
     const { transaction = null } = options;
 
-    console.log(bodyData);
-
     const reserve = R.omit(["id", "osParts"], bodyData);
 
     const reserveNotHasProp = prop => R.not(R.has(prop, reserve));
@@ -118,7 +116,6 @@ module.exports = class OsDomain {
     }
 
     if (errors) {
-      console.log(field, message);
       throw new FieldValidationError([{ field, message }]);
     }
 
@@ -141,7 +138,6 @@ module.exports = class OsDomain {
     if (reserveHasExist && process.env.NODE_ENV === "production") {
       field.message = true;
       message.message = "Há uma reserva nesta data para esta empresa";
-      console.log(field, message);
       throw new FieldValidationError([{ field, message }]);
     }
 
@@ -164,7 +160,6 @@ module.exports = class OsDomain {
         if (!HasProp("status", item) || !item.status) {
           field.status = true;
           message.status = "status cannot null";
-          console.log(field, message);
           throw new FieldValidationError([{ field, message }]);
         }
 
@@ -176,12 +171,10 @@ module.exports = class OsDomain {
         if (!status) {
           field.status = true;
           message.status = "status inválid";
-          console.log(field, message);
           throw new FieldValidationError([{ field, message }]);
         }
 
         if (item.status === "CONSERTO") {
-          // console.log(item);
           const conserto = await consertoDomain.add(item, { transaction });
 
           const osPartsCreatted = {
@@ -195,7 +188,6 @@ module.exports = class OsDomain {
             transaction
           });
 
-          // console.log(JSON.parse(JSON.stringify(osPartCreated)));
           // throw new FieldValidationError([{ field, message }]);
         } else {
           const productBase = await ProductBase.findByPk(item.productBaseId, {
@@ -220,7 +212,6 @@ module.exports = class OsDomain {
           }
 
           if (errors) {
-            console.log(field, message);
             throw new FieldValidationError([{ field, message }]);
           }
 
@@ -253,7 +244,6 @@ module.exports = class OsDomain {
                   errors = true;
                   field.serialNumber = true;
                   message.serialNumber = `este equipamento não esta cadastrado nessa base de estoque/ ${serialNumber} ja esta reservado`;
-                  console.log(field, message);
                   throw new FieldValidationError([{ field, message }]);
                 }
               });
@@ -791,7 +781,6 @@ module.exports = class OsDomain {
       acendent: true,
       direction: "DESC"
     };
-
     const { query = null, transaction = null } = options;
 
     const newQuery = Object.assign({}, query);
@@ -827,8 +816,8 @@ module.exports = class OsDomain {
             {
               model: Product
             }
-          ],
-          required
+          ]
+          // required
         }
         // {
         //   model: Product
@@ -843,8 +832,6 @@ module.exports = class OsDomain {
     });
 
     const { rows } = os;
-
-    // console.log(JSON.parse(JSON.stringify(rows)));
 
     if (rows.length === 0) {
       return {
@@ -864,14 +851,16 @@ module.exports = class OsDomain {
     };
 
     const formatProductDelete = R.map(item => {
-      // console.log(JSON.parse(JSON.stringify(item)))
       const resp = {
-        name: item.productBase.product.name,
+        name: item.productBase
+          ? item.productBase.product.name
+          : item.conserto.product.name,
         osPartsId: item.id,
         amount: item.amount,
         output: item.output,
         missOut: item.missOut,
         return: item.return,
+        status: item.statusExpedition.status,
         quantMax:
           parseInt(item.amount, 10) -
           parseInt(item.return, 10) -
@@ -899,6 +888,14 @@ module.exports = class OsDomain {
         },
         include: [
           {
+            model: Conserto,
+            include: [
+              {
+                model: Product
+              }
+            ]
+          },
+          {
             model: ProductBase,
             include: [
               {
@@ -909,13 +906,15 @@ module.exports = class OsDomain {
           {
             model: Os,
             paranoid: false
+          },
+          {
+            model: StatusExpedition,
+            attributes: ["status"]
           }
         ],
         paranoid: false,
         transaction
       });
-
-      console.log(JSON.parse(JSON.stringify(osParts)));
 
       const kitOuts = await KitOut.findAll({
         // where: { os: id.toString() },
@@ -938,8 +937,6 @@ module.exports = class OsDomain {
         transaction
       });
 
-      // console.log(osParts)
-
       const resp = formatProductDelete(osParts);
 
       Array.prototype.push.apply(resp, formatKitOut(kitOuts));
@@ -950,48 +947,47 @@ module.exports = class OsDomain {
     let notDelet = false;
 
     const formatProduct = R.map(async item => {
-      // console.log(JSON.parse(JSON.stringify(item)));
-
-      const status = await StatusExpedition.findByPk(
-        item.osParts.statusExpeditionId,
-        {
-          attributes: ["status"],
-          transaction
-        }
-      );
-
+      const status = await StatusExpedition.findByPk(item.statusExpeditionId, {
+        attributes: ["status"],
+        transaction
+      });
       notDelet =
-        item.osParts.output !== "0" ||
-        item.osParts.missOut !== "0" ||
-        item.osParts.return !== "0";
+        item.output !== "0" || item.missOut !== "0" || item.return !== "0";
       let equips = [];
 
-      if (item.product.serial) {
+      const serial = !!item.productBase
+        ? item.productBase.product.serial
+        : false;
+
+      if (serial) {
         equips = await Equip.findAll({
           attributes: ["serialNumber"],
-          where: { osPartId: item.osParts.id },
+          where: { osPartId: item.id },
           transaction
         });
-        notDelet = parseInt(item.osParts.amount, 10) !== equips.length;
+        notDelet = parseInt(item.amount, 10) !== equips.length;
       }
-
       const quantMax =
-        parseInt(item.osParts.amount, 10) -
-        parseInt(item.osParts.return, 10) -
-        parseInt(item.osParts.output, 10) -
-        parseInt(item.osParts.missOut, 10);
-
-      // console.log(JSON.parse(JSON.stringify()))
+        parseInt(item.amount, 10) -
+        parseInt(item.return, 10) -
+        parseInt(item.output, 10) -
+        parseInt(item.missOut, 10);
 
       const resp = {
-        serialNumbers: equips,
-        name: item.product.name,
-        serial: item.product.serial,
-        id: item.osParts.id,
-        amount: item.osParts.amount,
-        output: item.osParts.output,
-        missOut: item.osParts.missOut,
-        return: item.osParts.return,
+        serialNumbers: item.productBase
+          ? equips
+          : [{ serialNumber: item.conserto.serialNumber }],
+        name: item.productBase
+          ? item.productBase.product.name
+          : item.conserto.product.name,
+        serial: item.productBase
+          ? item.productBase.product.serial
+          : item.conserto.product.serial,
+        id: item.id,
+        amount: item.amount,
+        output: item.output,
+        missOut: item.missOut,
+        return: item.return,
         quantMax,
         status: status && status.status
       };
@@ -1005,17 +1001,28 @@ module.exports = class OsDomain {
         },
         include: [
           {
-            model: Conserto
+            model: Conserto,
+            include: [
+              {
+                model: Product
+              }
+            ]
+          },
+          {
+            model: ProductBase,
+            include: [
+              {
+                model: Product
+              }
+            ]
           }
         ],
-        attributes: ["consertoId", "id"],
+        // attributes: ["consertoId", "id"],
         paranoid: false,
         transaction
       });
 
-      console.log(JSON.parse(JSON.stringify(osParts)));
-      // console.log(JSON.parse(JSON.stringify(item.productBases)))
-      // console.log(JSON.parse(JSON.stringify(item)));
+      const consertos = osParts.filter(item => item.conserto !== null);
 
       const resp = {
         id: item.id,
@@ -1030,14 +1037,15 @@ module.exports = class OsDomain {
         // products: formatProduct(item.productBases),
         products:
           item.productBases.length !== 0
-            ? await Promise.all(formatProduct(item.productBases))
+            ? // ? await Promise.all(formatProduct(item.productBases))
+              await Promise.all(formatProduct(osParts))
             : await formatProductNull(item.id),
-        notDelet: osParts.length !== item.productBases.length || notDelet
+        notDelet:
+          osParts.length !== item.productBases.length + consertos.length ||
+          notDelet
       };
       return resp;
     });
-
-    // console.log(JSON.parse(JSON.stringify(rows)))
 
     const osList = await Promise.all(formatData(rows));
 
@@ -1190,122 +1198,119 @@ module.exports = class OsDomain {
       transaction
     });
 
-    let productBaseUpdate = {};
+    // console.log("productBase: ");
+    // console.log(JSON.parse(JSON.stringify(productBase)));
 
-    if (productBase.product.serial) {
-      // puxar base de estoque
+    // throw new FieldValidationError([{ field, message }]);
 
-      const stockBase = null;
-      if (stockBase === "EMPRESTIMO") {
-      }
+    if (!!productBase) {
+      let productBaseUpdate = {};
 
-      const { serialNumberArray } = bodyData;
+      if (productBase.product.serial) {
+        const stockBase = null;
+        if (stockBase === "EMPRESTIMO") {
+        }
 
-      if (serialNumberArray.length !== parseInt(value, 10)) {
-        errors = true;
-        field.serialNumbers = true;
-        message.serialNumbers =
-          "quantidade adicionada nãop condiz com a quantidade de números de série.";
-      }
+        const { serialNumberArray } = bodyData;
 
-      if (serialNumberArray.length > 0) {
-        await serialNumberArray.map(async serialNumber => {
-          const equip = await Equip.findOne({
-            where: {
-              serialNumber,
-              reserved: true,
-              productBaseId: productBase.id
-            },
-            transaction
-          });
+        if (serialNumberArray.length !== parseInt(value, 10)) {
+          errors = true;
+          field.serialNumbers = true;
+          message.serialNumbers =
+            "quantidade adicionada nãop condiz com a quantidade de números de série.";
+        }
 
-          if (!equip) {
-            errors = true;
-            field.serialNumber = true;
-            message.serialNumber =
-              "este equipamento não esta cadastrado nessa base de estoque";
-            throw new FieldValidationError([{ field, message }]);
-          }
-        });
-        await serialNumberArray.map(async serialNumber => {
-          const equip = await Equip.findOne({
-            where: {
-              serialNumber,
-              reserved: true,
-              productBaseId: productBase.id
-            },
-            transaction
-          });
-
-          if (key !== "output") {
-            await equip.update(
-              {
-                ...equip,
-                osPartId: null
+        if (serialNumberArray.length > 0) {
+          await serialNumberArray.map(async serialNumber => {
+            const equip = await Equip.findOne({
+              where: {
+                serialNumber,
+                reserved: true,
+                productBaseId: productBase.id
               },
-              { transaction }
-            );
-          }
+              transaction
+            });
 
-          if (key !== "return") {
-            await equip.destroy({ transaction });
-          } else {
-            await equip.update(
-              {
-                ...equip,
-                reserved: false
+            if (!equip) {
+              errors = true;
+              field.serialNumber = true;
+              message.serialNumber =
+                "este equipamento não esta cadastrado nessa base de estoque";
+              throw new FieldValidationError([{ field, message }]);
+            }
+          });
+          await serialNumberArray.map(async serialNumber => {
+            const equip = await Equip.findOne({
+              where: {
+                serialNumber,
+                reserved: true,
+                productBaseId: productBase.id
               },
-              { transaction }
-            );
-          }
-        });
-      }
-    }
+              transaction
+            });
 
-    if (key === "return") {
-      productBaseUpdate = {
-        ...productBase,
-        available: (
-          parseInt(productBase.available, 10) + parseInt(value, 10)
-        ).toString(),
-        reserved: (
-          parseInt(productBase.reserved, 10) - parseInt(value, 10)
-        ).toString()
-      };
+            if (key !== "output") {
+              await equip.update(
+                {
+                  ...equip,
+                  osPartId: null
+                },
+                { transaction }
+              );
+            }
+
+            if (key !== "return") {
+              await equip.destroy({ transaction });
+            } else {
+              await equip.update(
+                {
+                  ...equip,
+                  reserved: false
+                },
+                { transaction }
+              );
+            }
+          });
+        }
+      }
+
+      if (key === "return") {
+        productBaseUpdate = {
+          ...productBase,
+          available: (
+            parseInt(productBase.available, 10) + parseInt(value, 10)
+          ).toString(),
+          reserved: (
+            parseInt(productBase.reserved, 10) - parseInt(value, 10)
+          ).toString()
+        };
+      } else {
+        productBaseUpdate = {
+          ...productBase,
+          amount: (
+            parseInt(productBase.amount, 10) - parseInt(value, 10)
+          ).toString(),
+          reserved: (
+            parseInt(productBase.reserved, 10) - parseInt(value, 10)
+          ).toString()
+        };
+      }
+
+      if (
+        parseInt(productBaseUpdate.available, 10) < 0 ||
+        parseInt(productBaseUpdate.available, 10) < 0
+      ) {
+        field.productBaseUpdate = true;
+        message.productBaseUpdate = "Número negativo não é valido";
+        throw new FieldValidationError([{ field, message }]);
+      }
+
+      await productBase.update(productBaseUpdate, { transaction });
     } else {
-      productBaseUpdate = {
-        ...productBase,
-        amount: (
-          parseInt(productBase.amount, 10) - parseInt(value, 10)
-        ).toString(),
-        reserved: (
-          parseInt(productBase.reserved, 10) - parseInt(value, 10)
-        ).toString()
-      };
+      const conserto = await Conserto.findByPk(osPart.consertoId, {
+        transaction
+      });
     }
-
-    if (
-      parseInt(productBaseUpdate.available, 10) < 0 ||
-      parseInt(productBaseUpdate.available, 10) < 0
-    ) {
-      field.productBaseUpdate = true;
-      message.productBaseUpdate = "Número negativo não é valido";
-      throw new FieldValidationError([{ field, message }]);
-    }
-
-    // if (
-    //   parseInt(productBaseUpdate.available, 10)
-    //   < parseInt(productBase.product.minimumStock, 10)
-    // ) {
-    //   const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
-
-    //   await Notification.create(
-    //     { message: messageNotification },
-    //     { transaction },
-    //   )
-    // }
-
-    await productBase.update(productBaseUpdate, { transaction });
 
     const osPartUpdate = {
       ...osPart,

@@ -52,7 +52,8 @@ const createUserAdmin = async () => {
     addRML: true,
     gerROs: true,
     delROs: true,
-    updateRos: true
+    updateRos: true,
+    addStatus: true
   };
 
   await typeAccount.add(typeAccountMock);
@@ -86,7 +87,8 @@ const createUserAdmin = async () => {
     addRML: true,
     gerROs: true,
     delROs: true,
-    updateRos: true
+    updateRos: true,
+    addStatus: true
   };
   await userDomain.user_Create(userAdmin);
 
