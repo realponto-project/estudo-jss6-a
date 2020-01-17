@@ -1,15 +1,15 @@
-const UserDomain = require('.')
-const TypeAccount = require('./typeAccount')
+const UserDomain = require(".");
+const TypeAccount = require("./typeAccount");
 
-const userDomain = new UserDomain()
-const typeAccount = new TypeAccount()
+const userDomain = new UserDomain();
+const typeAccount = new TypeAccount();
 
-describe('create user', () => {
-  let typeAccountMock = null
+describe("create user", () => {
+  let typeAccountMock = null;
 
   beforeAll(async () => {
     typeAccountMock = {
-      typeName: 'TECNICO',
+      typeName: "TECNICO",
       addCompany: true,
       addPart: true,
       addAnalyze: true,
@@ -20,7 +20,7 @@ describe('create user', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       stock: false,
       labTec: true,
       addTec: false,
@@ -38,12 +38,13 @@ describe('create user', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
-    await typeAccount.add(typeAccountMock)
+      addStatus: false
+    };
+    await typeAccount.add(typeAccountMock);
 
     const userMock = {
-      username: 'teste01',
-      typeName: 'TECNICO',
+      username: "teste01",
+      typeName: "TECNICO",
       customized: false,
       addCompany: true,
       addPart: true,
@@ -55,7 +56,7 @@ describe('create user', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       addTec: false,
       addCar: false,
       addMark: false,
@@ -71,14 +72,15 @@ describe('create user', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
-    await userDomain.user_Create(userMock)
-  })
+      addStatus: false
+    };
+    await userDomain.user_Create(userMock);
+  });
 
-  test('create', async () => {
+  test("create", async () => {
     const userMock = {
-      username: 'teste1',
-      typeName: 'TECNICO',
+      username: "teste1",
+      typeName: "TECNICO",
       customized: false,
       addCompany: true,
       addPart: true,
@@ -90,7 +92,7 @@ describe('create user', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       addTec: false,
       addCar: false,
       addMark: false,
@@ -106,20 +108,21 @@ describe('create user', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
-    const userCreated = await userDomain.user_Create(userMock)
+      addStatus: false
+    };
+    const userCreated = await userDomain.user_Create(userMock);
 
-    expect(userCreated.username).toEqual(userMock.username)
-    expect(userCreated.typeAccount.typeName).toEqual(userMock.typeName)
+    expect(userCreated.username).toEqual(userMock.username);
+    expect(userCreated.typeAccount.typeName).toEqual(userMock.typeName);
 
-    expect(userCreated).not.toHaveProperty('login')
-    expect(userCreated).not.toHaveProperty('password')
-  })
+    expect(userCreated).not.toHaveProperty("login");
+    expect(userCreated).not.toHaveProperty("password");
+  });
 
-  test('getResourceByUsername', async () => {
+  test("getResourceByUsername", async () => {
     const userMock = {
-      username: 'teste98',
-      typeName: 'TECNICO',
+      username: "teste98",
+      typeName: "TECNICO",
       customized: true,
       addCompany: false,
       addPart: false,
@@ -131,7 +134,7 @@ describe('create user', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       addTec: false,
       addCar: false,
       addMark: false,
@@ -147,23 +150,24 @@ describe('create user', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
-    await userDomain.user_Create(userMock)
+      addStatus: false
+    };
+    await userDomain.user_Create(userMock);
 
-    const username = 'teste98'
+    const username = "teste98";
 
-    const userReturn = await userDomain.getResourceByUsername(username)
+    const userReturn = await userDomain.getResourceByUsername(username);
 
-    expect(userReturn.addCompany).toEqual(userMock.addCompany)
-    expect(userReturn.addPart).toEqual(userMock.addPart)
-    expect(userReturn.addAnalyze).toEqual(userMock.addAnalyze)
-    expect(userReturn.addEquip).toEqual(false)
-    expect(userReturn.addEntry).toEqual(false)
-  })
-  test('getResourceByUsername customized', async () => {
+    expect(userReturn.addCompany).toEqual(userMock.addCompany);
+    expect(userReturn.addPart).toEqual(userMock.addPart);
+    expect(userReturn.addAnalyze).toEqual(userMock.addAnalyze);
+    expect(userReturn.addEquip).toEqual(false);
+    expect(userReturn.addEntry).toEqual(false);
+  });
+  test("getResourceByUsername customized", async () => {
     const userMock = {
-      username: 'teste99',
-      typeName: 'TECNICO',
+      username: "teste99",
+      typeName: "TECNICO",
       customized: true,
       addCompany: true,
       addPart: true,
@@ -175,7 +179,7 @@ describe('create user', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       addTec: false,
       addCar: false,
       addMark: false,
@@ -191,23 +195,24 @@ describe('create user', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
-    await userDomain.user_Create(userMock)
+      addStatus: false
+    };
+    await userDomain.user_Create(userMock);
 
-    const username = 'teste99'
+    const username = "teste99";
 
-    const userReturn = await userDomain.getResourceByUsername(username)
+    const userReturn = await userDomain.getResourceByUsername(username);
 
-    expect(userReturn.addCompany).toEqual(userMock.addCompany)
-    expect(userReturn.addPart).toEqual(userMock.addPart)
-    expect(userReturn.addAnalyze).toEqual(userMock.addAnalyze)
-    expect(userReturn.addEquip).toEqual(userMock.addEquip)
-    expect(userReturn.addEntry).toEqual(userMock.addEntry)
-  })
+    expect(userReturn.addCompany).toEqual(userMock.addCompany);
+    expect(userReturn.addPart).toEqual(userMock.addPart);
+    expect(userReturn.addAnalyze).toEqual(userMock.addAnalyze);
+    expect(userReturn.addEquip).toEqual(userMock.addEquip);
+    expect(userReturn.addEntry).toEqual(userMock.addEntry);
+  });
 
-  test('criar usuario sem premissões', async () => {
+  test("criar usuario sem premissões", async () => {
     const typeAccountTeste = {
-      typeName: 'NADINHA',
+      typeName: "NADINHA",
       addCompany: false,
       addPart: false,
       addAnalyze: false,
@@ -218,7 +223,7 @@ describe('create user', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       stock: false,
       labTec: true,
       addTec: false,
@@ -236,12 +241,13 @@ describe('create user', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
-    await typeAccount.add(typeAccountTeste)
+      addStatus: false
+    };
+    await typeAccount.add(typeAccountTeste);
 
     const userMock = {
-      username: 'nadinha',
-      typeName: 'NADINHA',
+      username: "nadinha",
+      typeName: "NADINHA",
       customized: false,
       addCompany: false,
       addPart: false,
@@ -253,7 +259,7 @@ describe('create user', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       addTec: false,
       addCar: false,
       addMark: false,
@@ -269,18 +275,19 @@ describe('create user', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
-    const userReturn = await userDomain.user_Create(userMock)
+      addStatus: false
+    };
+    const userReturn = await userDomain.user_Create(userMock);
 
-    expect(userReturn.username).toEqual(userMock.username)
+    expect(userReturn.username).toEqual(userMock.username);
     // expect(await userDomain.findUsernameByPK(userReturn.id)).toBeTruthy()
-  })
+  });
 
-  test('getAll', async () => {
-    const users = await userDomain.getAll()
-    expect(users.rows.length > 0).toBeTruthy()
-  })
-})
+  test("getAll", async () => {
+    const users = await userDomain.getAll();
+    expect(users.rows.length > 0).toBeTruthy();
+  });
+});
 
 // describe('update password', () => {
 //   let userMockGenerated = {}

@@ -103,8 +103,8 @@ describe("emprestimoDomain", () => {
       cnpj: "37331737000105",
       razaoSocial: "emprestimoDomain",
       dateExpedition: new Date(),
-      equipId: equip.id,
-      technicianId: technicianCreated.id
+      technicianId: technicianCreated.id,
+      serialNumber: "0001212"
     };
 
     await emprestimoDomain.add(emprestimoMock);

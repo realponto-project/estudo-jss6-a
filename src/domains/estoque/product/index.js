@@ -374,7 +374,10 @@ module.exports = class ProductDomain {
         {
           model: EquipType,
           where: getWhere("equipType"),
-          required: newQuery.filters && newQuery.filters.equipType.specific.type
+          required:
+            newQuery.filters &&
+            newQuery.filters.equipType &&
+            newQuery.filters.equipType.specific.type
         }
       ],
       order: [[newOrder.field, newOrder.direction]],
@@ -384,6 +387,8 @@ module.exports = class ProductDomain {
     });
 
     const { rows } = products;
+
+    // console.log(JSON.parse(JSON.stringify(rows)));
 
     if (rows.length === 0) {
       return {

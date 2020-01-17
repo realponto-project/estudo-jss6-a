@@ -14,6 +14,7 @@ const typeAccountRoute = require("./typeAccount");
 const userRoute = require("./user");
 const statusExpeditionRoute = require("./estoque/statusExpedition");
 const emprestimoRoute = require("./estoque/emprestimo");
+const consertoRoute = require("./estoque/conserto");
 
 router.use("/car", carRoute);
 router.use("/company", companyRoute);
@@ -29,6 +30,7 @@ router.use("/typeAccount", typeAccountRoute);
 router.use("/user", userRoute);
 router.use("/statusExpedition", statusExpeditionRoute);
 router.use("/emprestimo", emprestimoRoute);
+router.use("/conserto", consertoRoute);
 
 module.exports = router;
 

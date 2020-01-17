@@ -1,18 +1,17 @@
-const request = require('../../helpers/request')
+const request = require("../../helpers/request");
 
-const TypeAccount = require('../../domains/auth/user/typeAccount')
+const TypeAccount = require("../../domains/auth/user/typeAccount");
 
-const typeAccount = new TypeAccount()
+const typeAccount = new TypeAccount();
 
-
-describe('userController', () => {
-  let headers = null
-  let typeAccountMock = null
-  let userMock = null
+describe("userController", () => {
+  let headers = null;
+  let typeAccountMock = null;
+  let userMock = null;
 
   beforeAll(async () => {
     typeAccountMock = {
-      typeName: 'TecnicoLab',
+      typeName: "TecnicoLab",
       addCompany: false,
       addPart: false,
       addAnalyze: true,
@@ -23,7 +22,7 @@ describe('userController', () => {
       addAccessories: false,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       stock: false,
       labTec: true,
       addTec: false,
@@ -41,13 +40,14 @@ describe('userController', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
+      addStatus: false
+    };
 
-    await typeAccount.add(typeAccountMock)
+    await typeAccount.add(typeAccountMock);
 
     userMock = {
-      username: 'matheus',
-      typeName: 'TecnicoLab',
+      username: "matheus",
+      typeName: "TecnicoLab",
       customized: false,
       addCompany: true,
       addPart: true,
@@ -59,7 +59,7 @@ describe('userController', () => {
       addAccessories: true,
       addUser: true,
       addTypeAccount: true,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       addTec: false,
       addCar: false,
       addMark: false,
@@ -75,42 +75,43 @@ describe('userController', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
+      addStatus: false
+    };
 
     const loginBody = {
-      username: 'modrp',
-      password: 'modrp',
-      typeAccount: { labTec: true },
-    }
+      username: "modrp",
+      password: "modrp",
+      typeAccount: { labTec: true }
+    };
 
-    const login = await request().post('/oapi/login', loginBody)
+    const login = await request().post("/oapi/login", loginBody);
 
-    const { token, username } = login.body
+    const { token, username } = login.body;
 
     headers = {
       token,
-      username,
-    }
-  })
+      username
+    };
+  });
 
-  test('create', async () => {
-    const response = await request().post('/api/user', userMock, { headers })
+  test("create", async () => {
+    const response = await request().post("/api/user", userMock, { headers });
 
-    const { statusCode } = response
+    const { statusCode } = response;
 
-    expect(statusCode).toBe(200)
+    expect(statusCode).toBe(200);
     // expect(body.typeName).toBe(typeAccountMock.typeName)
     // expect(body.resource.addCompany).toBe(typeAccountMock.addCompany)
     // expect(body.resource.addPart).toBe(typeAccountMock.addPart)
     // expect(body.resource.addAnalyze).toBe(typeAccountMock.addAnalyze)
     // expect(body.resource.addEquip).toBe(typeAccountMock.addEquip)
     // expect(body.resource.addEntry).toBe(typeAccountMock.addEntry)
-  })
+  });
 
-  test('getResourceByUsername', async () => {
+  test("getResourceByUsername", async () => {
     userMock = {
-      username: 'alvaro',
-      typeName: 'TecnicoLab',
+      username: "alvaro",
+      typeName: "TecnicoLab",
       customized: true,
       addCompany: false,
       addPart: false,
@@ -122,7 +123,7 @@ describe('userController', () => {
       addAccessories: true,
       addUser: false,
       addTypeAccount: false,
-      responsibleUser: 'modrp',
+      responsibleUser: "modrp",
       addTec: false,
       addCar: false,
       addMark: false,
@@ -138,43 +139,50 @@ describe('userController', () => {
       gerROs: false,
       delROs: false,
       updateRos: false,
-    }
+      addStatus: false
+    };
 
-    await request().post('/api/user', userMock, { headers })
+    await request().post("/api/user", userMock, { headers });
 
     const params = {
-      username: 'alvaro',
-    }
-    const response = await request().get('/api/user/getResourceByUsername', { headers, params })
+      username: "alvaro"
+    };
+    const response = await request().get("/api/user/getResourceByUsername", {
+      headers,
+      params
+    });
 
-    const { body, statusCode } = response
+    const { body, statusCode } = response;
 
-    expect(statusCode).toBe(200)
-    expect(body.addCompany).toBe(userMock.addCompany)
-    expect(body.addPart).toBe(userMock.addPart)
-    expect(body.addAnalyze).toBe(userMock.addAnalyze)
-    expect(body.addEquip).toBe(userMock.addEquip)
-    expect(body.addEntry).toBe(userMock.addEntry)
-  })
+    expect(statusCode).toBe(200);
+    expect(body.addCompany).toBe(userMock.addCompany);
+    expect(body.addPart).toBe(userMock.addPart);
+    expect(body.addAnalyze).toBe(userMock.addAnalyze);
+    expect(body.addEquip).toBe(userMock.addEquip);
+    expect(body.addEntry).toBe(userMock.addEntry);
+  });
 
-  test('getall, query', async () => {
+  test("getall, query", async () => {
     const params = {
       query: {
         filters: {
           typeAccount: {
             specific: {
-              typeName: 'TecnicoLab',
-            },
-          },
-        },
-      },
-    }
+              typeName: "TecnicoLab"
+            }
+          }
+        }
+      }
+    };
 
-    const response = await request().get('/api/user/getAll', { headers, params })
+    const response = await request().get("/api/user/getAll", {
+      headers,
+      params
+    });
 
-    const { body, statusCode } = response
+    const { body, statusCode } = response;
 
-    expect(statusCode).toBe(200)
-    expect(body).toBeTruthy()
-  })
-})
+    expect(statusCode).toBe(200);
+    expect(body).toBeTruthy();
+  });
+});
