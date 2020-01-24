@@ -6,7 +6,7 @@ const sequelize = new Sequelize({
   port: process.env.DB_PORT,
   password: process.env.DB_PASSWORD,
   username: process.env.DB_USERNAME,
-  database: process.env.DB_DATABASE,
+  database: process.env.DB_DATABASE, 
   dialect: 'postgres',
   // operatorsAliases: false,
   logging: false,
@@ -21,6 +21,7 @@ const sequelize = new Sequelize({
     paranoid: true,
   },
 })
+
 
 const modelInstances = models.map(model => model(sequelize))
 modelInstances.forEach(
