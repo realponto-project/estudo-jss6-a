@@ -18,18 +18,18 @@ const add = async (req, res, next) => {
   }
 };
 
-// const update = async (req, res, next) => {
-//   const transaction = await database.transaction()
-//   try {
-//     const entrance = await entranceDomain.update(req.body, { transaction })
+const update = async (req, res, next) => {
+  const transaction = await database.transaction();
+  try {
+    const emprestimo = await emprestimoDomain.update(req.body, { transaction });
 
-//     await transaction.commit()
-//     res.json(entrance)
-//   } catch (error) {
-//     await transaction.rollback()
-//     next(error)
-//   }
-// }
+    await transaction.commit();
+    res.json(emprestimo);
+  } catch (error) {
+    await transaction.rollback();
+    next(error);
+  }
+};
 
 const getAll = async (req, res, next) => {
   const transaction = await database.transaction();
@@ -54,7 +54,7 @@ const getAll = async (req, res, next) => {
 const delet = async (req, res, next) => {
   const transaction = await database.transaction();
   try {
-    const deleteEmprestimo = await emprestimoDomain.delete(req.query.id, {
+    const deleteEmprestimo = await emprestimoDomain.delete(req.query, {
       transaction
     });
 
@@ -68,7 +68,7 @@ const delet = async (req, res, next) => {
 
 module.exports = {
   add,
-  // update,
+  update,
   getAll,
   delet
 };

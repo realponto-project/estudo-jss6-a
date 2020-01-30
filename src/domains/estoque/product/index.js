@@ -388,8 +388,6 @@ module.exports = class ProductDomain {
 
     const { rows } = products;
 
-    // console.log(JSON.parse(JSON.stringify(rows)));
-
     if (rows.length === 0) {
       return {
         page: null,

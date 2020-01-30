@@ -1198,8 +1198,6 @@ module.exports = class OsDomain {
       transaction
     });
 
-    // console.log("productBase: ");
-    // console.log(JSON.parse(JSON.stringify(productBase)));
 
     // throw new FieldValidationError([{ field, message }]);
 

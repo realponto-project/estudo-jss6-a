@@ -119,8 +119,6 @@ module.exports = class ConsertoDomain {
 
   //   const { rows } = emprestimos;
 
-  //   // console.log(JSON.parse(JSON.stringify(rows)));
-
   //   if (rows.length === 0) {
   //     return {
   //       page: null,
@@ -140,7 +138,6 @@ module.exports = class ConsertoDomain {
   //   };
 
   //   const formatData = R.map(emprestimo => {
-  //     // console.log(JSON.parse(JSON.stringify(emprestimo)));
   //     const resp = {
   //       id: emprestimo.id,
   //       razaoSocial: emprestimo.razaoSocial,
