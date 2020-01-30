@@ -4,7 +4,7 @@
     "password": "estoque",
     "database": "estoque",
     "host": "192.168.90.211",
-    "port": 5432,
+    "port": 5402,
     "dialect": "postgres"
   },
   "test": {
@@ -12,7 +12,7 @@
     "password": "estoque",
     "database": "estoque",
     "host": "192.168.90.211",
-    "port": 5432,
+    "port": 5402,
     "dialect": "postgres"
   },
   "production": {
@@ -20,7 +20,7 @@
     "password": "estoque",
     "database": "estoque",
     "host": "192.168.90.211",
-    "port": 5432,
+    "port": 5402,
     "dialect": "postgres"
   }
 }

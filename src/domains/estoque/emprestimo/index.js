@@ -124,6 +124,97 @@ module.exports = class EmprestimoDomain {
     return emprestimoCreted;
   }
 
+  async update(bodyData, options = {}) {
+    const { transaction = null } = options;
+
+    const oldEmprestimo = await Emprestimo.findByPk(bodyData.id, {
+      transaction
+    });
+
+    if (!oldEmprestimo) {
+      throw new FieldValidationError([
+        { field: { id: true }, message: { id: "inválid id" } }
+      ]);
+    }
+
+    const emprestimo = R.omit(["id", "serialNumber"], bodyData);
+    const notHasProps = (prop, obj) => R.not(R.has(prop, obj));
+
+    let errors = false;
+
+    const field = {
+      cnpj: false,
+      razaoSocial: false,
+      dateExpedition: false,
+      productId: false
+    };
+
+    const message = {
+      razaoSocial: "",
+      cnpj: "",
+      dateExpedition: "",
+      productId: ""
+    };
+
+    if (notHasProps("cnpj", emprestimo) || !emprestimo.cnpj) {
+      errors = true;
+      field.cnpj = true;
+      message.cnpj = "cnpj cannot null";
+    } else if (!Cnpj.isValid(emprestimo.cnpj.replace(/\D/g, ""))) {
+      errors = true;
+      field.cnpj = true;
+      message.cnpj = "cnpj inválid";
+    }
+
+    if (notHasProps("razaoSocial", emprestimo) || !emprestimo.razaoSocial) {
+      errors = true;
+      field.razaoSocial = true;
+      message.razaoSocial = "razaoSocial cannot null";
+    }
+
+    if (
+      notHasProps("dateExpedition", emprestimo) ||
+      !emprestimo.dateExpedition
+    ) {
+      errors = true;
+      field.dateExpedition = true;
+      message.dateExpedition = "dateExpedition cannot null";
+    }
+
+    if (notHasProps("technicianId", emprestimo) || !emprestimo.technicianId) {
+      errors = true;
+      field.technicianId = true;
+      message.technicianId = "technicianId cannot null";
+    } else {
+      const technician = await Technician.findByPk(emprestimo.technicianId, {
+        transaction
+      });
+
+      if (!technician) {
+        errors = true;
+        field.technicianId = true;
+        message.technicianId = "technicianId inválid";
+      }
+    }
+
+    if (errors) {
+      throw new FieldValidationError([{ field, message }]);
+    }
+
+    const emperestimoUpdated = {
+      ...JSON.parse(JSON.stringify(oldEmprestimo)),
+      ...emprestimo
+    };
+
+    await oldEmprestimo.update(emperestimoUpdated, { transaction });
+
+    const response = await Emprestimo.findByPk(bodyData.id, {
+      transaction
+    });
+
+    return response;
+  }
+
   async getAll(options = {}) {
     const inicialOrder = {
       field: "createdAt",
@@ -196,7 +287,6 @@ module.exports = class EmprestimoDomain {
     };
 
     const formatData = R.map(emprestimo => {
-      // console.log(JSON.parse(JSON.stringify(emprestimo)));
       const resp = {
         id: emprestimo.id,
         razaoSocial: emprestimo.razaoSocial,
@@ -205,6 +295,8 @@ module.exports = class EmprestimoDomain {
         dateExpedition: formatDateFunct(emprestimo.dateExpedition),
         serialNumber: emprestimo.equip.serialNumber,
         name: emprestimo.equip.productBase.product.name,
+        technicianId: emprestimo.technician.id,
+        technician: emprestimo.technician.name,
         createdAtNotFormatted: emprestimo.createdAt,
         createdAt: formatDateFunct(emprestimo.createdAt),
         deletedAt: emprestimo.deletedAt && formatDateFunct(emprestimo.deletedAt)
@@ -226,14 +318,15 @@ module.exports = class EmprestimoDomain {
       rows: emprestimoList
     };
 
-    console.log(response);
     return response;
   }
 
-  async delete(id, options = {}) {
+  async delete(bodyData, options = {}) {
     const { transaction = null } = options;
 
-    const deletEmprestimo = await Emprestimo.findByPk(id, {
+    const optionsQuery = R.omit(["id"], bodyData);
+
+    const deletEmprestimo = await Emprestimo.findByPk(bodyData.id, {
       include: [
         {
           model: Equip
@@ -262,7 +355,7 @@ module.exports = class EmprestimoDomain {
       inClient: false
     });
 
-    await deletEmprestimo.destroy({ transaction });
+    await deletEmprestimo.destroy({ ...optionsQuery, transaction });
 
     return "sucesso";
   }

@@ -68,8 +68,6 @@ describe("consertoDomain", () => {
     };
     const consertoCreated = await consertoDomain.add(consertoMock);
 
-    // console.log(JSON.parse(JSON.stringify(consertoCreated)));
-
     expect(consertoCreated.serialNumber).toBe(consertoMock.serialNumber);
   });
 });
