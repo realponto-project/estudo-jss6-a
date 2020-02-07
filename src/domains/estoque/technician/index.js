@@ -468,8 +468,11 @@ module.exports = class TechnicianDomain {
 
     const newQuery = Object.assign({}, query);
 
+    const { getWhere } = formatQuery(newQuery);
+
     const technician = await Technician.findAll({
-      where: newQuery,
+      limit: 30,
+      where: getWhere("technician"),
       include: [
         {
           model: Car,
