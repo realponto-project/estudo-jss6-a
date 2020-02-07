@@ -97,8 +97,8 @@ module.exports = class ProductDomain {
 
       if (productHasExist) {
         errors = true;
-        field.name = true;
-        message.name = "Nome já cadastrado.";
+        field.codigo = true;
+        message.codigo = "SKU já cadastrado.";
       }
     }
 
@@ -491,15 +491,15 @@ module.exports = class ProductDomain {
 
     const newQuery = Object.assign({}, query);
 
-    const { stockBase } = newQuery;
+    const { getWhere } = formatQuery(newQuery);
 
     const kit =
       R.prop("kit", query) === undefined ? false : R.prop("kit", query);
 
-    let getWhere = {};
+    let or = {};
 
     if (kit) {
-      getWhere = {
+      or = {
         [operators.or]: [
           {
             category: { [operators.eq]: "peca" }
@@ -513,16 +513,18 @@ module.exports = class ProductDomain {
 
     const productBase = await ProductBase.findAll({
       attributes: ["id", "stockBaseId", "productId", "available"],
+      limit: 20,
       include: [
         {
           model: StockBase,
-          where: { stockBase },
+          where: getWhere("stockBase"),
           attributes: []
         },
         {
           model: Product,
           attributes: ["name", "serial"],
-          where: getWhere
+          where: { ...or, ...getWhere("product") },
+          order: [["name", "ASC"]]
         }
       ],
       transaction

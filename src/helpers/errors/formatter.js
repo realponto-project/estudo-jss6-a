@@ -33,7 +33,6 @@ const baseErrorFormatter = R.applySpec({
 });
 
 const formatErrorResponse = err => {
-  console.log(err instanceof Base);
   if (err instanceof UniqueConstraintError) {
     return getError(409, "unique_constraint", validationErrorFormatter)(err);
   }
