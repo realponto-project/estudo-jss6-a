@@ -511,31 +511,25 @@ module.exports = class ProductDomain {
       };
     }
 
-    const productBase = await ProductBase.findAll({
-      attributes: ["id", "stockBaseId", "productId", "available"],
+    const products = await Product.findAll({
+      where: { ...or, ...getWhere("product") },
+      order: [["name", "ASC"]],
       limit: 20,
       include: [
         {
           model: StockBase,
-          where: getWhere("stockBase"),
-          attributes: []
-        },
-        {
-          model: Product,
-          attributes: ["name", "serial"],
-          where: { ...or, ...getWhere("product") },
-          order: [["name", "ASC"]]
+          where: getWhere("stockBase")
         }
       ],
       transaction
     });
 
-    const response = productBase.map(item => {
+    const response = products.map(product => {
       const resp = {
-        id: item.id,
-        available: item.available,
-        name: item.product.name,
-        serial: item.product.serial
+        id: product.stockBases[0].productBase.id,
+        available: product.stockBases[0].productBase.available,
+        name: product.name,
+        serial: product.serial
       };
       return resp;
     });
