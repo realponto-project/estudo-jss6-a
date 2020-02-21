@@ -318,13 +318,16 @@ module.exports = class EquipDomain {
 
     const equips = await Equip.findAndCountAll({
       where: getWhere("equip"),
-      // attributes: ['id'],
       include: [
         {
+          required: true,
           model: ProductBase,
           include: [
+            { model: StockBase, where: getWhere("stockBase"), required: true },
             {
               model: Product,
+              where: getWhere("product"),
+              required: true,
               include: [
                 {
                   model: Mark
@@ -356,9 +359,18 @@ module.exports = class EquipDomain {
 
     const { rows } = equips;
 
+    if (rows.length === 0)
+      return {
+        page: 1,
+        show: 0,
+        count: 1,
+        rows: []
+      };
+
     const formatData = R.map(equip => {
       const resp = {
         id: equip.id,
+        reserved: equip.reserved,
         serialNumber: equip.serialNumber,
         razaoSocial: equip.razaoSocial,
         name: equip.productBase && equip.productBase.product.name,
