@@ -314,9 +314,9 @@ module.exports = class EquipDomain {
       newOrder.direction = "ASC";
     }
 
-    const { getWhere, limit, offset, pageResponse } = formatQuery(newQuery);
+    const { getWhere } = formatQuery(newQuery);
 
-    const equips = await Equip.findAndCountAll({
+    const equips = await Equip.findAll({
       where: getWhere("equip"),
       include: [
         {
@@ -338,20 +338,12 @@ module.exports = class EquipDomain {
         }
       ],
       order: [[newOrder.field, newOrder.direction]],
-      limit,
-      offset,
       transaction
     });
 
-    const { rows } = equips;
+    // const { rows } = equips;
 
-    if (rows.length === 0)
-      return {
-        page: 1,
-        show: 0,
-        count: 1,
-        rows: []
-      };
+    if (equips.length === 0) return [];
 
     const formatData = R.map(equip => {
       const resp = {
@@ -398,16 +390,7 @@ module.exports = class EquipDomain {
       return resp;
     });
 
-    const equipsList = formatData(rows);
-
-    const response = {
-      page: pageResponse,
-      show: limit,
-      count: equipsList.length,
-      rows: equipsList
-    };
-
-    return response;
+    return formatData(equips);
   }
 
   // async getAll(options = {}) {
