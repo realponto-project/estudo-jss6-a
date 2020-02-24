@@ -314,9 +314,9 @@ module.exports = class EquipDomain {
       newOrder.direction = "ASC";
     }
 
-    const { getWhere } = formatQuery(newQuery);
+    const { getWhere, pageResponse, offset, limit } = formatQuery(newQuery);
 
-    const equips = await Equip.findAll({
+    const equips = await Equip.findAndCountAll({
       where: getWhere("equip"),
       include: [
         {
@@ -341,9 +341,16 @@ module.exports = class EquipDomain {
       transaction
     });
 
-    // const { rows } = equips;
+    const { rows } = equips;
 
-    if (equips.length === 0) return [];
+    if (rows.length === 0) {
+      return {
+        page: null,
+        show: 0,
+        count: equips.count,
+        rows: []
+      };
+    }
 
     const formatData = R.map(equip => {
       const resp = {
@@ -356,41 +363,21 @@ module.exports = class EquipDomain {
           equip.productBase &&
           equip.productBase.product.mark &&
           equip.productBase.product.mark.mark
-        // companyId: equip.companyId,
-        // equipModelId: equip.equipModelId,
-        // razaoSocial: equip.company.razaoSocial,
-        // cnpj: equip.company.cnpj,
-        // street: equip.company.street,
-        // number: equip.company.number,
-        // city: equip.company.city,
-        // state: equip.company.state,
-        // neighborhood: equip.company.neighborhood,
-        // referencePoint: equip.company.referencePoint,
-        // zipCode: equip.company.zipCode,
-        // telphone: equip.company.telphone,
-        // email: equip.company.email,
-        // nameContact: equip.company.nameContact,
-        // type: equip.equipModel.equipMark.equipType.type,
-        // mark: equip.equipModel.equipMark.mark,
-        // model: equip.equipModel.model,
-        // description: equip.equipModel.description,
-        // serialNumber: equip.serialNumber,
-        // corLeitor: equip.corLeitor,
-        // tipoCracha: equip.tipoCracha,
-        // details: equip.details,
-        // proximidade: equip.proximidade,
-        // bio: equip.bio,
-        // barras: equip.barras,
-        // cartografico: equip.cartografico,
-        // responsibleUser: equip.responsibleUser,
-        // createdAt: formatDateFunct(equip.createdAt),
-        // updatedAt: formatDateFunct(equip.updatedAt),
       };
 
       return resp;
     });
 
-    return formatData(equips);
+    const equipsList = formatData(rows);
+
+    const response = {
+      page: pageResponse,
+      show: limit,
+      count: equipsList.length,
+      rows: equipsList
+    };
+
+    return response;
   }
 
   // async getAll(options = {}) {
