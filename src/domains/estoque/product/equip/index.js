@@ -335,21 +335,7 @@ module.exports = class EquipDomain {
               ]
             }
           ]
-          // attributes: [],
         }
-        // {
-        //   model: EquipModel,
-        //   // attributes: [],
-        //   where: getWhere('equipModel'),
-        //   include: [{
-        //     model: EquipMark,
-        //     where: getWhere('equipMark'),
-        //     include: [{
-        //       model: EquipType,
-        //       where: getWhere('equipType'),
-        //     }],
-        //   }],
-        // },
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,

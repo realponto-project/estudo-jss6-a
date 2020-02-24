@@ -44,7 +44,7 @@ module.exports = class StockDomain {
       include: [
         {
           model: Product,
-          attributes: ["name", "category", "minimumStock", "serial"],
+          attributes: ["name", "category", "minimumStock", "serial", "id"],
           where: getWhere("product"),
           // order: [
           //   ['name', 'ASC'],
@@ -95,6 +95,7 @@ module.exports = class StockDomain {
         amount: entrance.amount,
         available: entrance.available,
         serial: entrance.product.serial,
+        productId: entrance.product.id,
         name: entrance.product.name,
         category: entrance.product.category,
         minimumStock: entrance.product.minimumStock,

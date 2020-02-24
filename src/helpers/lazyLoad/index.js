@@ -26,7 +26,10 @@ const isBoolean = type => type instanceof Sequelize.BOOLEAN;
 // string formartter
 const isString = type => type instanceof Sequelize.STRING;
 const assocString = inputSearch => {
-  const searchformated = { [operators.iRegexp]: inputSearch };
+  const searchformated = {
+    [operators.iRegexp]: `${inputSearch.replace(/([()*?+\\])/gi, `\\$1`)}`
+  };
+
   return searchformated;
 };
 
@@ -328,6 +331,8 @@ const formatQuery = (queryPassed = null) => {
       ...whereAndFormatted,
       ...options
     };
+
+    console.log(where);
 
     return where;
   };
