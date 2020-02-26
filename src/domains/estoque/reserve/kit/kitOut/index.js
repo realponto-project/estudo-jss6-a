@@ -1,28 +1,30 @@
-const R = require('ramda')
-const moment = require('moment')
+const R = require("ramda");
+const moment = require("moment");
 // const axios = require('axios')
 
-const formatQuery = require('../../../../../helpers/lazyLoad')
-const database = require('../../../../../database')
+const formatQuery = require("../../../../../helpers/lazyLoad");
+const database = require("../../../../../database");
 
-const { FieldValidationError } = require('../../../../../helpers/errors')
+const { FieldValidationError } = require("../../../../../helpers/errors");
 
-const KitOut = database.model('kitOut')
-const Kit = database.model('kit')
-const KitParts = database.model('kitParts')
-const ProductBase = database.model('productBase')
-const Product = database.model('product')
-const Technician = database.model('technician')
-const Os = database.model('os')
+const KitOut = database.model("kitOut");
+const Kit = database.model("kit");
+const KitParts = database.model("kitParts");
+const ProductBase = database.model("productBase");
+const Product = database.model("product");
+const Technician = database.model("technician");
+const Os = database.model("os");
 // const OsParts = database.model('osParts')
 
 module.exports = class KitOutDomain {
   async add(bodyData, options = {}) {
-    const { transaction = null } = options
+    const { transaction = null } = options;
+
+    throw new FieldValidationError();
 
     // const kitOut = R.omit(['id'], bodyData)
 
-    const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
+    const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData));
 
     const field = {
       reposicao: false,
@@ -30,49 +32,49 @@ module.exports = class KitOutDomain {
       perda: false,
       os: false,
       kitPartId: false,
-      message: false,
-    }
+      message: false
+    };
     const message = {
-      reposicao: '',
-      expedicao: '',
-      perda: '',
-      action: '',
-      amount: '',
-      os: '',
-      kitPartId: '',
-      message: '',
-    }
+      reposicao: "",
+      expedicao: "",
+      perda: "",
+      action: "",
+      amount: "",
+      os: "",
+      kitPartId: "",
+      message: ""
+    };
 
-    let errors = false
-
-    if (
-      bodyDataNotHasProp('reposicao')
-      || !bodyData.reposicao
-      || /\D/.test(bodyData.reposicao)
-    ) {
-      errors = true
-      field.reposicao = true
-      message.reposicao = 'Ação inválida'
-    }
+    let errors = false;
 
     if (
-      bodyDataNotHasProp('expedicao')
-      || !bodyData.expedicao
-      || /\D/.test(bodyData.expedicao)
+      bodyDataNotHasProp("reposicao") ||
+      !bodyData.reposicao ||
+      /\D/.test(bodyData.reposicao)
     ) {
-      errors = true
-      field.expedicao = true
-      message.expedicao = 'Ação inválida'
+      errors = true;
+      field.reposicao = true;
+      message.reposicao = "Ação inválida";
     }
 
     if (
-      bodyDataNotHasProp('perda')
-      || !bodyData.perda
-      || /\D/.test(bodyData.perda)
+      bodyDataNotHasProp("expedicao") ||
+      !bodyData.expedicao ||
+      /\D/.test(bodyData.expedicao)
     ) {
-      errors = true
-      field.perda = true
-      message.perda = 'Ação inválida'
+      errors = true;
+      field.expedicao = true;
+      message.expedicao = "Ação inválida";
+    }
+
+    if (
+      bodyDataNotHasProp("perda") ||
+      !bodyData.perda ||
+      /\D/.test(bodyData.perda)
+    ) {
+      errors = true;
+      field.perda = true;
+      message.perda = "Ação inválida";
     }
 
     // if (bodyDataNotHasProp('amount')
@@ -84,63 +86,63 @@ module.exports = class KitOutDomain {
     //   message.amount = 'não é numero'
     // }
 
-    if (bodyDataNotHasProp('kitPartId') || !bodyData.kitPartId) {
-      errors = true
-      field.kitPartId = true
-      message.kitPartId = 'Por favor o ID do tecnico'
+    if (bodyDataNotHasProp("kitPartId") || !bodyData.kitPartId) {
+      errors = true;
+      field.kitPartId = true;
+      message.kitPartId = "Por favor o ID do tecnico";
     } else {
-      const { kitPartId } = bodyData
-      const kitPartExist = await KitParts.findByPk(kitPartId, { transaction })
+      const { kitPartId } = bodyData;
+      const kitPartExist = await KitParts.findByPk(kitPartId, { transaction });
 
       if (!kitPartExist) {
-        errors = true
-        field.kitPartId = true
-        message.kitPartId = 'Técnico não encomtrado'
+        errors = true;
+        field.kitPartId = true;
+        message.kitPartId = "Técnico não encomtrado";
       }
     }
     if (errors) {
-      throw new FieldValidationError([{ field, message }])
+      throw new FieldValidationError([{ field, message }]);
     }
 
     const kitPartExist = await KitParts.findByPk(bodyData.kitPartId, {
-      attributes: ['kitId'],
+      attributes: ["kitId"],
       include: [
         {
           model: Kit,
-          attributes: ['technicianId'],
-          include: [{ model: Technician, attributes: ['name'] }],
-        },
+          attributes: ["technicianId"],
+          include: [{ model: Technician, attributes: ["name"] }]
+        }
       ],
-      transaction,
-    })
+      transaction
+    });
 
-    const perdaNumber = parseInt(bodyData.perda, 10)
-    const reposicaoNumber = parseInt(bodyData.reposicao, 10)
-    const expedicaoNumber = parseInt(bodyData.expedicao, 10)
+    const perdaNumber = parseInt(bodyData.perda, 10);
+    const reposicaoNumber = parseInt(bodyData.reposicao, 10);
+    const expedicaoNumber = parseInt(bodyData.expedicao, 10);
 
     if (perdaNumber === 0 && reposicaoNumber === 0 && expedicaoNumber === 0) {
-      field.message = true
-      message.message = 'Quantidade invalida'
-      throw new FieldValidationError([{ field, message }])
+      field.message = true;
+      message.message = "Quantidade invalida";
+      throw new FieldValidationError([{ field, message }]);
     }
-    const { kitPartId } = bodyData
+    const { kitPartId } = bodyData;
 
-    const kitPart = await KitParts.findByPk(kitPartId, { transaction })
+    const kitPart = await KitParts.findByPk(kitPartId, { transaction });
 
     let productBase = await ProductBase.findByPk(kitPart.productBaseId, {
-      transaction,
-    })
+      transaction
+    });
 
     if (perdaNumber > 0) {
-      const { perda } = bodyData
+      const { perda } = bodyData;
 
       const kitOut = {
-        action: 'perda',
+        action: "perda",
         amount: perda,
-        kitPartId,
-      }
+        kitPartId
+      };
 
-      await KitOut.create(kitOut, { transaction })
+      await KitOut.create(kitOut, { transaction });
 
       const productBaseUpdate = {
         ...productBase,
@@ -150,26 +152,26 @@ module.exports = class KitOutDomain {
         ).toString(),
         reserved: (
           parseInt(productBase.reserved, 10) - parseInt(perda, 10)
-        ).toString(),
-      }
+        ).toString()
+      };
 
-      await productBase.update(productBaseUpdate, { transaction })
+      await productBase.update(productBaseUpdate, { transaction });
 
       productBase = await ProductBase.findByPk(kitPart.productBaseId, {
-        transaction,
-      })
+        transaction
+      });
     }
 
     if (reposicaoNumber > 0) {
-      const { reposicao } = bodyData
+      const { reposicao } = bodyData;
 
       const kitOut = {
-        action: 'reposicao',
+        action: "reposicao",
         amount: reposicao,
-        kitPartId,
-      }
+        kitPartId
+      };
 
-      await KitOut.create(kitOut, { transaction })
+      await KitOut.create(kitOut, { transaction });
 
       const productBaseUpdate = {
         ...productBase,
@@ -178,84 +180,84 @@ module.exports = class KitOutDomain {
         ).toString(),
         reserved: (
           parseInt(productBase.reserved, 10) + parseInt(reposicao, 10)
-        ).toString(),
-      }
+        ).toString()
+      };
 
-      await productBase.update(productBaseUpdate, { transaction })
+      await productBase.update(productBaseUpdate, { transaction });
 
       productBase = await ProductBase.findByPk(kitPart.productBaseId, {
-        transaction,
-      })
+        transaction
+      });
     }
 
     if (expedicaoNumber > 0) {
-      const { expedicao } = bodyData
-
+      const { expedicao } = bodyData;
 
       if (parseInt(expedicao, 10) > parseInt(kitPart.amount, 10)) {
-        field.expedicao = true
-        message.expedicao = 'expedição não pode ser maior que o valor da reserva'
-        throw new FieldValidationError([{ field, message }])
+        field.expedicao = true;
+        message.expedicao =
+          "expedição não pode ser maior que o valor da reserva";
+        throw new FieldValidationError([{ field, message }]);
       }
 
-      if (bodyDataNotHasProp('os') || !bodyData.os || /\D/.test(bodyData.os)) {
-        field.os = true
-        message.os = 'Ação inválida'
-        throw new FieldValidationError([{ field, message }])
+      if (bodyDataNotHasProp("os") || !bodyData.os || /\D/.test(bodyData.os)) {
+        field.os = true;
+        message.os = "Ação inválida";
+        throw new FieldValidationError([{ field, message }]);
       }
 
-      const { os } = bodyData
+      const { os } = bodyData;
 
       const osExist = await Os.findOne({
         where: { os },
-        include: [{ model: Technician, attributes: ['name'] }],
-        paranoid: false,
-        transaction,
-      })
+        include: [{ model: Technician, attributes: ["name"] }],
+        // paranoid: false,
+        transaction
+      });
 
       if (!osExist) {
-        field.os = true
-        message.os = 'OS inválida'
-        throw new FieldValidationError([{ field, message }])
+        field.os = true;
+        message.os = "OS inválida";
+        throw new FieldValidationError([{ field, message }]);
       } else {
         if (osExist.deletedAt !== null) {
-          field.os = true
-          message.os = 'OS encerrada'
-          throw new FieldValidationError([{ field, message }])
+          field.os = true;
+          message.os = "OS encerrada";
+          throw new FieldValidationError([{ field, message }]);
         }
 
         if (kitPartExist.kit.technician.name !== osExist.technician.name) {
-          field.os = true
-          message.os = `O tecnico que está relacionado com a OS ${osExist.os} é o/a ${osExist.technician.name}`
-          throw new FieldValidationError([{ field, message }])
+          field.os = true;
+          message.os = `O tecnico que está relacionado com a OS ${osExist.os} é o/a ${osExist.technician.name}`;
+          throw new FieldValidationError([{ field, message }]);
         }
       }
 
       const kitOutReturn = await KitOut.findOne({
         where: {
           os,
-          kitPartId: bodyData.kitPartId,
+          kitPartId: bodyData.kitPartId
         },
-        transaction,
-      })
+        transaction
+      });
 
       if (kitOutReturn) {
         const kitOutUpdate = {
           ...kitOutReturn,
           amount: (
             parseInt(kitOutReturn.amount, 10) + parseInt(expedicao, 10)
-          ).toString(),
-        }
+          ).toString()
+        };
 
-        await kitOutReturn.update(kitOutUpdate, { transaction })
+        await kitOutReturn.update(kitOutUpdate, { transaction });
       } else {
         const kitOut = {
-          action: 'expedicao',
+          action: "expedicao",
           amount: expedicao,
           kitPartId,
-          os,
-        }
-        await KitOut.create(kitOut, { transaction })
+          os
+        };
+        await KitOut.create(kitOut, { transaction });
 
         const productBaseUpdate = {
           ...productBase,
@@ -264,36 +266,37 @@ module.exports = class KitOutDomain {
           ).toString(),
           reserved: (
             parseInt(productBase.reserved, 10) - parseInt(expedicao, 10)
-          ).toString(),
-        }
+          ).toString()
+        };
 
-        await productBase.update(productBaseUpdate, { transaction })
+        await productBase.update(productBaseUpdate, { transaction });
 
         productBase = await ProductBase.findByPk(kitPart.productBaseId, {
-          transaction,
-        })
+          transaction
+        });
       }
     }
 
-    const amount = parseInt(kitPart.amount, 10)
-      + reposicaoNumber
-      - expedicaoNumber
-      - perdaNumber
+    const amount =
+      parseInt(kitPart.amount, 10) +
+      reposicaoNumber -
+      expedicaoNumber -
+      perdaNumber;
 
     if (amount < 0) {
-      field.amount = true
-      message.amount = 'quantidade inválida'
-      throw new FieldValidationError([{ field, message }])
+      field.amount = true;
+      message.amount = "quantidade inválida";
+      throw new FieldValidationError([{ field, message }]);
     }
 
     const kitPartUpdate = {
       ...kitPart,
-      amount,
-    }
+      amount
+    };
 
-    await kitPart.update(kitPartUpdate, { transaction })
+    await kitPart.update(kitPartUpdate, { transaction });
 
-    return 'sucesso'
+    return "sucesso";
 
     // if (expedicaoNumber > 0 && !bodyDataNotHasProp('os') || !bodyData.os) {
     //   const { expedicao } = bodyData
@@ -355,28 +358,26 @@ module.exports = class KitOutDomain {
 
   async getAll(options = {}) {
     const inicialOrder = {
-      field: 'createdAt',
+      field: "createdAt",
       acendent: true,
-      direction: 'DESC',
-    }
+      direction: "DESC"
+    };
 
-    const { query = null, transaction = null } = options
+    const { query = null, transaction = null } = options;
 
-    const newQuery = Object.assign({}, query)
-    const newOrder = query && query.order ? query.order : inicialOrder
+    const newQuery = Object.assign({}, query);
+    const newOrder = query && query.order ? query.order : inicialOrder;
 
     if (newOrder.acendent) {
-      newOrder.direction = 'DESC'
+      newOrder.direction = "DESC";
     } else {
-      newOrder.direction = 'ASC'
+      newOrder.direction = "ASC";
     }
 
-    const {
-      getWhere, limit, offset, pageResponse,
-    } = formatQuery(newQuery)
+    const { getWhere, limit, offset, pageResponse } = formatQuery(newQuery);
 
     const kitOut = await KitOut.findAndCountAll({
-      where: getWhere('kitOut'),
+      where: getWhere("kitOut"),
       include: [
         {
           model: KitParts,
@@ -388,10 +389,10 @@ module.exports = class KitOutDomain {
               include: [
                 {
                   model: Product,
-                  where: getWhere('product'),
-                },
+                  where: getWhere("product")
+                }
               ],
-              required: true,
+              required: true
             },
             {
               model: Kit,
@@ -399,13 +400,13 @@ module.exports = class KitOutDomain {
               include: [
                 {
                   model: Technician,
-                  where: getWhere('technician'),
-                },
+                  where: getWhere("technician")
+                }
               ],
-              required: true,
-            },
-          ],
-        },
+              required: true
+            }
+          ]
+        }
         // {
         //   model: ProductBase,
         //   include: [{
@@ -420,35 +421,35 @@ module.exports = class KitOutDomain {
       order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
-      transaction,
-    })
+      transaction
+    });
 
-    const { rows } = kitOut
+    const { rows } = kitOut;
 
     if (rows.length === 0) {
       return {
         page: null,
         show: 0,
         count: kitOut.count,
-        rows: [],
-      }
+        rows: []
+      };
     }
 
-    const formatDateFunct = (date) => {
-      moment.locale('pt-br')
-      const formatDate = moment(date).format('L')
-      const formatHours = moment(date).format('LT')
-      const dateformated = `${formatDate} ${formatHours}`
-      return dateformated
-    }
+    const formatDateFunct = date => {
+      moment.locale("pt-br");
+      const formatDate = moment(date).format("L");
+      const formatHours = moment(date).format("LT");
+      const dateformated = `${formatDate} ${formatHours}`;
+      return dateformated;
+    };
 
-    const formatData = R.map(async (item) => {
+    const formatData = R.map(async item => {
       const resp = {
         id: item.id,
         amount: item.amount,
         name: item.kitPart.productBase.product.name,
         technician: item.kitPart.kit.technician.name,
-        createdAt: formatDateFunct(item.createdAt),
+        createdAt: formatDateFunct(item.createdAt)
         // razaoSocial: item.razaoSocial,
         // cnpj: item.cnpj,
         // date: item.date,
@@ -460,24 +461,24 @@ module.exports = class KitOutDomain {
         // products: item.productBases.products.length !== 0 ?
         // formatProduct(item.productBases.products) :
         // await formatProductNull(item.id),
-      }
-      return resp
-    })
+      };
+      return resp;
+    });
 
-    const kitOutList = await Promise.all(formatData(rows))
+    const kitOutList = await Promise.all(formatData(rows));
 
-    let show = limit
+    let show = limit;
     if (kitOut.count < show) {
-      show = kitOut.count
+      show = kitOut.count;
     }
 
     const response = {
       page: pageResponse,
       show,
       count: kitOut.count,
-      rows: kitOutList,
-    }
+      rows: kitOutList
+    };
 
-    return response
+    return response;
   }
-}
+};
