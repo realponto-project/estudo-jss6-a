@@ -332,8 +332,6 @@ const formatQuery = (queryPassed = null) => {
       ...options
     };
 
-    console.log(where);
-
     return where;
   };
   const limitAndOffset = getLimitAndOffset(total, page);
