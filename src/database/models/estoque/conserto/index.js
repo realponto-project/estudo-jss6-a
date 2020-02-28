@@ -25,6 +25,7 @@ module.exports = sequelize => {
         allowNull: false
       }
     });
+    conserto.belongsToMany(models.os, { through: "osParts" });
   };
 
   return conserto;

@@ -12,9 +12,17 @@ const { auth } = require("./middlewares/authentic");
 
 const app = Express();
 
+console.log(process.env.ORIGIN);
 /** MIDDLEWARES */
 app.use(logger("dev"));
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.ORIGIN,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+  })
+);
 app.use(Express.static("public"));
 app.use(bodyParser.json());
 

@@ -330,18 +330,24 @@ module.exports = class EquipDomain {
               required: true,
               include: [
                 {
-                  model: Mark
+                  model: Mark,
+                  where: getWhere("mark")
                 }
               ]
             }
           ]
         }
       ],
+      offset,
+      limit,
       order: [[newOrder.field, newOrder.direction]],
       transaction
     });
 
     const { rows } = equips;
+
+    console.log("testtetetstte");
+    console.log(JSON.parse(JSON.stringify(rows)));
 
     if (rows.length === 0) {
       return {
@@ -370,12 +376,16 @@ module.exports = class EquipDomain {
 
     const equipsList = formatData(rows);
 
+    // console.log(equips.count);
+
     const response = {
       page: pageResponse,
-      show: limit,
-      count: equipsList.length,
+      show: equipsList.length,
+      count: equips.count,
       rows: equipsList
     };
+
+    // console.log(response);
 
     return response;
   }

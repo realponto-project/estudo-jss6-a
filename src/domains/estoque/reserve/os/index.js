@@ -841,6 +841,19 @@ module.exports = class OsDomain {
 
     const { getWhere, limit, offset, pageResponse } = formatQuery(newQuery);
 
+    const { count } = await Os.findAndCountAll({
+      where: getWhere("os"),
+      include: [
+        {
+          model: Technician,
+          where: getWhere("technician")
+        }
+      ],
+      limit: 0,
+      paranoid,
+      transaction
+    });
+
     const os = await Os.findAndCountAll({
       where: getWhere("os"),
       include: [
@@ -855,9 +868,9 @@ module.exports = class OsDomain {
               model: Product
             }
           ],
-          // required,
-          through: { paranoid }
-          // paranoid: false
+          through: {
+            paranoid
+          }
         },
         {
           model: Conserto,
@@ -867,8 +880,10 @@ module.exports = class OsDomain {
             }
           ],
           paranoid,
-          through: { paranoid }
-          // required
+          through: {
+            paranoid
+          }
+          // required: !getWhere("osParts")
         }
       ],
       order: [[newOrder.field, newOrder.direction]],
@@ -879,6 +894,8 @@ module.exports = class OsDomain {
     });
 
     const { rows } = os;
+
+    // console.log(JSON.parse(JSON.stringify(os)));
 
     if (rows.length === 0) {
       return {
@@ -917,79 +934,40 @@ module.exports = class OsDomain {
     //   return resp;
     // });
 
-    // const formatKitOut = R.map(item => {
-    //   const resp = {
-    //     name: `#${item.kitPart.productBase.product.name}`,
-    //     amount: "-",
-    //     output: item.amount,
-    //     missOut: "-",
-    //     return: "-"
-    //   };
-    //   return resp;
-    // });
+    const formatKitOut = R.map(item => {
+      const resp = {
+        name: `#${item.kitPart.productBase.product.name}`,
+        amount: "-",
+        output: item.amount,
+        missOut: "-",
+        return: "-"
+      };
+      return resp;
+    });
 
-    // const formatProductNull = async id => {
-    //   const osParts = await OsParts.findAll({
-    //     where: {
-    //       oId: id
-    //     },
-    //     include: [
-    //       {
-    //         model: Conserto,
-    //         include: [
-    //           {
-    //             model: Product
-    //           }
-    //         ]
-    //       },
-    //       {
-    //         model: ProductBase,
-    //         include: [
-    //           {
-    //             model: Product
-    //           }
-    //         ]
-    //       },
-    //       {
-    //         model: Os,
-    //         paranoid: false
-    //       },
-    //       {
-    //         model: StatusExpedition,
-    //         attributes: ["status"]
-    //       }
-    //     ],
-    //     paranoid: false,
-    //     transaction
-    //   });
+    const findKitOuts = async os => {
+      const kitOuts = await KitOut.findAll({
+        where: { os },
+        include: [
+          {
+            model: KitParts,
+            include: [
+              {
+                model: ProductBase,
+                include: [
+                  {
+                    model: Product
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        transaction
+      });
 
-    //   const kitOuts = await KitOut.findAll({
-    //     // where: { os: id.toString() },
-    //     where: { os: osParts[0].o.os },
-    //     include: [
-    //       {
-    //         model: KitParts,
-    //         include: [
-    //           {
-    //             model: ProductBase,
-    //             include: [
-    //               {
-    //                 model: Product
-    //               }
-    //             ]
-    //           }
-    //         ]
-    //       }
-    //     ],
-    //     transaction
-    //   });
-
-    //   const resp = formatProductDelete(osParts);
-
-    //   Array.prototype.push.apply(resp, formatKitOut(kitOuts));
-
-    //   return resp;
-    // };
+      return formatKitOut(kitOuts);
+    };
 
     let notDelet = false;
 
@@ -1071,6 +1049,7 @@ module.exports = class OsDomain {
     });
 
     const formatData = R.map(async item => {
+      // console.log(JSON.parse(JSON.stringify(item)));
       const resp = {
         id: item.id,
         razaoSocial: item.razaoSocial,
@@ -1083,7 +1062,8 @@ module.exports = class OsDomain {
         createdAt: formatDateFunct(item.createdAt),
         products: [
           ...(await Promise.all(formatProduct(item.productBases))),
-          ...(await Promise.all(formatConserto(item.consertos)))
+          ...(await Promise.all(formatConserto(item.consertos))),
+          ...(await findKitOuts(item.os))
         ],
         notDelet:
           (item.productBases &&
@@ -1102,21 +1082,21 @@ module.exports = class OsDomain {
     const osList = await Promise.all(formatData(rows));
 
     let show = limit;
-    if (os.count < show) {
-      show = os.count;
+    if (count < show) {
+      show = count;
     }
 
     const response = {
       page: pageResponse,
       show,
-      count: os.count,
+      count,
       rows: osList
     };
 
     return response;
   }
 
-  async getOsByOs(razaoSocial, options = {}) {
+  async getOsByOs(os, options = {}) {
     const { transaction = null } = options;
 
     const formatDateFunct = date => {
@@ -1126,7 +1106,7 @@ module.exports = class OsDomain {
     };
 
     const osReturn = await Os.findOne({
-      where: { razaoSocial },
+      where: { os },
       include: [
         {
           model: Technician
