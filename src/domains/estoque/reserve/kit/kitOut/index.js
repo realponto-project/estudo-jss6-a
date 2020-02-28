@@ -14,15 +14,12 @@ const ProductBase = database.model("productBase");
 const Product = database.model("product");
 const Technician = database.model("technician");
 const Os = database.model("os");
-// const OsParts = database.model('osParts')
+const Conserto = database.model("conserto");
+const OsParts = database.model("osParts");
 
 module.exports = class KitOutDomain {
   async add(bodyData, options = {}) {
     const { transaction = null } = options;
-
-    throw new FieldValidationError();
-
-    // const kitOut = R.omit(['id'], bodyData)
 
     const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData));
 
@@ -407,16 +404,6 @@ module.exports = class KitOutDomain {
             }
           ]
         }
-        // {
-        //   model: ProductBase,
-        //   include: [{
-        //     model: Product,
-        //   }],
-        // },
-        // // {
-        // //   model: Product,
-        // //   required,
-        // // },
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,
@@ -424,9 +411,78 @@ module.exports = class KitOutDomain {
       transaction
     });
 
-    const { rows } = kitOut;
+    const osConserto = await OsParts.findAndCountAll({
+      where: { missOut: "1" },
+      include: [
+        {
+          model: Os,
+          where: getWhere("os"),
+          paranoid: false,
+          include: [
+            {
+              model: Technician,
+              where: getWhere("technician")
+            }
+          ]
+        },
+        {
+          model: Conserto,
+          include: [
+            {
+              model: Product
+            }
+          ],
+          required: true,
+          paranoid: false
+        }
+      ],
+      order: [[newOrder.field, newOrder.direction]],
+      // limit,
+      // offset,
+      paranoid: false,
+      transaction
+    });
 
-    if (rows.length === 0) {
+    // console.log(JSON.parse(JSON.stringify(osConserto)));
+
+    const osProductBase = await OsParts.findAndCountAll({
+      where: { missOut: "1" },
+      include: [
+        {
+          model: Os,
+          where: getWhere("os"),
+          paranoid: false,
+          include: [
+            {
+              model: Technician,
+              where: getWhere("technician")
+            }
+          ]
+        },
+        {
+          model: ProductBase,
+          include: [
+            {
+              model: Product
+            }
+          ],
+          required: true
+        }
+      ],
+      order: [[newOrder.field, newOrder.direction]],
+      // limit,
+      // offset,
+      paranoid: false,
+      transaction
+    });
+
+    // console.log(JSON.parse(JSON.stringify(osProductBase)));
+
+    if (
+      kitOut.rows.length === 0 &&
+      osConserto.rows.length === 0 &&
+      osProductBase.rows.length === 0
+    ) {
       return {
         page: null,
         show: 0,
@@ -443,29 +499,53 @@ module.exports = class KitOutDomain {
       return dateformated;
     };
 
-    const formatData = R.map(async item => {
+    const formatKitOut = R.map(async item => {
       const resp = {
         id: item.id,
         amount: item.amount,
         name: item.kitPart.productBase.product.name,
         technician: item.kitPart.kit.technician.name,
         createdAt: formatDateFunct(item.createdAt)
-        // razaoSocial: item.razaoSocial,
-        // cnpj: item.cnpj,
-        // date: item.date,
-        // formatedDate: moment(item.date).format('L'),
-        // technician: item.technician.name,
-        // technicianId: item.technicianId,
-        // os: item.os,
-        // products: formatProduct(item.productBases),
-        // products: item.productBases.products.length !== 0 ?
-        // formatProduct(item.productBases.products) :
-        // await formatProductNull(item.id),
       };
       return resp;
     });
 
-    const kitOutList = await Promise.all(formatData(rows));
+    const formatProductBase = R.map(async item => {
+      const resp = {
+        // id: item.id,
+        amount: item.amount,
+        name: item.productBase.product.name,
+        technician: item.o.technician.name,
+        createdAt: formatDateFunct(item.createdAt)
+      };
+      return resp;
+    });
+
+    const formatConserto = R.map(async item => {
+      const resp = {
+        // id: item.id,
+        amount: item.amount,
+        name: item.conserto.product.name,
+        technician: item.o.technician.name,
+        createdAt: formatDateFunct(item.createdAt)
+      };
+      return resp;
+    });
+
+    const kitOutList =
+      kitOut.rows.length !== 0
+        ? await Promise.all(formatKitOut(kitOut.rows))
+        : [];
+
+    const osConsertoList =
+      osConserto.rows.length !== 0
+        ? await Promise.all(formatConserto(osConserto.rows))
+        : [];
+
+    const osProductBaseList =
+      osProductBase.rows.length !== 0
+        ? await Promise.all(formatProductBase(osProductBase.rows))
+        : [];
 
     let show = limit;
     if (kitOut.count < show) {
@@ -476,7 +556,7 @@ module.exports = class KitOutDomain {
       page: pageResponse,
       show,
       count: kitOut.count,
-      rows: kitOutList
+      rows: [...kitOutList, ...osConsertoList, ...osProductBaseList]
     };
 
     return response;

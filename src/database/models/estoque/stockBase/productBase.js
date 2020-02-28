@@ -1,42 +1,43 @@
-const Sequelize = require('sequelize')
+const Sequelize = require("sequelize");
 
-module.exports = (sequelize) => {
-  const productBase = sequelize.define('productBase', {
+module.exports = sequelize => {
+  const productBase = sequelize.define("productBase", {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
-      primaryKey: true,
+      primaryKey: true
     },
 
     amount: {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: false
     },
 
     available: {
       type: Sequelize.STRING,
-      allowNull: false,
+      allowNull: false
     },
 
     reserved: {
       type: Sequelize.STRING,
-      allowNull: false,
-    },
-  })
+      allowNull: false
+    }
+  });
 
-  productBase.associate = (models) => {
-    productBase.hasMany(models.equip)
+  productBase.associate = models => {
+    productBase.hasMany(models.equip);
     productBase.belongsTo(models.product, {
       foreignKey: {
-        allowNull: false,
-      },
-    })
+        allowNull: false
+      }
+    });
     productBase.belongsTo(models.stockBase, {
       foreignKey: {
-        allowNull: false,
-      },
-    })
-  }
+        allowNull: false
+      }
+    }),
+      productBase.belongsToMany(models.os, { through: "osParts" });
+  };
 
-  return productBase
-}
+  return productBase;
+};
