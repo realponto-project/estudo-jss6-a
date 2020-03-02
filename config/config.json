@@ -3,24 +3,24 @@
     "username": "postgres",
     "password": "estoque",
     "database": "estoque",
-    "host": "192.168.90.211",
-    "port": 5402,
+    "host": "192.168.90.244",
+    "port": 5442,
     "dialect": "postgres"
   },
   "test": {
     "username": "postgres",
     "password": "estoque",
     "database": "estoque",
-    "host": "192.168.90.211",
-    "port": 5402,
+    "host": "192.168.90.244",
+    "port": 5442,
     "dialect": "postgres"
   },
   "production": {
     "username": "postgres",
     "password": "estoque",
     "database": "estoque",
-    "host": "192.168.90.211",
-    "port": 5402,
+    "host": "192.168.90.244",
+    "port": 5442,
     "dialect": "postgres"
   }
 }

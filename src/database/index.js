@@ -8,7 +8,7 @@ const sequelize = new Sequelize({
   username: process.env.DB_USERNAME,
   database: process.env.DB_DATABASE,
   dialect: "postgres",
-  operatorsAliases: false,
+  // operatorsAliases: false,
   logging: false,
   pool: {
     max: 5,

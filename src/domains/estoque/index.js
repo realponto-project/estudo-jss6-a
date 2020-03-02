@@ -52,6 +52,7 @@ module.exports = class StockDomain {
           include: [
             {
               model: Mark,
+              where: getWhere("mark"),
               attributes: ["mark"],
               required: true
             }

@@ -3,5 +3,6 @@ FROM node:10
 ADD . .
 LABEL Description="backendmodrp"
 RUN yarn install
-CMD npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all && yarn start
+RUN ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+CMD ["yarn", "start"]
 EXPOSE 5312
