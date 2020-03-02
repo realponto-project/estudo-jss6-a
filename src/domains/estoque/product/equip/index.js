@@ -346,9 +346,6 @@ module.exports = class EquipDomain {
 
     const { rows } = equips;
 
-    console.log("testtetetstte");
-    console.log(JSON.parse(JSON.stringify(rows)));
-
     if (rows.length === 0) {
       return {
         page: null,

@@ -271,14 +271,6 @@ module.exports = class EmprestimoDomain {
 
     const { rows } = emprestimos;
 
-    console.log("çkdsvi digsdi ufsdyvyfcsdc gsdioc sdidk pkfsdhsdo fisd ");
-
-    console.log(JSON.parse(JSON.stringify(rows)));
-    // rows.map(item => {
-    //   console.log(JSON.parse(JSON.stringify(item.equip)));
-    //   // console.log(JSON.parse(JSON.stringify(item.equip.productBase)));
-    // });
-
     if (rows.length === 0) {
       return {
         page: null,

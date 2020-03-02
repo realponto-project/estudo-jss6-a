@@ -1,5 +1,6 @@
 const R = require("ramda");
 const moment = require("moment");
+const Sequelize = require("sequelize");
 // const axios = require('axios')
 
 const formatQuery = require("../../../../../helpers/lazyLoad");
@@ -16,6 +17,8 @@ const Technician = database.model("technician");
 const Os = database.model("os");
 const Conserto = database.model("conserto");
 const OsParts = database.model("osParts");
+
+const { Op: operators } = Sequelize;
 
 module.exports = class KitOutDomain {
   async add(bodyData, options = {}) {
@@ -371,7 +374,9 @@ module.exports = class KitOutDomain {
       newOrder.direction = "ASC";
     }
 
-    const { getWhere, limit, offset, pageResponse } = formatQuery(newQuery);
+    const { getWhere, limit, pageResponse } = formatQuery(newQuery);
+
+    console.log(getWhere("product"));
 
     const kitOut = await KitOut.findAndCountAll({
       where: getWhere("kitOut"),
@@ -405,14 +410,13 @@ module.exports = class KitOutDomain {
           ]
         }
       ],
-      order: [[newOrder.field, newOrder.direction]],
-      limit,
-      offset,
+      order: [["createdAt", "ASC"]],
+      limit: 10,
       transaction
     });
 
     const osConserto = await OsParts.findAndCountAll({
-      where: { missOut: "1" },
+      where: { ...getWhere("osParts"), missOut: { [operators.ne]: "0" } },
       include: [
         {
           model: Os,
@@ -429,16 +433,16 @@ module.exports = class KitOutDomain {
           model: Conserto,
           include: [
             {
-              model: Product
+              model: Product,
+              where: getWhere("product")
             }
           ],
           required: true,
           paranoid: false
         }
       ],
-      order: [[newOrder.field, newOrder.direction]],
-      // limit,
-      // offset,
+      order: [["createdAt", "ASC"]],
+      limit: 10,
       paranoid: false,
       transaction
     });
@@ -446,7 +450,7 @@ module.exports = class KitOutDomain {
     // console.log(JSON.parse(JSON.stringify(osConserto)));
 
     const osProductBase = await OsParts.findAndCountAll({
-      where: { missOut: "1" },
+      where: { ...getWhere("osParts"), missOut: { [operators.ne]: "0" } },
       include: [
         {
           model: Os,
@@ -463,15 +467,15 @@ module.exports = class KitOutDomain {
           model: ProductBase,
           include: [
             {
-              model: Product
+              model: Product,
+              where: getWhere("product")
             }
           ],
           required: true
         }
       ],
-      order: [[newOrder.field, newOrder.direction]],
-      // limit,
-      // offset,
+      order: [["createdAt", "ASC"]],
+      limit: 10,
       paranoid: false,
       transaction
     });
@@ -484,9 +488,6 @@ module.exports = class KitOutDomain {
       osProductBase.rows.length === 0
     ) {
       return {
-        page: null,
-        show: 0,
-        count: kitOut.count,
         rows: []
       };
     }
@@ -494,9 +495,7 @@ module.exports = class KitOutDomain {
     const formatDateFunct = date => {
       moment.locale("pt-br");
       const formatDate = moment(date).format("L");
-      const formatHours = moment(date).format("LT");
-      const dateformated = `${formatDate} ${formatHours}`;
-      return dateformated;
+      return formatDate;
     };
 
     const formatKitOut = R.map(async item => {
@@ -513,7 +512,8 @@ module.exports = class KitOutDomain {
     const formatProductBase = R.map(async item => {
       const resp = {
         // id: item.id,
-        amount: item.amount,
+        os: item.o.os,
+        amount: item.missOut,
         name: item.productBase.product.name,
         technician: item.o.technician.name,
         createdAt: formatDateFunct(item.createdAt)
@@ -524,7 +524,8 @@ module.exports = class KitOutDomain {
     const formatConserto = R.map(async item => {
       const resp = {
         // id: item.id,
-        amount: item.amount,
+        os: item.o.os,
+        amount: item.missOut,
         name: item.conserto.product.name,
         technician: item.o.technician.name,
         createdAt: formatDateFunct(item.createdAt)
@@ -547,15 +548,7 @@ module.exports = class KitOutDomain {
         ? await Promise.all(formatProductBase(osProductBase.rows))
         : [];
 
-    let show = limit;
-    if (kitOut.count < show) {
-      show = kitOut.count;
-    }
-
     const response = {
-      page: pageResponse,
-      show,
-      count: kitOut.count,
       rows: [...kitOutList, ...osConsertoList, ...osProductBaseList]
     };
 

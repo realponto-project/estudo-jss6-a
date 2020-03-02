@@ -969,87 +969,97 @@ module.exports = class OsDomain {
       return formatKitOut(kitOuts);
     };
 
-    let notDelet = false;
+    let notDelet = {};
 
-    const formatProduct = R.map(async item => {
-      const { osParts } = item;
-      const { amount, output, missOut } = osParts;
-      const status = await StatusExpedition.findByPk(
-        osParts.statusExpeditionId,
-        {
-          attributes: ["status"],
-          transaction
+    const formatProduct = (productBases, index) => {
+      return R.map(async item => {
+        const { osParts } = item;
+        const { amount, output, missOut } = osParts;
+        const status = await StatusExpedition.findByPk(
+          osParts.statusExpeditionId,
+          {
+            attributes: ["status"],
+            transaction
+          }
+        );
+        notDelet[index] =
+          output !== "0" ||
+          missOut !== "0" ||
+          osParts.return !== "0" ||
+          !!notDelet[index];
+        let equips = [];
+
+        const serial = item.product.serial;
+
+        if (serial) {
+          equips = await Equip.findAll({
+            attributes: ["serialNumber"],
+            where: { osPartId: osParts.id },
+            transaction
+          });
+          notDelet = parseInt(amount, 10) !== equips.length;
         }
-      );
-      notDelet = output !== "0" || missOut !== "0" || osParts.return !== "0";
-      let equips = [];
 
-      const serial = item.product.serial;
+        const quantMax =
+          parseInt(amount, 10) -
+          parseInt(osParts.return, 10) -
+          parseInt(output, 10) -
+          parseInt(missOut, 10);
 
-      if (serial) {
-        equips = await Equip.findAll({
-          attributes: ["serialNumber"],
-          where: { osPartId: osParts.id },
-          transaction
-        });
-        notDelet = parseInt(amount, 10) !== equips.length;
-      }
+        const resp = {
+          serialNumbers: equips,
+          name: item.product.name,
+          serial: item.product.serial,
+          id: osParts.id,
+          amount,
+          output,
+          missOut,
+          return: osParts.return,
+          quantMax,
+          status: status && status.status
+        };
 
-      const quantMax =
-        parseInt(amount, 10) -
-        parseInt(osParts.return, 10) -
-        parseInt(output, 10) -
-        parseInt(missOut, 10);
+        return resp;
+      }, productBases);
+    };
 
-      const resp = {
-        serialNumbers: equips,
-        name: item.product.name,
-        serial: item.product.serial,
-        id: osParts.id,
-        amount,
-        output,
-        missOut,
-        return: osParts.return,
-        quantMax,
-        status: status && status.status
-      };
+    const formatConserto = (conserto, index) => {
+      return R.map(async item => {
+        const { osParts, serialNumber } = item;
+        const { amount, output, missOut } = osParts;
+        const status = await StatusExpedition.findByPk(
+          osParts.statusExpeditionId,
+          {
+            attributes: ["status"],
+            transaction
+          }
+        );
+        notDelet[index] =
+          output !== "0" ||
+          missOut !== "0" ||
+          osParts.return !== "0" ||
+          notDelet[index];
 
-      return resp;
-    });
+        const resp = {
+          serialNumbers: [{ serialNumber }],
+          name: item.product.name,
+          serial: item.product.serial,
+          id: osParts.id,
+          amount,
+          output,
+          missOut,
+          return: osParts.return,
+          quantMax: 1,
+          status: status && status.status
+        };
 
-    const formatConserto = R.map(async item => {
-      const { osParts, serialNumber } = item;
-      const { amount, output, missOut } = osParts;
-      const status = await StatusExpedition.findByPk(
-        osParts.statusExpeditionId,
-        {
-          attributes: ["status"],
-          transaction
-        }
-      );
-      notDelet =
-        output !== "0" || missOut !== "0" || osParts.return !== "0" || notDelet;
+        return resp;
+      }, conserto);
+    };
 
-      const resp = {
-        serialNumbers: [{ serialNumber }],
-        name: item.product.name,
-        serial: item.product.serial,
-        id: osParts.id,
-        amount,
-        output,
-        missOut,
-        return: osParts.return,
-        quantMax: 1,
-        status: status && status.status
-      };
+    const mapIndexed = R.addIndex(R.map);
 
-      notDelet = false;
-
-      return resp;
-    });
-
-    const formatData = R.map(async item => {
-      // console.log(JSON.parse(JSON.stringify(item)));
+    const formatData = mapIndexed(async (item, index) => {
       const resp = {
         id: item.id,
         razaoSocial: item.razaoSocial,
@@ -1061,8 +1071,8 @@ module.exports = class OsDomain {
         os: item.os,
         createdAt: formatDateFunct(item.createdAt),
         products: [
-          ...(await Promise.all(formatProduct(item.productBases))),
-          ...(await Promise.all(formatConserto(item.consertos))),
+          ...(await Promise.all(formatProduct(item.productBases, index))),
+          ...(await Promise.all(formatConserto(item.consertos, index))),
           ...(await findKitOuts(item.os))
         ],
         notDelet:
@@ -1074,8 +1084,9 @@ module.exports = class OsDomain {
             item.consertos.filter(
               conserto => conserto.osParts.deletedAt !== null
             ).length !== 0) ||
-          notDelet
+          notDelet[index]
       };
+
       return resp;
     });
 

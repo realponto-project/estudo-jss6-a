@@ -677,7 +677,7 @@ module.exports = class TechnicianDomain {
       await productBase.update(productBaseUpdate, { transaction });
     }
 
-    await deletEntrance.destroy({ transaction });
+    await deletEntrance.destroy({ force: true, transaction });
 
     return "sucesso";
   }
