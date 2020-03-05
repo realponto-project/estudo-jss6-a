@@ -22,7 +22,7 @@
     "@fnando/cpf": "^1.0.1",
     "@google-cloud/storage": "^2.4.2",
     "add": "^2.0.6",
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "bcrypt": "^3.0.7",
     "bluebird": "^3.5.3",
     "body-parser": "^1.19.0",
