@@ -3,8 +3,8 @@ const R = require("ramda");
 const moment = require("moment");
 const axios = require("axios");
 
-const Cnpj = require("@fnando/cnpj/dist/node");
-const Cpf = require("@fnando/cpf/dist/node");
+const Cnpj = require("@fnando/cnpj/es");
+const Cpf = require("@fnando/cpf/es");
 
 const formatQuery = require("../../../helpers/lazyLoad");
 const database = require("../../../database");

@@ -2,7 +2,8 @@ const R = require("ramda");
 const moment = require("moment");
 const Sequelize = require("sequelize");
 // const axios = require('axios')
-const Cnpj = require("@fnando/cnpj/dist/node");
+const Cnpj = require("@fnando/cnpj/es");
+const Cpf = require("@fnando/cpf/es");
 
 const formatQuery = require("../../../../helpers/lazyLoad");
 const database = require("../../../../database");
@@ -80,7 +81,7 @@ module.exports = class OsDomain {
     } else {
       const cnpj = reserve.cnpj.replace(/\D/g, "");
 
-      if (!Cnpj.isValid(cnpj)) {
+      if (!Cnpj.isValid(cnpj) && !Cpf.isValid(cnpj)) {
         errors = true;
         field.cnpj = true;
         message.cnpj = "O cnpj informado não é válido.";
@@ -895,8 +896,6 @@ module.exports = class OsDomain {
 
     const { rows } = os;
 
-    // console.log(JSON.parse(JSON.stringify(os)));
-
     if (rows.length === 0) {
       return {
         page: null,
@@ -997,7 +996,7 @@ module.exports = class OsDomain {
             where: { osPartId: osParts.id },
             transaction
           });
-          notDelet = parseInt(amount, 10) !== equips.length;
+          notDelet[index] = parseInt(amount, 10) !== equips.length;
         }
 
         const quantMax =
@@ -1034,6 +1033,7 @@ module.exports = class OsDomain {
             transaction
           }
         );
+
         notDelet[index] =
           output !== "0" ||
           missOut !== "0" ||

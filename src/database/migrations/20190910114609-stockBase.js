@@ -16,6 +16,7 @@ module.exports = {
         ]),
         allowNull: false
       },
+
       createdAt: {
         defaultValue: Sequelize.NOW,
         type: Sequelize.DATE

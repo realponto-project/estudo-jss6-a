@@ -18,8 +18,8 @@
     "db:seed:all": "npx sequelize-cli db:seed:all"
   },
   "dependencies": {
-    "@fnando/cnpj": "^0.1.1",
-    "@fnando/cpf": "^0.1.1",
+    "@fnando/cnpj": "^1.0.1",
+    "@fnando/cpf": "^1.0.1",
     "@google-cloud/storage": "^2.4.2",
     "add": "^2.0.6",
     "axios": "^0.18.0",
