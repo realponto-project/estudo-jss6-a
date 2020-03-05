@@ -13,7 +13,8 @@ module.exports = sequelize => {
         "REALPONTO",
         "NOVAREAL",
         "PONTOREAL",
-        "EMPRESTIMO"
+        "EMPRESTIMO",
+        "INSUMOS"
       ]),
       allowNull: false
     }

@@ -1,6 +1,8 @@
 const R = require("ramda");
 const moment = require("moment");
-const Cnpj = require("@fnando/cnpj/dist/node");
+
+const Cnpj = require("@fnando/cnpj/es");
+const Cpf = require("@fnando/cpf/es");
 
 const database = require("../../../database");
 const { FieldValidationError } = require("../../../helpers/errors");
@@ -42,7 +44,10 @@ module.exports = class EmprestimoDomain {
       errors = true;
       field.cnpj = true;
       message.cnpj = "cnpj cannot null";
-    } else if (!Cnpj.isValid(emprestimo.cnpj.replace(/\D/g, ""))) {
+    } else if (
+      !Cnpj.isValid(emprestimo.cnpj.replace(/\D/g, "")) &&
+      !Cpf.isValid(emprestimo.cnpj.replace(/\D/g, ""))
+    ) {
       errors = true;
       field.cnpj = true;
       message.cnpj = "cnpj inválid";
@@ -160,7 +165,10 @@ module.exports = class EmprestimoDomain {
       errors = true;
       field.cnpj = true;
       message.cnpj = "cnpj cannot null";
-    } else if (!Cnpj.isValid(emprestimo.cnpj.replace(/\D/g, ""))) {
+    } else if (
+      !Cnpj.isValid(emprestimo.cnpj.replace(/\D/g, "")) &&
+      !Cpf.isValid(emprestimo.cnpj.replace(/\D/g, ""))
+    ) {
       errors = true;
       field.cnpj = true;
       message.cnpj = "cnpj inválid";

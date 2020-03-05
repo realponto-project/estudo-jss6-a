@@ -1,7 +1,4 @@
 const R = require("ramda");
-const moment = require("moment");
-const Cnpj = require("@fnando/cnpj/dist/node");
-
 const database = require("../../../database");
 const { FieldValidationError } = require("../../../helpers/errors");
 const formatQuery = require("../../../helpers/lazyLoad");

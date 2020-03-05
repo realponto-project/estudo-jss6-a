@@ -90,15 +90,15 @@
     lodash "^4.17.10"
     to-fast-properties "^2.0.0"
 
-"@fnando/cnpj@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@fnando/cnpj/-/cnpj-0.1.1.tgz#245c987fae5ebabd6869aaa05bd9af005032e375"
-  integrity sha512-lzV5HLTfo8ArEcV7Ahdg7UF1ar/YZM7bSRgvDKlaKU/YAVhREhCDO1AoIDJNuWkvTeqM4w/OknprtXd6cAZIGQ==
+"@fnando/cnpj@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@fnando/cnpj/-/cnpj-1.0.1.tgz#3565fcc08c4afafe74b376c76850033e6fdfd4b4"
+  integrity sha512-bNMSOGmEPiRf8Lgraex2q00k9OuU2vOyzidg//MGb6OqLCX8cR7XSjhM8o2kQ+yk04L/fweHaDuB3Gz0eM4IkQ==
 
-"@fnando/cpf@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@fnando/cpf/-/cpf-0.1.1.tgz#b4170275fab4ba086f4e0b45bba6d70b0708fb0a"
-  integrity sha512-KWIk6uh7Z8fAefUmtcDrLfCUIf+gU1DVv6BkL/TgXO5oJFC82X6FferrvBQzVBSRNb+TFbd/na1R7PHRgynrkA==
+"@fnando/cpf@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@fnando/cpf/-/cpf-1.0.1.tgz#59838dc8dcf5e6f9e6fa6022b3411593a733f0e7"
+  integrity sha512-7KdgB+x/825Wk0/qiud0U1QmJQydSBvH/0X8SQ9pAuOzhfzwH1Xsgd6efQFILgFcxE0QvNfYu2HadpPmsUzlgQ==
 
 "@google-cloud/common@^0.31.0":
   version "0.31.0"
