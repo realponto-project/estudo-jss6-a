@@ -120,27 +120,27 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }]);
     }
 
-    const reserveHasExist = await Os.findOne({
-      where: {
-        date: {
-          [operators.gte]: moment(reserve.date)
-            .startOf("day")
-            .toString(),
-          [operators.lte]: moment(reserve.date)
-            .endOf("day")
-            .toString()
-        },
-        razaoSocial: reserve.razaoSocial,
-        cnpj: reserve.cnpj.replace(/\D/g, "")
-      },
-      transaction
-    });
+    // const reserveHasExist = await Os.findOne({
+    //   where: {
+    //     date: {
+    //       [operators.gte]: moment(reserve.date)
+    //         .startOf("day")
+    //         .toString(),
+    //       [operators.lte]: moment(reserve.date)
+    //         .endOf("day")
+    //         .toString()
+    //     },
+    //     razaoSocial: reserve.razaoSocial,
+    //     cnpj: reserve.cnpj.replace(/\D/g, "")
+    //   },
+    //   transaction
+    // });
 
-    if (reserveHasExist && process.env.NODE_ENV !== "test") {
-      field.message = true;
-      message.message = "Há uma reserva nesta data para esta empresa";
-      throw new FieldValidationError([{ field, message }]);
-    }
+    // if (reserveHasExist && process.env.NODE_ENV !== "test") {
+    //   field.message = true;
+    //   message.message = "Há uma reserva nesta data para esta empresa";
+    //   throw new FieldValidationError([{ field, message }]);
+    // }
 
     const reserveAll = await Os.findAll({ paranoid: false, transaction });
 
@@ -478,31 +478,31 @@ module.exports = class OsDomain {
       }
     }
 
-    const reserveHasExist = await Os.findOne({
-      where: {
-        date: {
-          [operators.gte]: moment(reserve.date)
-            .startOf("day")
-            .toString(),
-          [operators.lte]: moment(reserve.date)
-            .endOf("day")
-            .toString()
-        },
-        razaoSocial: oldReserve.razaoSocial,
-        cnpj: oldReserve.cnpj.replace(/\D/g, "")
-      },
-      transaction
-    });
+    // const reserveHasExist = await Os.findOne({
+    //   where: {
+    //     date: {
+    //       [operators.gte]: moment(reserve.date)
+    //         .startOf("day")
+    //         .toString(),
+    //       [operators.lte]: moment(reserve.date)
+    //         .endOf("day")
+    //         .toString()
+    //     },
+    //     razaoSocial: oldReserve.razaoSocial,
+    //     cnpj: oldReserve.cnpj.replace(/\D/g, "")
+    //   },
+    //   transaction
+    // });
 
-    if (
-      reserveHasExist &&
-      reserveHasExist.id !== bodyData.id &&
-      process.env.NODE_ENV !== "test"
-    ) {
-      field.message = true;
-      message.message = "Há uma reserva nesta data para esta empresa";
-      throw new FieldValidationError([{ field, message }]);
-    }
+    // if (
+    //   reserveHasExist &&
+    //   reserveHasExist.id !== bodyData.id &&
+    //   process.env.NODE_ENV !== "test"
+    // ) {
+    //   field.message = true;
+    //   message.message = "Há uma reserva nesta data para esta empresa";
+    //   throw new FieldValidationError([{ field, message }]);
+    // }
 
     if (reserveHasProp("technicianId")) {
       const technician = await Technician.findByPk(reserve.technicianId, {
