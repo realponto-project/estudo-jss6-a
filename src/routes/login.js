@@ -7,5 +7,9 @@ router.post("/login", loginController.loginController);
 router.delete("/logout", loginController.logoutController);
 
 router.get("/util/deleteEComerce", utilController.deleteEComerce);
+router.get(
+  "/util/associateTechnicianReverve",
+  utilController.associateTechnicianReverve
+);
 
 module.exports = router;

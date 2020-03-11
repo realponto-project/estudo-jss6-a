@@ -275,7 +275,7 @@ module.exports = class TechnicianReserveDomain {
         }
       ],
       order: [[inicialOrder.field, inicialOrder.direction]],
-      limit: 6,
+      limit,
       offset,
       transaction
     });
