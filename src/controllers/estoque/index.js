@@ -1,30 +1,46 @@
-const R = require('ramda')
+const R = require("ramda");
 
-const StockDomain = require('../../domains/estoque')
-const database = require('../../database')
+const StockDomain = require("../../domains/estoque");
+const database = require("../../database");
 
-const stockDomain = new StockDomain()
+const stockDomain = new StockDomain();
 
 const getAll = async (req, res, next) => {
-  const transaction = await database.transaction()
+  const transaction = await database.transaction();
   try {
-    let query
-    if (R.has('query', req)) {
-      if (R.has('query', req.query)) {
-        query = JSON.parse(req.query.query)
+    let query;
+    if (R.has("query", req)) {
+      if (R.has("query", req.query)) {
+        query = JSON.parse(req.query.query);
       }
     }
 
-    const stock = await stockDomain.getAll({ query, transaction })
+    const stock = await stockDomain.getAll({ query, transaction });
 
-    await transaction.commit()
-    res.json(stock)
+    await transaction.commit();
+    res.json(stock);
   } catch (error) {
-    await transaction.rollback()
-    next()
+    await transaction.rollback();
+    next();
   }
-}
+};
+
+const updatteProductBase = async (req, res, next) => {
+  const transaction = await database.transaction();
+  try {
+    const stock = await stockDomain.updatteProductBase(req.body, {
+      transaction
+    });
+
+    await transaction.commit();
+    res.json(stock);
+  } catch (error) {
+    await transaction.rollback();
+    next();
+  }
+};
 
 module.exports = {
   getAll,
-}
+  updatteProductBase
+};

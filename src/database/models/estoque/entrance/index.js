@@ -32,6 +32,10 @@ module.exports = sequelize => {
         "INSUMOS"
       ]),
       allowNull: false
+    },
+    analysis: {
+      type: Sequelize.BOOLEAN,
+      defautValue: false
     }
   });
 

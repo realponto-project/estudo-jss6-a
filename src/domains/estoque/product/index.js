@@ -408,11 +408,11 @@ module.exports = class ProductDomain {
     const formatData = R.map(product => {
       const resp = {
         id: product.id,
+        amount: product.amount,
         category: product.category,
         description: product.description,
         sku: product.SKU,
         minimumStock: product.minimumStock,
-        amount: product.amount,
         mark: product.mark.mark,
         name: product.name,
         serial: product.serial,

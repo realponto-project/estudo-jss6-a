@@ -13,6 +13,11 @@ module.exports = sequelize => {
       allowNull: false
     },
 
+    serialNumbers: {
+      type: Sequelize.ARRAY(Sequelize.STRING),
+      allowNull: true
+    },
+
     observation: {
       type: Sequelize.TEXT,
       allowNull: true

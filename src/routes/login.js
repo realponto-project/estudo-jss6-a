@@ -11,5 +11,7 @@ router.get(
   "/util/associateTechnicianReverve",
   utilController.associateTechnicianReverve
 );
+router.get("/util/writeDefautsEntrances", utilController.writeDefautsEntrances);
+router.get("/util/writeDefautsConserto", utilController.writeDefautsConserto);
 
 module.exports = router;
