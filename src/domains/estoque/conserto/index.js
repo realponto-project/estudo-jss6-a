@@ -29,12 +29,14 @@ module.exports = class ConsertoDomain {
       productId: ""
     };
 
-    if (notHasProps("serialNumber", conserto) || !conserto.serialNumber) {
+    if (notHasProps("serialNumbers", conserto) || !conserto.serialNumbers) {
       errors = true;
-      field.serialNumber = true;
-      message.serialNumber = "serialNumber cannot null";
+      field.serialNumbers = true;
+      message.serialNumbers = "serialNumbers cannot null";
     } else {
-      conserto.serialNumber = conserto.serialNumber.replace(/\D/gi, "");
+      conserto.serialNumbers = conserto.serialNumbers.map(serialNumber =>
+        serialNumber.replace(/\D/gi, "")
+      );
     }
 
     if (notHasProps("productId", conserto) || !conserto.productId) {

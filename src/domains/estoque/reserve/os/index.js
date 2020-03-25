@@ -179,7 +179,7 @@ module.exports = class OsDomain {
           const conserto = await consertoDomain.add(item, { transaction });
 
           const osPartsCreatted = {
-            amount: "1",
+            amount: item.amount,
             consertoId: conserto.id,
             statusExpeditionId: status.id,
             oId: reserveCreated.id
@@ -370,62 +370,58 @@ module.exports = class OsDomain {
         where: { oId: osId },
         transaction
       });
+      console.log(JSON.parse(JSON.stringify(osParts)));
 
       const osPartsPromise = osParts.map(async item => {
-        const productBase = await ProductBase.findByPk(item.productBaseId, {
-          include: [Product],
-          transaction
-        });
+        if (item.productBaseId) {
+          const productBase = await ProductBase.findByPk(item.productBaseId, {
+            include: [Product],
+            transaction
+          });
 
-        const equips = await Equip.findAll({
-          where: { osPartId: item.id },
-          transaction
-        });
+          const equips = await Equip.findAll({
+            where: { osPartId: item.id },
+            transaction
+          });
 
-        const equipUpdatePromise = equips.map(async equip => {
-          await equip.update(
-            {
-              ...equip,
-              reserved: false
-            },
-            { transaction }
-          );
-        });
+          const equipUpdatePromise = equips.map(async equip => {
+            await equip.update(
+              {
+                ...equip,
+                reserved: false
+              },
+              { transaction }
+            );
+          });
 
-        await Promise.all(equipUpdatePromise);
+          await Promise.all(equipUpdatePromise);
+          const productBaseUpdate = {
+            ...productBase,
+            available: (
+              parseInt(productBase.available, 10) + parseInt(item.amount, 10)
+            ).toString(),
+            reserved: (
+              parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)
+            ).toString()
+          };
 
-        const productBaseUpdate = {
-          ...productBase,
-          available: (
-            parseInt(productBase.available, 10) + parseInt(item.amount, 10)
-          ).toString(),
-          reserved: (
-            parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)
-          ).toString()
-        };
+          if (
+            parseInt(productBaseUpdate.available, 10) < 0 ||
+            parseInt(productBaseUpdate.available, 10) < 0
+          ) {
+            field.productBaseUpdate = true;
+            message.productBaseUpdate = "Número negativo não é valido";
+            throw new FieldValidationError([{ field, message }]);
+          }
 
-        if (
-          parseInt(productBaseUpdate.available, 10) < 0 ||
-          parseInt(productBaseUpdate.available, 10) < 0
-        ) {
-          field.productBaseUpdate = true;
-          message.productBaseUpdate = "Número negativo não é valido";
-          throw new FieldValidationError([{ field, message }]);
+          await productBase.update(productBaseUpdate, { transaction });
+        } else {
+          const conserto = await Conserto.findByPk(item.consertoId, {
+            transaction
+          });
+
+          await conserto.destroy({ transaction });
         }
-
-        // if (
-        //   parseInt(productBaseUpdate.available, 10)
-        //   < parseInt(productBase.product.minimumStock, 10)
-        // ) {
-        //   const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
-
-        //   await Notification.create(
-        //     { message: messageNotification },
-        //     { transaction },
-        //   )
-        // }
-
-        await productBase.update(productBaseUpdate, { transaction });
 
         await item.destroy({ transaction });
       });
@@ -609,7 +605,7 @@ module.exports = class OsDomain {
             const conserto = await consertoDomain.add(item, { transaction });
 
             const osPartsCreatted = {
-              amount: "1",
+              amount: conserto.serialNumbers.length,
               consertoId: conserto.id,
               statusExpeditionId: status.id,
               oId: bodyData.id
@@ -1024,7 +1020,7 @@ module.exports = class OsDomain {
 
     const formatConserto = (conserto, index) => {
       return R.map(async item => {
-        const { osParts, serialNumber } = item;
+        const { osParts, serialNumbers } = item;
         const { amount, output, missOut } = osParts;
         const status = await StatusExpedition.findByPk(
           osParts.statusExpeditionId,
@@ -1040,8 +1036,16 @@ module.exports = class OsDomain {
           osParts.return !== "0" ||
           notDelet[index];
 
+        const quantMax =
+          parseInt(amount, 10) -
+          parseInt(osParts.return, 10) -
+          parseInt(output, 10) -
+          parseInt(missOut, 10);
+
         const resp = {
-          serialNumbers: [{ serialNumber }],
+          serialNumbers: serialNumbers.map(number => {
+            return { serialNumber: number };
+          }),
           name: item.product.name,
           serial: item.product.serial,
           id: osParts.id,
@@ -1049,7 +1053,7 @@ module.exports = class OsDomain {
           output,
           missOut,
           return: osParts.return,
-          quantMax: 1,
+          quantMax,
           status: status && status.status
         };
 
@@ -1172,6 +1176,8 @@ module.exports = class OsDomain {
     const { transaction = null } = options;
     const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData));
     // const bodyHasProp = prop => R.has(prop, bodyData)
+
+    console.log(bodyData);
 
     const field = {
       osPartsId: false,
@@ -1347,7 +1353,23 @@ module.exports = class OsDomain {
         transaction
       });
 
-      await conserto.destroy({ transaction });
+      const outSerialNumbers = bodyData.serialNumberArray;
+
+      const serialNumbers = conserto.serialNumbers;
+
+      outSerialNumbers.map(item => {
+        // console.log(R.indexOf(item, serialNumbers));
+        serialNumbers.splice(R.indexOf(item, serialNumbers), 1);
+      });
+
+      await conserto.update(
+        { outSerialNumbers, serialNumbers },
+        { transaction }
+      );
+
+      if (serialNumbers.length === 0) {
+        await conserto.destroy({ transaction });
+      }
     }
 
     const osPartUpdate = {
@@ -1355,7 +1377,16 @@ module.exports = class OsDomain {
       [key]: (parseInt(value, 10) + parseInt(osPart[key], 10)).toString()
     };
 
-    await osPart.update(osPartUpdate, { transaction });
+    console.log(key);
+    console.log(parseInt(value, 10));
+    console.log(parseInt(osPart[key], 10));
+    console.log(parseInt(value, 10) + parseInt(osPart[key], 10));
+
+    console.log(
+      JSON.parse(
+        JSON.stringify(await osPart.update(osPartUpdate, { transaction }))
+      )
+    );
 
     const osPartsUpdate = await OsParts.findByPk(bodyData.osPartsId, {
       transaction
@@ -1385,6 +1416,7 @@ module.exports = class OsDomain {
       transaction
     });
 
+    // throw new FieldValidationError([{ field, message }]);
     return response;
   }
 };
