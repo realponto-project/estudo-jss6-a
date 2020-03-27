@@ -10,7 +10,17 @@ module.exports = sequelize => {
 
     serialNumber: {
       type: Sequelize.STRING,
-      allowNull: false
+      allowNull: true
+    },
+
+    serialNumbers: {
+      type: Sequelize.ARRAY(Sequelize.STRING),
+      allowNull: true
+    },
+
+    outSerialNumbers: {
+      type: Sequelize.ARRAY(Sequelize.STRING),
+      allowNull: true
     },
 
     observation: {

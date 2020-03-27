@@ -4,24 +4,24 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     const transaction = await queryInterface.sequelize.transaction();
     try {
-      await queryInterface.changeColumn(
-        "stockBase",
-        "stockBase",
-        {
-          type: Sequelize.STRING,
-          allowNull: false
-        },
-        { transaction }
-      );
-      await queryInterface.changeColumn(
-        "entrance",
-        "stockBase",
-        {
-          type: Sequelize.STRING,
-          allowNull: false
-        },
-        { transaction }
-      );
+      // await queryInterface.changeColumn(
+      //   "stockBase",
+      //   "stockBase",
+      //   {
+      //     type: Sequelize.STRING,
+      //     allowNull: false
+      //   },
+      //   { transaction }
+      // );
+      // await queryInterface.changeColumn(
+      //   "entrance",
+      //   "stockBase",
+      //   {
+      //     type: Sequelize.STRING,
+      //     allowNull: false
+      //   },
+      //   { transaction }
+      // );
 
       await transaction.commit();
     } catch (err) {

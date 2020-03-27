@@ -9,6 +9,8 @@ const FreeMarketParts = database.model("freeMarketParts");
 const Equip = database.model("equip");
 const TechnicianReserve = database.model("technicianReserve");
 const TechnicianReserveParts = database.model("technicianReserveParts");
+const Entrance = database.model("entrance");
+const Conserto = database.model("conserto");
 
 const { Op } = Sequelize;
 
@@ -116,7 +118,60 @@ const associateTechnicianReverve = async (req, res, next) => {
   }
 };
 
+const writeDefautsEntrances = async (req, res, next) => {
+  const transaction = await database.transaction();
+  try {
+    const entrances = await Entrance.findAll({ transaction });
+
+    await Promise.all(
+      entrances.map(
+        async entrance =>
+          await entrance.update({ analysis: false }, { transaction })
+      )
+    );
+
+    const producBtases = await ProductBase.findAll({ transaction });
+
+    await Promise.all(
+      producBtases.map(
+        async producBtase =>
+          await producBtase.update({ analysis: "0" }, { transaction })
+      )
+    );
+
+    await transaction.commit();
+    res.json("sucess");
+  } catch (error) {
+    await transaction.rollback();
+    next(error);
+  }
+};
+
+const writeDefautsConserto = async (req, res, next) => {
+  const transaction = await database.transaction();
+  try {
+    const consertos = await Conserto.findAll({
+      paranoid: false,
+      transaction
+    });
+
+    await Promise.all(
+      consertos.map(async conserto => {
+        const serialNumbers = [conserto.serialNumber];
+        await conserto.update({ serialNumbers }, { transaction });
+      })
+    );
+    await transaction.commit();
+    res.json("sucess");
+  } catch (error) {
+    await transaction.rollback();
+    next(error);
+  }
+};
+
 module.exports = {
   deleteEComerce,
-  associateTechnicianReverve
+  associateTechnicianReverve,
+  writeDefautsEntrances,
+  writeDefautsConserto
 };

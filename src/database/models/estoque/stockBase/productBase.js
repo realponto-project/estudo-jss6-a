@@ -18,6 +18,11 @@ module.exports = sequelize => {
       allowNull: false
     },
 
+    analysis: {
+      type: Sequelize.STRING,
+      defautValue: "0"
+    },
+
     reserved: {
       type: Sequelize.STRING,
       allowNull: false

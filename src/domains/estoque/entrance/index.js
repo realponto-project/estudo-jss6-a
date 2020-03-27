@@ -36,7 +36,8 @@ module.exports = class TechnicianDomain {
       productId: false,
       companyId: false,
       message: false,
-      responsibleUser: false
+      responsibleUser: false,
+      analysis: false
     };
     const message = {
       amountAdded: "",
@@ -44,10 +45,21 @@ module.exports = class TechnicianDomain {
       productId: "",
       companyId: "",
       message: "",
-      responsibleUser: ""
+      responsibleUser: "",
+      analysis: ""
     };
 
     let errors = false;
+
+    if (entranceNotHasProp("analysis") || !entrance.analysis) {
+      errors = true;
+      field.analysis = true;
+      message.analysis = "analysis cannot undefined";
+    } else if (/\D/gi.test(entrance.analysis)) {
+      errors = true;
+      field.analysis = true;
+      message.analysis = "Não é permitido letras.";
+    }
 
     if (entranceNotHasProp("amountAdded") || !entrance.amountAdded) {
       errors = true;
@@ -133,7 +145,7 @@ module.exports = class TechnicianDomain {
       message.stockBase = "deve conter numero de serie";
     }
 
-    if (product.serial) {
+    if (product.serial && !entrance.analysis) {
       if (
         entranceNotHasProp("serialNumbers") ||
         entrance.serialNumbers.length === 0
@@ -187,6 +199,7 @@ module.exports = class TechnicianDomain {
           stockBaseId: stockBase.id,
           amount: entrance.amountAdded,
           available: entrance.amountAdded,
+          analysis: entrance.analysis,
           reserved: "0"
         },
         { transaction }
@@ -195,6 +208,10 @@ module.exports = class TechnicianDomain {
       entrance.oldAmount = "0";
     } else {
       entrance.oldAmount = productBase.amount;
+
+      const analysis = (
+        parseInt(productBase.analysis, 10) + parseInt(entrance.analysis, 10)
+      ).toString();
 
       // eslint-disable-next-line max-len
       const amount = (
@@ -208,8 +225,10 @@ module.exports = class TechnicianDomain {
       const productBaseUpdate = {
         ...productBase,
         amount,
-        available
+        available,
+        analysis
       };
+
       await productBase.update(productBaseUpdate, { transaction });
     }
 
@@ -221,7 +240,7 @@ module.exports = class TechnicianDomain {
       transaction
     });
 
-    if (product.serial) {
+    if (product.serial && entrance.serialNumber) {
       const { serialNumbers } = entrance;
 
       const serialNumbersFindPromises = serialNumbers.map(async item => {
@@ -258,6 +277,13 @@ module.exports = class TechnicianDomain {
       });
       await Promise.all(serialNumbersCreatePromises);
     }
+
+    entrance.amountAdded = Math.max.apply(null, [
+      entrance.analysis,
+      entrance.amountAdded
+    ]);
+
+    entrance.analysis = entrance.analysis !== "0";
 
     const entranceCreated = await Entrance.create(entrance, { transaction });
 
@@ -608,10 +634,10 @@ module.exports = class TechnicianDomain {
       where: {
         createdAt: {
           [operators.gte]: moment(deletEntrance.createdAt)
-            .subtract(5, "seconds")
+            .subtract(3, "seconds")
             .toString(),
           [operators.lte]: moment(deletEntrance.createdAt)
-            .add(5, "seconds")
+            .add(3, "seconds")
             .toString()
         }
       },
@@ -649,27 +675,29 @@ module.exports = class TechnicianDomain {
       message.message = "ProductBase não encontrada.";
       throw new FieldValidationError([{ field, message }]);
     } else {
-      // eslint-disable-next-line max-len
-      const amount = (
-        parseInt(productBase.amount, 10) -
-        parseInt(deletEntrance.amountAdded, 10)
-      ).toString();
-      // eslint-disable-next-line max-len
-      const available = (
-        parseInt(productBase.available, 10) -
-        parseInt(deletEntrance.amountAdded, 10)
-      ).toString();
+      let analysis = parseInt(productBase.analysis, 10);
+      let amount = parseInt(productBase.amount, 10);
+      let available = parseInt(productBase.available, 10);
+
+      if (deletEntrance.analysis) {
+        analysis = (
+          analysis - parseInt(deletEntrance.amountAdded, 10)
+        ).toString();
+      } else {
+        amount = (amount - parseInt(deletEntrance.amountAdded, 10)).toString();
+        available = (
+          available - parseInt(deletEntrance.amountAdded, 10)
+        ).toString();
+      }
 
       const productBaseUpdate = {
         ...productBase,
         amount,
-        available
+        available,
+        analysis
       };
 
-      if (
-        parseInt(productBaseUpdate.amount, 10) < 0 ||
-        parseInt(productBaseUpdate.available, 10) < 0
-      ) {
+      if (analysis < 0 || amount < 0 || available < 0) {
         field.productBaseUpdate = true;
         message.productBaseUpdate = "Número negativo não é valido";
         throw new FieldValidationError([{ field, message }]);
