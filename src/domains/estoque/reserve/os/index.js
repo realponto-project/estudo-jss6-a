@@ -13,8 +13,6 @@ const ConsertoDomain = require("../../conserto");
 const Os = database.model("os");
 const OsParts = database.model("osParts");
 const Product = database.model("product");
-const ProductBase = database.model("productBase");
-const StockBase = database.model("stockBase");
 const Technician = database.model("technician");
 const Equip = database.model("equip");
 const KitOut = database.model("kitOut");
@@ -33,8 +31,8 @@ module.exports = class OsDomain {
 
     const reserve = R.omit(["id", "osParts"], bodyData);
 
-    const reserveNotHasProp = prop => R.not(R.has(prop, reserve));
-    const bodyHasProp = prop => R.has(prop, bodyData);
+    const reserveNotHasProp = (prop) => R.not(R.has(prop, reserve));
+    const bodyHasProp = (prop) => R.has(prop, bodyData);
     const HasProp = (prop, obj) => R.has(prop, obj);
 
     const field = {
@@ -44,7 +42,7 @@ module.exports = class OsDomain {
       cnpj: false,
       date: false,
       osParts: false,
-      technician: false
+      technician: false,
     };
     const message = {
       // Os: '',
@@ -53,7 +51,7 @@ module.exports = class OsDomain {
       cnpj: "",
       date: "",
       osParts: "",
-      technician: ""
+      technician: "",
     };
 
     let errors = false;
@@ -106,7 +104,7 @@ module.exports = class OsDomain {
     } else {
       const { technicianId } = bodyData;
       const technicianExist = await Technician.findByPk(technicianId, {
-        transaction
+        transaction,
       });
 
       if (!technicianExist) {
@@ -157,7 +155,7 @@ module.exports = class OsDomain {
     if (bodyHasProp("osParts")) {
       const { osParts } = bodyData;
 
-      const osPartsCreattedPromises = osParts.map(async item => {
+      const osPartsCreattedPromises = osParts.map(async (item) => {
         if (!HasProp("status", item) || !item.status) {
           field.status = true;
           message.status = "status cannot null";
@@ -166,7 +164,7 @@ module.exports = class OsDomain {
 
         const status = await StatusExpedition.findOne({
           where: { status: item.status },
-          transaction
+          transaction,
         });
 
         if (!status) {
@@ -182,11 +180,11 @@ module.exports = class OsDomain {
             amount: item.amount,
             consertoId: conserto.id,
             statusExpeditionId: status.id,
-            oId: reserveCreated.id
+            oId: reserveCreated.id,
           };
 
           const osPartCreated = await OsParts.create(osPartsCreatted, {
-            transaction
+            transaction,
           });
 
           // throw new FieldValidationError([{ field, message }]);
@@ -194,16 +192,16 @@ module.exports = class OsDomain {
           const productBase = await ProductBase.findByPk(item.productBaseId, {
             include: [
               {
-                model: Product
-              }
+                model: Product,
+              },
             ],
-            transaction
+            transaction,
           });
 
           const osPartsCreatted = {
             ...item,
             statusExpeditionId: status.id,
-            oId: reserveCreated.id
+            oId: reserveCreated.id,
           };
 
           if (!productBase) {
@@ -217,7 +215,7 @@ module.exports = class OsDomain {
           }
 
           const osPartCreated = await OsParts.create(osPartsCreatted, {
-            transaction
+            transaction,
           });
 
           if (productBase.product.serial) {
@@ -231,14 +229,14 @@ module.exports = class OsDomain {
             }
 
             if (serialNumberArray.length > 0) {
-              await serialNumberArray.map(async serialNumber => {
+              await serialNumberArray.map(async (serialNumber) => {
                 const equip = await Equip.findOne({
                   where: {
                     serialNumber,
                     reserved: false,
-                    productBaseId: productBase.id
+                    productBaseId: productBase.id,
                   },
-                  transaction
+                  transaction,
                 });
 
                 if (!equip) {
@@ -248,21 +246,21 @@ module.exports = class OsDomain {
                   throw new FieldValidationError([{ field, message }]);
                 }
               });
-              await serialNumberArray.map(async serialNumber => {
+              await serialNumberArray.map(async (serialNumber) => {
                 const equip = await Equip.findOne({
                   where: {
                     serialNumber,
                     reserved: false,
-                    productBaseId: productBase.id
+                    productBaseId: productBase.id,
                   },
-                  transaction
+                  transaction,
                 });
 
                 await equip.update(
                   {
                     ...equip,
                     osPartId: osPartCreated.id,
-                    reserved: true
+                    reserved: true,
                   },
                   { transaction }
                 );
@@ -286,7 +284,7 @@ module.exports = class OsDomain {
             ).toString(),
             reserved: (
               parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
-            ).toString()
+            ).toString(),
           };
 
           if (
@@ -338,16 +336,16 @@ module.exports = class OsDomain {
     const response = await Os.findByPk(reserveCreated.id, {
       include: [
         {
-          model: ProductBase
+          model: ProductBase,
           // include: [{
           //   model: Product,
           // }],
         },
         {
-          model: Technician
-        }
+          model: Technician,
+        },
       ],
-      transaction
+      transaction,
     });
 
     return response;
@@ -357,10 +355,10 @@ module.exports = class OsDomain {
     const { transaction = null } = options;
 
     const field = {
-      os: false
+      os: false,
     };
     const message = {
-      os: ""
+      os: "",
     };
 
     const os = await Os.findByPk(osId, { transaction });
@@ -368,27 +366,27 @@ module.exports = class OsDomain {
     if (os) {
       const osParts = await OsParts.findAll({
         where: { oId: osId },
-        transaction
+        transaction,
       });
       console.log(JSON.parse(JSON.stringify(osParts)));
 
-      const osPartsPromise = osParts.map(async item => {
+      const osPartsPromise = osParts.map(async (item) => {
         if (item.productBaseId) {
           const productBase = await ProductBase.findByPk(item.productBaseId, {
             include: [Product],
-            transaction
+            transaction,
           });
 
           const equips = await Equip.findAll({
             where: { osPartId: item.id },
-            transaction
+            transaction,
           });
 
-          const equipUpdatePromise = equips.map(async equip => {
+          const equipUpdatePromise = equips.map(async (equip) => {
             await equip.update(
               {
                 ...equip,
-                reserved: false
+                reserved: false,
               },
               { transaction }
             );
@@ -402,7 +400,7 @@ module.exports = class OsDomain {
             ).toString(),
             reserved: (
               parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)
-            ).toString()
+            ).toString(),
           };
 
           if (
@@ -417,7 +415,7 @@ module.exports = class OsDomain {
           await productBase.update(productBaseUpdate, { transaction });
         } else {
           const conserto = await Conserto.findByPk(item.consertoId, {
-            transaction
+            transaction,
           });
 
           await conserto.destroy({ transaction });
@@ -453,13 +451,13 @@ module.exports = class OsDomain {
     const reserveOs = { ...oldReserve };
 
     const HasProp = (prop, obj) => R.has(prop, obj);
-    const reserveHasProp = prop => R.has(prop, reserve);
+    const reserveHasProp = (prop) => R.has(prop, reserve);
 
     const field = {
-      date: false
+      date: false,
     };
     const message = {
-      date: ""
+      date: "",
     };
 
     let errors = false;
@@ -502,7 +500,7 @@ module.exports = class OsDomain {
 
     if (reserveHasProp("technicianId")) {
       const technician = await Technician.findByPk(reserve.technicianId, {
-        transaction
+        transaction,
       });
       if (!technician) {
         errors = true;
@@ -517,17 +515,17 @@ module.exports = class OsDomain {
       let osPartsAll = await OsParts.findAll({
         where: { oId: bodyData.id },
         attributes: ["id", "productBaseId"],
-        transaction
+        transaction,
       });
 
-      const osPartsUpdatePromises = osParts.map(async item => {
+      const osPartsUpdatePromises = osParts.map(async (item) => {
         if (R.prop("id", item)) {
           const osPartsReturn = await OsParts.findByPk(item.id, {
-            transaction
+            transaction,
           });
 
           // eslint-disable-next-line consistent-return
-          osPartsAll = await osPartsAll.filter(itemOld => {
+          osPartsAll = await osPartsAll.filter((itemOld) => {
             if (itemOld.id !== item.id) {
               return itemOld.id;
             }
@@ -551,7 +549,7 @@ module.exports = class OsDomain {
                 parseInt(productBase.reserved, 10) -
                 parseInt(osPartsReturn.amount, 10) +
                 parseInt(item.amount, 10)
-              ).toString()
+              ).toString(),
             };
 
             if (
@@ -577,7 +575,7 @@ module.exports = class OsDomain {
 
             const osPartsUpdate = {
               ...osPartsReturn,
-              amount: item.amount
+              amount: item.amount,
             };
 
             await osPartsReturn.update(osPartsUpdate, { transaction });
@@ -592,7 +590,7 @@ module.exports = class OsDomain {
 
           const status = await StatusExpedition.findOne({
             where: { status: item.status },
-            transaction
+            transaction,
           });
 
           if (!status) {
@@ -608,31 +606,31 @@ module.exports = class OsDomain {
               amount: conserto.serialNumbers.length,
               consertoId: conserto.id,
               statusExpeditionId: status.id,
-              oId: bodyData.id
+              oId: bodyData.id,
             };
 
             await OsParts.create(osPartsCreatted, {
-              transaction
+              transaction,
             });
           } else {
             const osPartsCreatted = {
               ...item,
               statusExpeditionId: status.id,
-              oId: bodyData.id
+              oId: bodyData.id,
             };
 
             const osPartCreated = await OsParts.create(osPartsCreatted, {
-              transaction
+              transaction,
             });
 
             const productBase = await ProductBase.findByPk(item.productBaseId, {
               include: [
                 {
                   model: Product,
-                  attributes: ["serial"]
-                }
+                  attributes: ["serial"],
+                },
               ],
-              transaction
+              transaction,
             });
 
             if (!productBase) {
@@ -652,14 +650,14 @@ module.exports = class OsDomain {
               }
 
               if (serialNumberArray.length > 0) {
-                await serialNumberArray.map(async serialNumber => {
+                await serialNumberArray.map(async (serialNumber) => {
                   const equip = await Equip.findOne({
                     where: {
                       serialNumber,
                       reserved: false,
-                      productBaseId: productBase.id
+                      productBaseId: productBase.id,
                     },
-                    transaction
+                    transaction,
                   });
 
                   if (!equip) {
@@ -670,21 +668,21 @@ module.exports = class OsDomain {
                   }
                 });
 
-                await serialNumberArray.map(async serialNumber => {
+                await serialNumberArray.map(async (serialNumber) => {
                   const equip = await Equip.findOne({
                     where: {
                       serialNumber,
                       reserved: false,
-                      productBaseId: productBase.id
+                      productBaseId: productBase.id,
                     },
-                    transaction
+                    transaction,
                   });
 
                   await equip.update(
                     {
                       ...equip,
                       osPartId: osPartCreated.id,
-                      reserved: true
+                      reserved: true,
                     },
                     { transaction }
                   );
@@ -699,7 +697,7 @@ module.exports = class OsDomain {
               ).toString(),
               reserved: (
                 parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
-              ).toString()
+              ).toString(),
             };
 
             if (
@@ -730,20 +728,20 @@ module.exports = class OsDomain {
       await Promise.all(osPartsUpdatePromises);
 
       if (osPartsAll.length > 0) {
-        const osPartsdeletePromises = osPartsAll.map(async item => {
+        const osPartsdeletePromises = osPartsAll.map(async (item) => {
           const osPartDelete = await OsParts.findByPk(item.id, { transaction });
 
           const equips = await Equip.findAll({
             where: { osPartId: item.id },
-            transaction
+            transaction,
           });
 
-          const equipUpdatePromise = equips.map(async equip => {
+          const equipUpdatePromise = equips.map(async (equip) => {
             await equip.update(
               {
                 ...equip,
                 reserved: false,
-                osPartId: null
+                osPartId: null,
               },
               { transaction }
             );
@@ -752,7 +750,7 @@ module.exports = class OsDomain {
           await Promise.all(equipUpdatePromise);
 
           const productBase = await ProductBase.findByPk(item.productBaseId, {
-            transaction
+            transaction,
           });
 
           if (productBase) {
@@ -765,7 +763,7 @@ module.exports = class OsDomain {
               reserved: (
                 parseInt(productBase.reserved, 10) -
                 parseInt(osPartDelete.amount, 10)
-              ).toString()
+              ).toString(),
             };
 
             if (
@@ -814,7 +812,7 @@ module.exports = class OsDomain {
     const inicialOrder = {
       field: "createdAt",
       acendent: true,
-      direction: "DESC"
+      direction: "DESC",
     };
     const { query = null, transaction = null } = options;
 
@@ -843,52 +841,47 @@ module.exports = class OsDomain {
       include: [
         {
           model: Technician,
-          where: getWhere("technician")
-        }
+          where: getWhere("technician"),
+        },
       ],
       limit: 0,
       paranoid,
-      transaction
+      transaction,
     });
 
+    console.log("teste");
     const os = await Os.findAndCountAll({
       where: getWhere("os"),
       include: [
         {
           model: Technician,
-          where: getWhere("technician")
+          where: getWhere("technician"),
         },
         {
-          model: ProductBase,
-          include: [
-            {
-              model: Product
-            }
-          ],
-          through: {
-            paranoid
-          }
+          model: Product,
         },
-        {
-          model: Conserto,
-          include: [
-            {
-              model: Product
-            }
-          ],
-          paranoid,
-          through: {
-            paranoid
-          }
-          // required: !getWhere("osParts")
-        }
+        // {
+        //   model: Conserto,
+        //   // include: [
+        //   //   {
+        //   //     model: Product,
+        //   //   },
+        //   // ],
+        //   // paranoid,
+        //   // through: {
+        //   //   paranoid,
+        //   // },
+        //   required: !getWhere("osParts"),
+        // },
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
       paranoid,
-      transaction
+      transaction,
     });
+
+    console.log(JSON.parse(JSON.stringify(os)));
 
     const { rows } = os;
 
@@ -897,11 +890,11 @@ module.exports = class OsDomain {
         page: null,
         show: 0,
         count: os.count,
-        rows: []
+        rows: [],
       };
     }
 
-    const formatDateFunct = date => {
+    const formatDateFunct = (date) => {
       moment.locale("pt-br");
       const formatDate = moment(date).format("L");
       const formatHours = moment(date).format("LT");
@@ -929,18 +922,18 @@ module.exports = class OsDomain {
     //   return resp;
     // });
 
-    const formatKitOut = R.map(item => {
+    const formatKitOut = R.map((item) => {
       const resp = {
         name: `#${item.kitPart.productBase.product.name}`,
         amount: "-",
         output: item.amount,
         missOut: "-",
-        return: "-"
+        return: "-",
       };
       return resp;
     });
 
-    const findKitOuts = async os => {
+    const findKitOuts = async (os) => {
       const kitOuts = await KitOut.findAll({
         where: { os },
         include: [
@@ -948,17 +941,12 @@ module.exports = class OsDomain {
             model: KitParts,
             include: [
               {
-                model: ProductBase,
-                include: [
-                  {
-                    model: Product
-                  }
-                ]
-              }
-            ]
-          }
+                model: Product,
+              },
+            ],
+          },
         ],
-        transaction
+        transaction,
       });
 
       return formatKitOut(kitOuts);
@@ -967,14 +955,14 @@ module.exports = class OsDomain {
     let notDelet = {};
 
     const formatProduct = (productBases, index) => {
-      return R.map(async item => {
+      return R.map(async (item) => {
         const { osParts } = item;
         const { amount, output, missOut } = osParts;
         const status = await StatusExpedition.findByPk(
           osParts.statusExpeditionId,
           {
             attributes: ["status"],
-            transaction
+            transaction,
           }
         );
         notDelet[index] =
@@ -990,7 +978,7 @@ module.exports = class OsDomain {
           equips = await Equip.findAll({
             attributes: ["serialNumber"],
             where: { osPartId: osParts.id },
-            transaction
+            transaction,
           });
           notDelet[index] = parseInt(amount, 10) !== equips.length;
         }
@@ -1011,7 +999,7 @@ module.exports = class OsDomain {
           missOut,
           return: osParts.return,
           quantMax,
-          status: status && status.status
+          status: status && status.status,
         };
 
         return resp;
@@ -1019,14 +1007,14 @@ module.exports = class OsDomain {
     };
 
     const formatConserto = (conserto, index) => {
-      return R.map(async item => {
+      return R.map(async (item) => {
         const { osParts, serialNumbers } = item;
         const { amount, output, missOut } = osParts;
         const status = await StatusExpedition.findByPk(
           osParts.statusExpeditionId,
           {
             attributes: ["status"],
-            transaction
+            transaction,
           }
         );
 
@@ -1043,7 +1031,7 @@ module.exports = class OsDomain {
           parseInt(missOut, 10);
 
         const resp = {
-          serialNumbers: serialNumbers.map(number => {
+          serialNumbers: serialNumbers.map((number) => {
             return { serialNumber: number };
           }),
           name: item.product.name,
@@ -1054,7 +1042,7 @@ module.exports = class OsDomain {
           missOut,
           return: osParts.return,
           quantMax,
-          status: status && status.status
+          status: status && status.status,
         };
 
         return resp;
@@ -1077,18 +1065,18 @@ module.exports = class OsDomain {
         products: [
           ...(await Promise.all(formatProduct(item.productBases, index))),
           ...(await Promise.all(formatConserto(item.consertos, index))),
-          ...(await findKitOuts(item.os))
+          ...(await findKitOuts(item.os)),
         ],
         notDelet:
           (item.productBases &&
             item.productBases.filter(
-              productBase => productBase.osParts.deletedAt !== null
+              (productBase) => productBase.osParts.deletedAt !== null
             ).length !== 0) ||
           (item.consertos &&
             item.consertos.filter(
-              conserto => conserto.osParts.deletedAt !== null
+              (conserto) => conserto.osParts.deletedAt !== null
             ).length !== 0) ||
-          notDelet[index]
+          notDelet[index],
       };
 
       return resp;
@@ -1105,7 +1093,7 @@ module.exports = class OsDomain {
       page: pageResponse,
       show,
       count,
-      rows: osList
+      rows: osList,
     };
 
     return response;
@@ -1114,7 +1102,7 @@ module.exports = class OsDomain {
   async getOsByOs(os, options = {}) {
     const { transaction = null } = options;
 
-    const formatDateFunct = date => {
+    const formatDateFunct = (date) => {
       moment.locale("pt-br");
       const formatDate = moment(date);
       return formatDate;
@@ -1124,21 +1112,21 @@ module.exports = class OsDomain {
       where: { os },
       include: [
         {
-          model: Technician
+          model: Technician,
         },
         {
           model: ProductBase,
           include: [
             {
-              model: Product
+              model: Product,
             },
             {
-              model: StockBase
-            }
-          ]
-        }
+              model: StockBase,
+            },
+          ],
+        },
       ],
-      transaction
+      transaction,
     });
 
     if (!osReturn) {
@@ -1147,16 +1135,16 @@ module.exports = class OsDomain {
         cnpj: "",
         // data: formatDateFunct(new Date()),
         technician: "",
-        reserve: []
+        reserve: [],
       };
     }
 
-    const formatedReserve = R.map(item => {
+    const formatedReserve = R.map((item) => {
       const resp = {
         stockBase: item.stockBase.stockBase,
         amount: item.osParts.amount,
         nomeProdutoCarrinho: item.product.name,
-        productId: item.productId
+        productId: item.productId,
       };
       return resp;
     });
@@ -1166,7 +1154,7 @@ module.exports = class OsDomain {
       cnpj: osReturn.cnpj,
       data: formatDateFunct(osReturn.date),
       technician: osReturn.technician.name,
-      reserve: formatedReserve(osReturn.productBases)
+      reserve: formatedReserve(osReturn.productBases),
     };
 
     return response;
@@ -1174,18 +1162,18 @@ module.exports = class OsDomain {
 
   async output(bodyData, options = {}) {
     const { transaction = null } = options;
-    const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData));
+    const bodyDataNotHasProp = (prop) => R.not(R.has(prop, bodyData));
     // const bodyHasProp = prop => R.has(prop, bodyData)
 
     console.log(bodyData);
 
     const field = {
       osPartsId: false,
-      add: false
+      add: false,
     };
     const message = {
       osPartsId: "",
-      add: ""
+      add: "",
     };
 
     let errors = false;
@@ -1196,7 +1184,7 @@ module.exports = class OsDomain {
       message.osPartsId = "Informe o id do produto.";
     } else {
       const osPart = await OsParts.findByPk(bodyData.osPartsId, {
-        transaction
+        transaction,
       });
 
       if (!osPart) {
@@ -1241,10 +1229,10 @@ module.exports = class OsDomain {
       include: [
         {
           model: Product,
-          attributes: ["serial"]
-        }
+          attributes: ["serial"],
+        },
       ],
-      transaction
+      transaction,
     });
 
     // throw new FieldValidationError([{ field, message }]);
@@ -1263,14 +1251,14 @@ module.exports = class OsDomain {
         }
 
         if (serialNumberArray.length > 0) {
-          await serialNumberArray.map(async serialNumber => {
+          await serialNumberArray.map(async (serialNumber) => {
             const equip = await Equip.findOne({
               where: {
                 serialNumber,
                 reserved: true,
-                productBaseId: productBase.id
+                productBaseId: productBase.id,
               },
-              transaction
+              transaction,
             });
 
             if (!equip) {
@@ -1281,21 +1269,21 @@ module.exports = class OsDomain {
               throw new FieldValidationError([{ field, message }]);
             }
           });
-          await serialNumberArray.map(async serialNumber => {
+          await serialNumberArray.map(async (serialNumber) => {
             const equip = await Equip.findOne({
               where: {
                 serialNumber,
                 reserved: true,
-                productBaseId: productBase.id
+                productBaseId: productBase.id,
               },
-              transaction
+              transaction,
             });
 
             if (key !== "output") {
               await equip.update(
                 {
                   ...equip,
-                  osPartId: null
+                  osPartId: null,
                 },
                 { transaction }
               );
@@ -1307,7 +1295,7 @@ module.exports = class OsDomain {
               await equip.update(
                 {
                   ...equip,
-                  reserved: false
+                  reserved: false,
                 },
                 { transaction }
               );
@@ -1324,7 +1312,7 @@ module.exports = class OsDomain {
           ).toString(),
           reserved: (
             parseInt(productBase.reserved, 10) - parseInt(value, 10)
-          ).toString()
+          ).toString(),
         };
       } else {
         productBaseUpdate = {
@@ -1334,7 +1322,7 @@ module.exports = class OsDomain {
           ).toString(),
           reserved: (
             parseInt(productBase.reserved, 10) - parseInt(value, 10)
-          ).toString()
+          ).toString(),
         };
       }
 
@@ -1350,14 +1338,14 @@ module.exports = class OsDomain {
       await productBase.update(productBaseUpdate, { transaction });
     } else {
       const conserto = await Conserto.findByPk(osPart.consertoId, {
-        transaction
+        transaction,
       });
 
       const outSerialNumbers = bodyData.serialNumberArray;
 
       const serialNumbers = conserto.serialNumbers;
 
-      outSerialNumbers.map(item => {
+      outSerialNumbers.map((item) => {
         // console.log(R.indexOf(item, serialNumbers));
         serialNumbers.splice(R.indexOf(item, serialNumbers), 1);
       });
@@ -1374,7 +1362,7 @@ module.exports = class OsDomain {
 
     const osPartUpdate = {
       ...osPart,
-      [key]: (parseInt(value, 10) + parseInt(osPart[key], 10)).toString()
+      [key]: (parseInt(value, 10) + parseInt(osPart[key], 10)).toString(),
     };
 
     console.log(key);
@@ -1389,7 +1377,7 @@ module.exports = class OsDomain {
     );
 
     const osPartsUpdate = await OsParts.findByPk(bodyData.osPartsId, {
-      transaction
+      transaction,
     });
 
     if (total - parseInt(value, 10) === 0) {
@@ -1399,13 +1387,13 @@ module.exports = class OsDomain {
     const os = await Os.findByPk(osPart.oId, {
       include: [
         {
-          model: ProductBase
+          model: ProductBase,
         },
         {
-          model: Conserto
-        }
+          model: Conserto,
+        },
       ],
-      transaction
+      transaction,
     });
 
     if (os.productBases.length === 0 && os.consertos.length === 0) {
@@ -1413,7 +1401,7 @@ module.exports = class OsDomain {
     }
 
     const response = await OsParts.findByPk(bodyData.osPartsId, {
-      transaction
+      transaction,
     });
 
     // throw new FieldValidationError([{ field, message }]);

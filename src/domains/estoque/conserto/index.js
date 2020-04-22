@@ -7,7 +7,6 @@ const Conserto = database.model("conserto");
 const Product = database.model("product");
 const Equip = database.model("equip");
 const Technician = database.model("technician");
-const ProductBase = database.model("productBase");
 
 module.exports = class ConsertoDomain {
   async add(bodyData, options = {}) {
@@ -21,12 +20,12 @@ module.exports = class ConsertoDomain {
 
     const field = {
       serialNumber: false,
-      productId: false
+      productId: false,
     };
 
     const message = {
       serialNumber: "",
-      productId: ""
+      productId: "",
     };
 
     if (notHasProps("serialNumbers", conserto) || !conserto.serialNumbers) {
@@ -34,7 +33,7 @@ module.exports = class ConsertoDomain {
       field.serialNumbers = true;
       message.serialNumbers = "serialNumbers cannot null";
     } else {
-      conserto.serialNumbers = conserto.serialNumbers.map(serialNumber =>
+      conserto.serialNumbers = conserto.serialNumbers.map((serialNumber) =>
         serialNumber.replace(/\D/gi, "")
       );
     }
@@ -45,7 +44,7 @@ module.exports = class ConsertoDomain {
       message.productId = "productId cannot null";
     } else {
       const product = await Product.findByPk(conserto.productId, {
-        transaction
+        transaction,
       });
 
       if (!product) {
@@ -60,7 +59,7 @@ module.exports = class ConsertoDomain {
     }
 
     const consertoCreted = await Conserto.create(conserto, {
-      transaction
+      transaction,
     });
 
     return consertoCreted;

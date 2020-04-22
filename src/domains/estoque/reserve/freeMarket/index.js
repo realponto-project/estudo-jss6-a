@@ -12,8 +12,6 @@ const { FieldValidationError } = require("../../../../helpers/errors");
 
 const Equip = database.model("equip");
 const Product = database.model("product");
-// const StockBase = database.model('stockBase')
-const ProductBase = database.model("productBase");
 const FreeMarket = database.model("freeMarket");
 const FreeMarketParts = database.model("freeMarketParts");
 // const Notification = database.model('notification')
@@ -24,18 +22,18 @@ module.exports = class FreeMarketDomain {
 
     const freeMarket = R.omit(["id"], bodyData);
 
-    const freeMarketNotHasProp = prop => R.not(R.has(prop, freeMarket));
-    const bodyHasProp = prop => R.has(prop, bodyData);
+    const freeMarketNotHasProp = (prop) => R.not(R.has(prop, freeMarket));
+    const bodyHasProp = (prop) => R.has(prop, bodyData);
 
     const field = {
       codigo: false,
       razaoSocial: false,
-      cpfOuCnpj: false
+      cpfOuCnpj: false,
     };
     const message = {
       codigo: "",
       razaoSocial: "",
-      cpfOuCnpj: ""
+      cpfOuCnpj: "",
     };
 
     let errors = false;
@@ -48,7 +46,7 @@ module.exports = class FreeMarketDomain {
       const freeMarketHasExist = await FreeMarket.findOne({
         where: { trackingCode: freeMarket.trackingCode },
         paranoid: false,
-        transaction
+        transaction,
       });
 
       if (freeMarketHasExist) {
@@ -90,16 +88,16 @@ module.exports = class FreeMarketDomain {
     freeMarket.cnpjOrCpf = freeMarket.cnpjOrCpf.replace(/\D/gi, "");
 
     const freeMarketCreated = await FreeMarket.create(freeMarket, {
-      transaction
+      transaction,
     });
 
     if (bodyHasProp("freeMarketParts")) {
       const { freeMarketParts } = bodyData;
 
-      const kitPartsCreattedPromises = freeMarketParts.map(async item => {
+      const kitPartsCreattedPromises = freeMarketParts.map(async (item) => {
         const freeMarketPartsCreatted = {
           ...item,
-          freeMarketId: freeMarketCreated.id
+          freeMarketId: freeMarketCreated.id,
         };
 
         const freeMarketPartCreated = await FreeMarketParts.create(
@@ -110,10 +108,10 @@ module.exports = class FreeMarketDomain {
         const productBase = await ProductBase.findByPk(item.productBaseId, {
           include: [
             {
-              model: Product
-            }
+              model: Product,
+            },
           ],
-          transaction
+          transaction,
         });
 
         if (productBase.product.serial) {
@@ -127,14 +125,14 @@ module.exports = class FreeMarketDomain {
           }
 
           if (serialNumberArray.length > 0) {
-            await serialNumberArray.map(async serialNumber => {
+            await serialNumberArray.map(async (serialNumber) => {
               const equip = await Equip.findOne({
                 where: {
                   serialNumber,
                   reserved: false,
-                  productBaseId: productBase.id
+                  productBaseId: productBase.id,
                 },
-                transaction
+                transaction,
               });
 
               if (!equip) {
@@ -144,20 +142,20 @@ module.exports = class FreeMarketDomain {
                 throw new FieldValidationError([{ field, message }]);
               }
             });
-            await serialNumberArray.map(async serialNumber => {
+            await serialNumberArray.map(async (serialNumber) => {
               const equip = await Equip.findOne({
                 where: {
                   serialNumber,
                   reserved: false,
-                  productBaseId: productBase.id
+                  productBaseId: productBase.id,
                 },
-                transaction
+                transaction,
               });
               await equip.update(
                 {
                   ...equip,
                   freeMarketPartId: freeMarketPartCreated.id,
-                  reserved: true
+                  reserved: true,
                 },
                 { transaction }
               );
@@ -173,7 +171,7 @@ module.exports = class FreeMarketDomain {
           ).toString(),
           amount: (
             parseInt(productBase.amount, 10) - parseInt(item.amount, 10)
-          ).toString()
+          ).toString(),
         };
         if (
           parseInt(productBaseUpdate.available, 10) < 0 ||
@@ -202,10 +200,10 @@ module.exports = class FreeMarketDomain {
     const response = await FreeMarket.findByPk(freeMarketCreated.id, {
       include: [
         {
-          model: ProductBase
-        }
+          model: ProductBase,
+        },
       ],
-      transaction
+      transaction,
     });
 
     return response;
@@ -215,7 +213,7 @@ module.exports = class FreeMarketDomain {
     const inicialOrder = {
       field: "createdAt",
       acendent: true,
-      direction: "DESC"
+      direction: "DESC",
     };
 
     const { query = null, transaction = null } = options;
@@ -235,7 +233,7 @@ module.exports = class FreeMarketDomain {
       where: getWhere("freeMarket"),
       limit: 1,
       offset: 0,
-      transaction
+      transaction,
     });
 
     const freeMarket = await FreeMarket.findAndCountAll({
@@ -249,15 +247,15 @@ module.exports = class FreeMarketDomain {
           model: ProductBase,
           include: [
             {
-              model: Product
-            }
-          ]
-        }
+              model: Product,
+            },
+          ],
+        },
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
-      transaction
+      transaction,
     });
 
     const { rows } = freeMarket;
@@ -267,31 +265,31 @@ module.exports = class FreeMarketDomain {
         page: null,
         show: 0,
         count: freeMarketCount.count,
-        rows: []
+        rows: [],
       };
     }
 
-    const formatProduct = R.map(async item => {
+    const formatProduct = R.map(async (item) => {
       const resp = {
         name: item.product.name,
         id: item.freeMarketParts.id,
-        amount: item.freeMarketParts.amount
+        amount: item.freeMarketParts.amount,
       };
 
       if (item.product.serial) {
         const equips = await Equip.findAll({
           where: { freeMarketPartId: item.freeMarketParts.id },
           paranoid: false,
-          transaction
+          transaction,
         });
 
-        resp.serialNumbers = equips.map(equip => equip.serialNumber);
+        resp.serialNumbers = equips.map((equip) => equip.serialNumber);
       }
 
       return resp;
     });
 
-    const formatDateFunct = date => {
+    const formatDateFunct = (date) => {
       moment.locale("pt-br");
       const formatDate = moment(date).format("L");
       const formatHours = moment(date).format("LT");
@@ -299,13 +297,13 @@ module.exports = class FreeMarketDomain {
       return dateformated;
     };
 
-    const formatData = R.map(async item => {
+    const formatData = R.map(async (item) => {
       const resp = {
         id: item.id,
         trackingCode: item.trackingCode,
         name: item.name,
         products: await Promise.all(formatProduct(item.productBases)),
-        createdAt: formatDateFunct(item.createdAt)
+        createdAt: formatDateFunct(item.createdAt),
       };
       return resp;
     });
@@ -321,7 +319,7 @@ module.exports = class FreeMarketDomain {
       page: pageResponse,
       show,
       count: freeMarketCount.count,
-      rows: freeMarketList
+      rows: freeMarketList,
     };
 
     return response;

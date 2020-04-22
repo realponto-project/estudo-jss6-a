@@ -4,80 +4,88 @@ module.exports = {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
-        primaryKey: true
+        primaryKey: true,
       },
 
       serialNumber: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true
+        unique: true,
       },
 
       reserved: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
 
       inClient: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
 
       loan: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
       },
 
       createdAt: {
         defaultValue: Sequelize.NOW,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
 
       updatedAt: {
         defaultValue: Sequelize.NOW,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
 
       deletedAt: {
         defaultValue: null,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
-      productBaseId: {
+      productId: {
         type: Sequelize.UUID,
         references: {
-          model: "productBase",
-          key: "id"
+          model: "product",
+          key: "id",
         },
-        allowNull: false
+        allowNull: false,
+      },
+      entranceId: {
+        type: Sequelize.UUID,
+        references: {
+          model: "entrance",
+          key: "id",
+        },
+        allowNull: true,
       },
       osPartId: {
         type: Sequelize.UUID,
         references: {
           model: "osParts",
-          key: "id"
+          key: "id",
         },
-        allowNull: true
+        allowNull: true,
       },
       freeMarketPartId: {
         type: Sequelize.UUID,
         references: {
           model: "freeMarketParts",
-          key: "id"
+          key: "id",
         },
-        allowNull: true
-      }
+        allowNull: true,
+      },
     });
 
-    equip.associate = models => {
+    equip.associate = (models) => {
       equip.belongsTo(models.productBase, {
         foreignKey: {
-          allowNull: false
-        }
+          allowNull: false,
+        },
       });
       equip.belongsTo(models.osParts);
     };
 
     return equip;
   },
-  down: queryInterface => queryInterface.dropTable("equip")
+  down: (queryInterface) => queryInterface.dropTable("equip"),
 };

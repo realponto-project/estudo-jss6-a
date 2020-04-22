@@ -12,8 +12,6 @@ const Equip = database.model("equip");
 const EquipType = database.model("equipType");
 const Mark = database.model("mark");
 const Product = database.model("product");
-const ProductBase = database.model("productBase");
-const StockBase = database.model("stockBase");
 
 const { Op: operators } = Sequelize;
 
@@ -23,8 +21,8 @@ module.exports = class ProductDomain {
 
     const product = R.omit(["id", "type", "mark"], bodyData);
 
-    const productNotHasProp = prop => R.not(R.has(prop, product));
-    const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData));
+    const productNotHasProp = (prop) => R.not(R.has(prop, product));
+    const bodyDataNotHasProp = (prop) => R.not(R.has(prop, bodyData));
     // const productHasProp = prop => R.has(prop, product)
 
     const field = {
@@ -34,7 +32,7 @@ module.exports = class ProductDomain {
       serial: false,
       minimumStock: false,
       mark: false,
-      type: false
+      type: false,
     };
     const message = {
       name: "",
@@ -43,7 +41,7 @@ module.exports = class ProductDomain {
       serial: "",
       minimumStock: "",
       mark: "",
-      type: ""
+      type: "",
     };
 
     let errors = false;
@@ -57,7 +55,7 @@ module.exports = class ProductDomain {
 
       const productHasExist = await Product.findOne({
         where: { name },
-        transaction
+        transaction,
       });
 
       if (productHasExist) {
@@ -92,7 +90,7 @@ module.exports = class ProductDomain {
 
       const productHasExist = await Product.findOne({
         where: { SKU },
-        transaction
+        transaction,
       });
 
       if (productHasExist) {
@@ -121,7 +119,7 @@ module.exports = class ProductDomain {
     } else {
       const markHasExist = await Mark.findOne({
         where: { mark: bodyData.mark },
-        transaction
+        transaction,
       });
 
       if (!markHasExist) {
@@ -147,7 +145,7 @@ module.exports = class ProductDomain {
       } else {
         const equipTypeHasExist = await EquipType.findOne({
           where: { type: bodyData.type },
-          transaction
+          transaction,
         });
 
         if (!equipTypeHasExist) {
@@ -168,7 +166,7 @@ module.exports = class ProductDomain {
 
     const response = await Product.findByPk(productCreated.id, {
       include: [{ model: Mark }, { model: EquipType }],
-      transaction
+      transaction,
     });
 
     return response;
@@ -179,8 +177,8 @@ module.exports = class ProductDomain {
 
     const product = R.omit(["id", "type", "mark"], bodyData);
 
-    const productNotHasProp = prop => R.not(R.has(prop, product));
-    const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData));
+    const productNotHasProp = (prop) => R.not(R.has(prop, product));
+    const bodyDataNotHasProp = (prop) => R.not(R.has(prop, bodyData));
     // const productHasProp = prop => R.has(prop, product)
 
     const oldProduct = await Product.findByPk(bodyData.id, { transaction });
@@ -192,7 +190,7 @@ module.exports = class ProductDomain {
       serial: false,
       minimumStock: false,
       mark: false,
-      type: false
+      type: false,
     };
     const message = {
       name: "",
@@ -201,7 +199,7 @@ module.exports = class ProductDomain {
       serial: "",
       minimumStock: "",
       mark: "",
-      type: ""
+      type: "",
     };
 
     let errors = false;
@@ -221,7 +219,7 @@ module.exports = class ProductDomain {
 
       const productHasExist = await Product.findOne({
         where: { name },
-        transaction
+        transaction,
       });
 
       if (productHasExist && productHasExist.id !== bodyData.id) {
@@ -256,7 +254,7 @@ module.exports = class ProductDomain {
 
       const productHasExist = await Product.findOne({
         where: { SKU },
-        transaction
+        transaction,
       });
 
       if (productHasExist && productHasExist.id !== bodyData.id) {
@@ -285,7 +283,7 @@ module.exports = class ProductDomain {
     } else {
       const markHasExist = await Mark.findOne({
         where: { mark: bodyData.mark },
-        transaction
+        transaction,
       });
 
       if (!markHasExist) {
@@ -311,7 +309,7 @@ module.exports = class ProductDomain {
       } else {
         const equipTypeHasExist = await EquipType.findOne({
           where: { type: bodyData.type },
-          transaction
+          transaction,
         });
 
         if (!equipTypeHasExist) {
@@ -330,14 +328,14 @@ module.exports = class ProductDomain {
 
     const newProduct = {
       ...oldProduct,
-      ...product
+      ...product,
     };
 
     await oldProduct.update(newProduct, { transaction });
 
     const response = await Product.findByPk(bodyData.id, {
       include: [{ model: Mark }, { model: EquipType }],
-      transaction
+      transaction,
     });
 
     return response;
@@ -347,7 +345,7 @@ module.exports = class ProductDomain {
     const inicialOrder = {
       field: "createdAt",
       acendent: true,
-      direction: "DESC"
+      direction: "DESC",
     };
 
     const { query = null, transaction = null } = options;
@@ -369,7 +367,7 @@ module.exports = class ProductDomain {
         {
           model: Mark,
           where: getWhere("mark"),
-          required: true
+          required: true,
         },
         {
           model: EquipType,
@@ -377,13 +375,13 @@ module.exports = class ProductDomain {
           required:
             newQuery.filters &&
             newQuery.filters.equipType &&
-            newQuery.filters.equipType.specific.type
-        }
+            newQuery.filters.equipType.specific.type,
+        },
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
-      transaction
+      transaction,
     });
 
     const { rows } = products;
@@ -393,11 +391,11 @@ module.exports = class ProductDomain {
         page: null,
         show: 0,
         count: products.count,
-        rows: []
+        rows: [],
       };
     }
 
-    const formatDateFunct = date => {
+    const formatDateFunct = (date) => {
       moment.locale("pt-br");
       const formatDate = moment(date).format("L");
       const formatHours = moment(date).format("LT");
@@ -405,7 +403,7 @@ module.exports = class ProductDomain {
       return dateformated;
     };
 
-    const formatData = R.map(product => {
+    const formatData = R.map((product) => {
       const resp = {
         id: product.id,
         amount: product.amount,
@@ -418,7 +416,7 @@ module.exports = class ProductDomain {
         serial: product.serial,
         type: product.equipType ? product.equipType.type : "-",
         createdAt: formatDateFunct(product.createdAt),
-        updatedAt: formatDateFunct(product.updatedAt)
+        updatedAt: formatDateFunct(product.updatedAt),
       };
       return resp;
     });
@@ -434,7 +432,7 @@ module.exports = class ProductDomain {
       page: pageResponse,
       show,
       count: products.count,
-      rows: productsList
+      rows: productsList,
     };
 
     return response;
@@ -449,16 +447,17 @@ module.exports = class ProductDomain {
 
     const products = await Product.findAll({
       where: getWhere("product"),
-      attributes: ["id", "name", "serial"],
+      attributes: ["id", "name", "serial", "available"],
       order: [["name", "ASC"]],
       limit: 20,
-      transaction
+      transaction,
     });
 
-    const response = products.map(item => ({
+    const response = products.map((item) => ({
       id: item.id,
       name: item.name,
-      serial: item.serial
+      serial: item.serial,
+      available: item.available,
     }));
 
     return response;
@@ -473,66 +472,14 @@ module.exports = class ProductDomain {
           [operators.gte]: moment(query.createdAt)
             .subtract(5, "seconds")
             .toString(),
-          [operators.lte]: moment(query.createdAt)
-            .add(5, "seconds")
-            .toString()
-        }
+          [operators.lte]: moment(query.createdAt).add(5, "seconds").toString(),
+        },
       },
       attributes: ["serialNumber"],
       order: [["serialNumber", "ASC"]],
-      transaction
+      transaction,
     });
 
     return equips;
-  }
-
-  async getProductByStockBase(options = {}) {
-    const { query = null, transaction = null } = options;
-
-    const newQuery = Object.assign({}, query);
-
-    const { getWhere } = formatQuery(newQuery);
-
-    const kit =
-      R.prop("kit", query) === undefined ? false : R.prop("kit", query);
-
-    let or = {};
-
-    if (kit) {
-      or = {
-        [operators.or]: [
-          {
-            category: { [operators.eq]: "peca" }
-          },
-          {
-            category: { [operators.eq]: "acessorios" }
-          }
-        ]
-      };
-    }
-
-    const products = await Product.findAll({
-      where: { ...or, ...getWhere("product") },
-      order: [["name", "ASC"]],
-      limit: 20,
-      include: [
-        {
-          model: StockBase,
-          where: getWhere("stockBase")
-        }
-      ],
-      transaction
-    });
-
-    const response = products.map(product => {
-      const resp = {
-        id: product.stockBases[0].productBase.id,
-        available: product.stockBases[0].productBase.available,
-        name: product.name,
-        serial: product.serial
-      };
-      return resp;
-    });
-    return response.filter(item => parseInt(item.available, 10) !== 0);
   }
 };

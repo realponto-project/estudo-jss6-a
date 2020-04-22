@@ -3,7 +3,6 @@ const moment = require("moment");
 
 const database = require("../../database");
 
-const ProductBase = database.model("productBase");
 const FreeMarket = database.model("freeMarket");
 const FreeMarketParts = database.model("freeMarketParts");
 const Equip = database.model("equip");
@@ -21,19 +20,19 @@ const deleteEComerce = async (req, res, next) => {
       where: { trackingCode: "OI202442267BR" },
       include: [{ model: ProductBase }],
       transaction,
-      paranoid: false
+      paranoid: false,
     });
 
     await Promise.all(
-      resp.productBases.map(async item => {
+      resp.productBases.map(async (item) => {
         const equip = await Equip.findAll({
           where: { freeMarketPartId: item.freeMarketParts.id },
           paranoid: false,
-          transaction
+          transaction,
         });
 
         const productBase = await ProductBase.findByPk(item.id, {
-          transaction
+          transaction,
         });
 
         // await productBase.update(
@@ -80,11 +79,11 @@ const associateTechnicianReverve = async (req, res, next) => {
   const transaction = await database.transaction();
   try {
     const technicianReserves = await TechnicianReserve.findAll({
-      transaction
+      transaction,
     });
 
     await Promise.all(
-      technicianReserves.map(async technicianReserve => {
+      technicianReserves.map(async (technicianReserve) => {
         const technicianReserveParts = await TechnicianReserveParts.findAll({
           where: {
             createdAt: {
@@ -92,14 +91,14 @@ const associateTechnicianReverve = async (req, res, next) => {
                 4,
                 "seconds"
               ),
-              [Op.lte]: moment(technicianReserve.createdAt).add(4, "seconds")
-            }
+              [Op.lte]: moment(technicianReserve.createdAt).add(4, "seconds"),
+            },
           },
-          transaction
+          transaction,
         });
 
         await Promise.all(
-          technicianReserveParts.map(async technicianReservePart => {
+          technicianReserveParts.map(async (technicianReservePart) => {
             await technicianReservePart.update(
               { technicianReserveId: technicianReserve.id },
               { transaction }
@@ -125,7 +124,7 @@ const writeDefautsEntrances = async (req, res, next) => {
 
     await Promise.all(
       entrances.map(
-        async entrance =>
+        async (entrance) =>
           await entrance.update({ analysis: false }, { transaction })
       )
     );
@@ -134,7 +133,7 @@ const writeDefautsEntrances = async (req, res, next) => {
 
     await Promise.all(
       producBtases.map(
-        async producBtase =>
+        async (producBtase) =>
           await producBtase.update({ analysis: "0" }, { transaction })
       )
     );
@@ -152,11 +151,11 @@ const writeDefautsConserto = async (req, res, next) => {
   try {
     const consertos = await Conserto.findAll({
       paranoid: false,
-      transaction
+      transaction,
     });
 
     await Promise.all(
-      consertos.map(async conserto => {
+      consertos.map(async (conserto) => {
         const serialNumbers = [conserto.serialNumber];
         await conserto.update({ serialNumbers }, { transaction });
       })
@@ -173,5 +172,5 @@ module.exports = {
   deleteEComerce,
   associateTechnicianReverve,
   writeDefautsEntrances,
-  writeDefautsConserto
+  writeDefautsConserto,
 };

@@ -25,8 +25,6 @@ const kitDomain = new KitDomain();
 
 const Kit = database.model("kit");
 const KitParts = database.model("kitParts");
-const ProductBase = database.model("productBase");
-const StockBase = database.model("stockBase");
 
 describe("kitOutDomain", () => {
   let kitParts = null;
@@ -36,7 +34,7 @@ describe("kitOutDomain", () => {
     const carMock = {
       model: "GOL",
       year: "2007",
-      plate: "RST-4444"
+      plate: "RST-4444",
     };
 
     await carDomain.add(carMock);
@@ -45,14 +43,14 @@ describe("kitOutDomain", () => {
       name: "NARUTO DA SUL",
       CNH: "01/01/2000",
       plate: "RST-4444",
-      external: true
+      external: true,
     };
 
     const technicianCreated = await technicianDomain.add(technicianMock);
 
     const mark = {
       mark: "KONOHA",
-      responsibleUser: "modrp"
+      responsibleUser: "modrp",
     };
 
     await markDomain.add(mark);
@@ -65,7 +63,7 @@ describe("kitOutDomain", () => {
       mark: "KONOHA",
       name: "LED",
       serial: false,
-      responsibleUser: "modrp"
+      responsibleUser: "modrp",
     };
 
     const productCreated = await productDomain.add(productMock);
@@ -83,7 +81,7 @@ describe("kitOutDomain", () => {
       nameContact: "joseildom",
       email: "josealdo@gmasi.com",
       responsibleUser: "modrp",
-      relation: "fornecedor"
+      relation: "fornecedor",
     };
 
     const companyCreated = await companyDomain.add(companyMock);
@@ -93,26 +91,26 @@ describe("kitOutDomain", () => {
       stockBase: "REALPONTO",
       productId: productCreated.id,
       companyId: companyCreated.id,
-      responsibleUser: "modrp"
+      responsibleUser: "modrp",
     };
 
     await entranceDomain.add(entranceMock);
 
     const productBase = await ProductBase.findOne({
       where: {
-        productId: productCreated.id
+        productId: productCreated.id,
       },
       include: [{ model: StockBase, where: { stockBase: "REALPONTO" } }],
-      transacition: null
+      transacition: null,
     });
 
     const reserveMock = {
       kitParts: [
         {
           productBaseId: productBase.id,
-          amount: "5"
-        }
-      ]
+          amount: "5",
+        },
+      ],
     };
 
     await kitDomain.add(reserveMock);
@@ -121,10 +119,10 @@ describe("kitOutDomain", () => {
       include: [
         {
           model: Kit,
-          where: { technicianId: technicianCreated.id }
-        }
+          where: { technicianId: technicianCreated.id },
+        },
       ],
-      transaction: null
+      transaction: null,
     });
 
     const reserveMockOs = {
@@ -136,9 +134,9 @@ describe("kitOutDomain", () => {
         {
           productBaseId: productBase.id,
           amount: "1",
-          status: "venda"
-        }
-      ]
+          status: "venda",
+        },
+      ],
     };
     reserveOs = await osDomain.add(reserveMockOs);
   });
@@ -158,7 +156,7 @@ describe("kitOutDomain", () => {
       expedicao: "2",
       perda: "1",
       os: reserveOs.os,
-      kitPartId: kitParts.id
+      kitPartId: kitParts.id,
     };
 
     const kitOutCreated = await kitOutDomain.add(kitOutMock);

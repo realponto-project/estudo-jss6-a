@@ -12,8 +12,6 @@ const { FieldValidationError } = require("../../helpers/errors");
 const Product = database.model("product");
 // const User = database.model('user')
 const Mark = database.model("mark");
-const StockBase = database.model("stockBase");
-const ProductBase = database.model("productBase");
 const Notification = database.model("notification");
 const Equip = database.model("equip");
 
@@ -22,7 +20,7 @@ module.exports = class StockDomain {
     const inicialOrder = {
       field: "createdAt",
       acendent: true,
-      direction: "ASC"
+      direction: "ASC",
     };
 
     const { query = null, transaction = null } = options;
@@ -38,88 +36,71 @@ module.exports = class StockDomain {
 
     const { getWhere, limit, offset, pageResponse } = formatQuery(newQuery);
 
-    const productBases = await ProductBase.findAndCountAll({
-      // where: getWhere('productBase'),
-      attributes: ["id", "amount", "available", "analysis"],
+    console.log("test");
+
+    const products = await Product.findAndCountAll({
+      attributes: [
+        "name",
+        "category",
+        "minimumStock",
+        "serial",
+        "id",
+        "amount",
+        "available",
+        "analysis",
+      ],
+      where: getWhere("product"),
       include: [
         {
-          model: Product,
-          attributes: ["name", "category", "minimumStock", "serial", "id"],
-          where: getWhere("product"),
-          // order: [
-          //   ['name', 'ASC'],
-          // ],
-          include: [
-            {
-              model: Mark,
-              where: getWhere("mark"),
-              attributes: ["mark"],
-              required: true
-            }
-          ],
-          required: true
+          model: Mark,
+          where: getWhere("mark"),
+          attributes: ["mark"],
+          required: true,
         },
-        {
-          model: StockBase,
-          attributes: ["stockBase"],
-          where: getWhere("stockBase")
-        }
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
-      transaction
+      transaction,
     });
 
-    const { rows } = productBases;
+    const { rows, count } = products;
 
     if (rows.length === 0) {
       return {
         page: null,
         show: 0,
-        count: productBases.count,
-        rows: []
+        count,
+        rows: [],
       };
     }
 
-    // const formatDateFunct = (date) => {
-    //   moment.locale('pt-br')
-    //   const formatDate = moment(date).format('L')
-    //   const formatHours = moment(date).format('LT')
-    //   const dateformated = `${formatDate} ${formatHours}`
-    //   return dateformated
-    // }
-
-    const formatData = R.map(productBase => {
+    const formatData = R.map((product) => {
       const resp = {
-        id: productBase.id,
-        amount: productBase.amount,
-        analysis: productBase.analysis,
-        available: productBase.available,
-        serial: productBase.product.serial,
-        productId: productBase.product.id,
-        name: productBase.product.name,
-        category: productBase.product.category,
-        minimumStock: productBase.product.minimumStock,
-        manufacturer: productBase.product.mark.mark,
-        stockBase: productBase.stockBase.stockBase
+        id: product.id,
+        productId: product.id,
+        amount: product.amount,
+        analysis: product.analysis,
+        available: product.available,
+        serial: product.serial,
+        name: product.name,
+        category: product.category,
+        minimumStock: product.minimumStock,
+        manufacturer: product.mark.mark,
       };
       return resp;
     });
 
-    const productBasesList = formatData(rows);
-
-    let show = limit;
-    if (productBases.count < show) {
-      show = productBases.count;
-    }
+    const productList = formatData(rows);
 
     const response = {
       page: pageResponse,
-      show,
-      count: productBases.count,
-      rows: productBasesList
+      show: R.min(count, limit),
+      count,
+      rows: productList,
     };
+
+    console.log(response);
 
     return response;
   }
@@ -128,7 +109,7 @@ module.exports = class StockDomain {
     const inicialOrder = {
       field: "createdAt",
       acendent: true,
-      direction: "DESC"
+      direction: "DESC",
     };
 
     const { query = null, transaction = null } = options;
@@ -149,7 +130,7 @@ module.exports = class StockDomain {
       order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
-      transaction
+      transaction,
     });
 
     const { rows } = notifications;
@@ -159,14 +140,14 @@ module.exports = class StockDomain {
         page: null,
         show: 0,
         count: notifications.count,
-        rows: []
+        rows: [],
       };
     }
 
-    const formatData = R.map(entrance => {
+    const formatData = R.map((entrance) => {
       const resp = {
         id: entrance.id,
-        message: entrance.message
+        message: entrance.message,
       };
       return resp;
     });
@@ -182,7 +163,7 @@ module.exports = class StockDomain {
       page: pageResponse,
       show,
       count: notifications.count,
-      rows: notificationsList
+      rows: notificationsList,
     };
 
     return response;
@@ -192,20 +173,20 @@ module.exports = class StockDomain {
     const { transaction = null } = options;
 
     console.log(body);
-    const bodyNotHasProp = prop => R.not(R.has(prop, body));
+    const bodyNotHasProp = (prop) => R.not(R.has(prop, body));
 
     let errors = false;
 
     const field = {
       id: false,
       amount: false,
-      serialNumbers: false
+      serialNumbers: false,
     };
 
     const message = {
       id: false,
       amount: false,
-      serialNumbers: false
+      serialNumbers: false,
     };
 
     let productBase = null;
@@ -241,12 +222,12 @@ module.exports = class StockDomain {
     const { serialNumbers } = body;
     console.log("teste");
 
-    const serialNumbersFindPromises = serialNumbers.map(async item => {
+    const serialNumbersFindPromises = serialNumbers.map(async (item) => {
       const serialNumberHasExist = await Equip.findOne({
         where: { serialNumber: item },
         attributes: [],
         paranoid: false,
-        transaction
+        transaction,
       });
 
       if (serialNumberHasExist) {
@@ -257,11 +238,11 @@ module.exports = class StockDomain {
     });
     await Promise.all(serialNumbersFindPromises);
 
-    const serialNumbersCreatePromises = serialNumbers.map(async item => {
+    const serialNumbersCreatePromises = serialNumbers.map(async (item) => {
       const equipCreate = {
         productBaseId: productBase.id,
         serialNumber: item,
-        loan: false
+        loan: false,
       };
 
       await Equip.create(equipCreate, { transaction });

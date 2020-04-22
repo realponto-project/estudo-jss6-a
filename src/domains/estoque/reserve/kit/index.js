@@ -1,53 +1,52 @@
 /* eslint-disable max-len */
-const R = require('ramda')
-const moment = require('moment')
+const R = require("ramda");
+const moment = require("moment");
 // const axios = require('axios')
-const Sequelize = require('sequelize')
+const Sequelize = require("sequelize");
 
-const { Op: operators } = Sequelize
+const { Op: operators } = Sequelize;
 
-const formatQuery = require('../../../../helpers/lazyLoad')
-const database = require('../../../../database')
+const formatQuery = require("../../../../helpers/lazyLoad");
+const database = require("../../../../database");
 
-const { FieldValidationError } = require('../../../../helpers/errors')
+const { FieldValidationError } = require("../../../../helpers/errors");
 
-const Kit = database.model('kit')
-const Technician = database.model('technician')
-const KitParts = database.model('kitParts')
-const Product = database.model('product')
-const ProductBase = database.model('productBase')
-const Notification = database.model('notification')
+const Kit = database.model("kit");
+const Technician = database.model("technician");
+const KitParts = database.model("kitParts");
+const Product = database.model("product");
+const Notification = database.model("notification");
 
 module.exports = class KitDomain {
   async add(bodyData, options = {}) {
-    const { transaction = null } = options
+    const { transaction = null } = options;
 
-    const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
-    const bodyHasProp = prop => R.has(prop, bodyData)
+    const bodyDataNotHasProp = (prop) => R.not(R.has(prop, bodyData));
+    const bodyHasProp = (prop) => R.has(prop, bodyData);
 
     const field = {
       kitParts: false,
-    }
+    };
     const message = {
       kitParts: false,
-    }
+    };
 
-    let errors = false
+    let errors = false;
 
-    if (bodyDataNotHasProp('kitParts') || !bodyData.kitParts) {
-      errors = true
-      field.kitParts = true
-      message.kitParts = 'Ao menos uma peça deve ser associada.'
+    if (bodyDataNotHasProp("kitParts") || !bodyData.kitParts) {
+      errors = true;
+      field.kitParts = true;
+      message.kitParts = "Ao menos uma peça deve ser associada.";
     }
 
     if (errors) {
-      throw new FieldValidationError([{ field, message }])
+      throw new FieldValidationError([{ field, message }]);
     }
 
     const technicial = await Technician.findAll({
       where: { external: true },
       transaction,
-    })
+    });
 
     const oldKit = await Kit.findAll({
       include: [
@@ -57,33 +56,33 @@ module.exports = class KitDomain {
         },
       ],
       transaction,
-    })
+    });
 
-    let count = {}
-    let count1 = {}
+    let count = {};
+    let count1 = {};
 
     if (oldKit.length > 0) {
       const oldKitDelete = oldKit.map(async (itemOldKit) => {
         const oldKitParts = await KitParts.findAll({
           where: { kitId: itemOldKit.id },
-          attributes: ['id', 'amount', 'productBaseId'],
+          attributes: ["id", "amount", "productBaseId"],
           transaction,
-        })
+        });
 
         const kitPartsDeletePromises = oldKitParts.map(async (item) => {
           if (itemOldKit.technicianId) {
             const productBase = await ProductBase.findByPk(item.productBaseId, {
               transaction,
-            })
+            });
 
             count = {
               ...count,
               [item.productBaseId]: count[item.productBaseId]
                 ? count[item.productBaseId]
                 : 0,
-            }
+            };
 
-            count[item.productBaseId] += parseInt(item.amount, 10)
+            count[item.productBaseId] += parseInt(item.amount, 10);
 
             const productBaseUpdate = {
               ...productBase,
@@ -93,60 +92,60 @@ module.exports = class KitDomain {
               reserved: (
                 parseInt(productBase.reserved, 10) - count[item.productBaseId]
               ).toString(),
-            }
+            };
 
             if (
-              parseInt(productBaseUpdate.available, 10) < 0
-              || parseInt(productBaseUpdate.reserved, 10) < 0
+              parseInt(productBaseUpdate.available, 10) < 0 ||
+              parseInt(productBaseUpdate.reserved, 10) < 0
             ) {
-              field.productBaseUpdate = true
-              message.productBaseUpdate = 'Número negativo não é valido'
-              throw new FieldValidationError([{ field, message }])
+              field.productBaseUpdate = true;
+              message.productBaseUpdate = "Número negativo não é valido";
+              throw new FieldValidationError([{ field, message }]);
             }
-            await productBase.update(productBaseUpdate, { transaction })
+            await productBase.update(productBaseUpdate, { transaction });
           }
 
-          await item.destroy({ transaction })
-        })
+          await item.destroy({ transaction });
+        });
 
-        await Promise.all(kitPartsDeletePromises)
+        await Promise.all(kitPartsDeletePromises);
 
-        await itemOldKit.destroy({ transaction })
-      })
-      await Promise.all(oldKitDelete)
+        await itemOldKit.destroy({ transaction });
+      });
+      await Promise.all(oldKitDelete);
     }
 
     const kitCreatedPromise = technicial.map(async (itemTec) => {
       const kitCreated = await Kit.create(
         { technicianId: itemTec.id },
-        { transaction },
-      )
+        { transaction }
+      );
 
-      if (bodyHasProp('kitParts')) {
-        const { kitParts } = bodyData
+      if (bodyHasProp("kitParts")) {
+        const { kitParts } = bodyData;
 
         const kitPartsCreattedPromises = kitParts.map(async (item) => {
           const productBase = await ProductBase.findByPk(item.productBaseId, {
             include: [Product],
             transaction,
-          })
+          });
 
           const kitPartsCreatted = {
             amount: item.amount,
             kitId: kitCreated.id,
             productBaseId: productBase.id,
-          }
+          };
 
-          await KitParts.create(kitPartsCreatted, { transaction })
+          await KitParts.create(kitPartsCreatted, { transaction });
 
           count1 = {
             ...count1,
             [item.productBaseId]: count1[item.productBaseId]
               ? count1[item.productBaseId]
               : 0,
-          }
+          };
 
-          count1[item.productBaseId] += parseInt(item.amount, 10)
+          count1[item.productBaseId] += parseInt(item.amount, 10);
 
           const productBaseUpdate = {
             ...productBase,
@@ -156,57 +155,57 @@ module.exports = class KitDomain {
             reserved: (
               parseInt(productBase.reserved, 10) + count1[item.productBaseId]
             ).toString(),
-          }
+          };
 
           if (
+            parseInt(productBaseUpdate.available, 10) < 0 ||
             parseInt(productBaseUpdate.available, 10) < 0
-            || parseInt(productBaseUpdate.available, 10) < 0
           ) {
-            field.productBaseUpdate = true
-            message.productBaseUpdate = 'Número negativo não é valido'
-            throw new FieldValidationError([{ field, message }])
+            field.productBaseUpdate = true;
+            message.productBaseUpdate = "Número negativo não é valido";
+            throw new FieldValidationError([{ field, message }]);
           }
 
           if (
-            parseInt(productBaseUpdate.available, 10)
-            < parseInt(productBase.product.minimumStock, 10)
+            parseInt(productBaseUpdate.available, 10) <
+            parseInt(productBase.product.minimumStock, 10)
           ) {
-            const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`
+            const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`;
 
             await Notification.create(
               { message: messageNotification },
-              { transaction },
-            )
+              { transaction }
+            );
           }
 
-          await productBase.update(productBaseUpdate, { transaction })
-          count1 = 0
-        })
-        await Promise.all(kitPartsCreattedPromises)
+          await productBase.update(productBaseUpdate, { transaction });
+          count1 = 0;
+        });
+        await Promise.all(kitPartsCreattedPromises);
       }
-    })
+    });
 
-    await Promise.all(kitCreatedPromise)
+    await Promise.all(kitCreatedPromise);
 
-    const kitCreatedTecNull = await Kit.create({ transaction })
+    const kitCreatedTecNull = await Kit.create({ transaction });
 
-    if (bodyHasProp('kitParts')) {
-      const { kitParts } = bodyData
+    if (bodyHasProp("kitParts")) {
+      const { kitParts } = bodyData;
 
       const kitPartsCreattedPromises = kitParts.map(async (item) => {
         const productBase = await ProductBase.findByPk(item.productBaseId, {
           transaction,
-        })
+        });
 
         const kitPartsCreatted = {
           amount: item.amount,
           kitId: kitCreatedTecNull.id,
           productBaseId: productBase.id,
-        }
+        };
 
-        await KitParts.create(kitPartsCreatted, { transaction })
-      })
-      await Promise.all(kitPartsCreattedPromises)
+        await KitParts.create(kitPartsCreatted, { transaction });
+      });
+      await Promise.all(kitPartsCreattedPromises);
     }
 
     const response = await Kit.findAll({
@@ -216,45 +215,37 @@ module.exports = class KitDomain {
         },
       ],
       transaction,
-    })
+    });
 
-    return response
+    return response;
   }
 
   async getAll(options = {}) {
     const inicialOrder = {
-      field: 'createdAt',
+      field: "createdAt",
       acendent: true,
-      direction: 'DESC',
-    }
+      direction: "DESC",
+    };
 
-    const { query = null, transaction = null } = options
+    const { query = null, transaction = null } = options;
 
-    const newQuery = Object.assign({}, query)
-    const newOrder = query && query.order ? query.order : inicialOrder
+    const newQuery = Object.assign({}, query);
+    const newOrder = query && query.order ? query.order : inicialOrder;
 
     if (newOrder.acendent) {
-      newOrder.direction = 'DESC'
+      newOrder.direction = "DESC";
     } else {
-      newOrder.direction = 'ASC'
+      newOrder.direction = "ASC";
     }
 
-    const {
-      getWhere, limit, offset, pageResponse,
-    } = formatQuery(newQuery)
+    const { getWhere, limit, offset, pageResponse } = formatQuery(newQuery);
 
     const entrances = await KitParts.findAndCountAll({
-      where: getWhere('kitParts'),
+      where: getWhere("kitParts"),
       include: [
         {
-          model: ProductBase,
-          include: [
-            {
-              model: Product,
-              where: getWhere('product'),
-            },
-          ],
-          required: true,
+          model: Product,
+          where: getWhere("product"),
         },
         {
           model: Kit,
@@ -264,8 +255,8 @@ module.exports = class KitDomain {
               where: newQuery.filters && {
                 name: {
                   [operators.eq]:
-                    newQuery.filters
-                    && newQuery.filters.technician.specific.name,
+                    newQuery.filters &&
+                    newQuery.filters.technician.specific.name,
                 },
               },
             },
@@ -277,9 +268,9 @@ module.exports = class KitDomain {
       limit,
       offset,
       transaction,
-    })
+    });
 
-    const { rows } = entrances
+    const { rows } = entrances;
 
     if (rows.length === 0) {
       return {
@@ -287,21 +278,21 @@ module.exports = class KitDomain {
         show: 0,
         count: entrances.count,
         rows: [],
-      }
+      };
     }
 
     const formatDateFunct = (date) => {
-      moment.locale('pt-br')
-      const formatDate = moment(date).format('L')
-      const formatHours = moment(date).format('LT')
-      const dateformated = `${formatDate} ${formatHours}`
-      return dateformated
-    }
+      moment.locale("pt-br");
+      const formatDate = moment(date).format("L");
+      const formatHours = moment(date).format("LT");
+      const dateformated = `${formatDate} ${formatHours}`;
+      return dateformated;
+    };
 
-    const formatData = await R.map((entrance) => {
+    const formatData = await R.map((kit) => {
       const resp = {
-        kitPartId: entrance.id,
-        amount: entrance.amount,
+        kitPartId: kit.id,
+        amount: kit.amount,
         // oldAmount: entrance.oldAmount,
         // stockBase: entrance.stockBase,
         // responsibleUser: entrance.responsibleUser,
@@ -313,68 +304,65 @@ module.exports = class KitDomain {
         // amount: entrance.product.amount,
         // mark: entrance.product.mark.mark,
         // // eslint-disable-next-line max-len
-        name: entrance.productBase ? entrance.productBase.product.name : null,
-        quantMax: entrance.productBase
-          ? parseInt(entrance.productBase.available, 10)
+        name: kit.productBase ? kit.productBase.product.name : null,
+        quantMax: kit.productBase
+          ? parseInt(kit.productBase.available, 10)
           : null,
-        updatedAt: formatDateFunct(entrance.updatedAt),
-      }
-      return resp
-    })
+        updatedAt: formatDateFunct(kit.updatedAt),
+      };
+      return resp;
+    });
 
-    const entrancesList = formatData(rows)
+    const kitList = formatData(rows);
 
     // const entrancesList = formatData(rows).filter((item) => {
     //   if (item.name.indexOf(query.filters.name.toUpperCase()) !== -1) return item
     // })
 
-    let show = limit
+    let show = limit;
     if (entrances.count < show) {
-      show = entrances.count
+      show = entrances.count;
     }
 
     const response = {
       page: pageResponse,
       show,
-      count: entrances.count,
+      count: kitList.count,
       rows: entrancesList,
-    }
+    };
 
-
-    return response
+    return response;
   }
 
   async getKitDefaultValue(options = {}) {
     const inicialOrder = {
-      field: 'createdAt',
+      field: "createdAt",
       acendent: true,
-      direction: 'DESC',
-    }
+      direction: "DESC",
+    };
 
-    const { query = null, transaction = null } = options
+    const { query = null, transaction = null } = options;
 
-    const newQuery = Object.assign({}, query)
-    const newOrder = query && query.order ? query.order : inicialOrder
+    const newQuery = Object.assign({}, query);
+    const newOrder = query && query.order ? query.order : inicialOrder;
 
     if (newOrder.acendent) {
-      newOrder.direction = 'DESC'
+      newOrder.direction = "DESC";
     } else {
-      newOrder.direction = 'ASC'
+      newOrder.direction = "ASC";
     }
 
-    const {
-      getWhere, limit, offset, pageResponse,
-    } = formatQuery(newQuery)
+    const { getWhere, limit, offset, pageResponse } = formatQuery(newQuery);
 
     const kitParts = await KitParts.findAndCountAll({
-      where: getWhere('kitParts'),
+      where: getWhere("kitParts"),
       include: [
         {
           model: ProductBase,
           include: [
             {
               model: Product,
-              where: getWhere('product'),
+              where: getWhere("product"),
             },
           ],
           required: true,
@@ -389,9 +377,9 @@ module.exports = class KitDomain {
       limit,
       offset,
       transaction,
-    })
+    });
 
-    const { rows } = kitParts
+    const { rows } = kitParts;
 
     if (rows.length === 0) {
       return {
@@ -399,7 +387,7 @@ module.exports = class KitDomain {
         show: 0,
         count: kitParts.count,
         rows: [],
-      }
+      };
     }
 
     const formatData = await R.map((kitPart) => {
@@ -419,19 +407,19 @@ module.exports = class KitDomain {
         // mark: kitPart.product.mark.mark,
         // // eslint-disable-next-line max-len
         // createdAt: formatDateFunct(kitPart.createdAt),
-      }
-      return resp
-    })
+      };
+      return resp;
+    });
 
-    const kitPartsList = formatData(rows)
+    const kitPartsList = formatData(rows);
 
     // const kitPartsList = formatData(rows).filter((item) => {
     //   if (item.name.indexOf(query.filters.name.toUpperCase()) !== -1) return item
     // })
 
-    let show = limit
+    let show = limit;
     if (kitParts.count < show) {
-      show = kitParts.count
+      show = kitParts.count;
     }
 
     const response = {
@@ -439,8 +427,8 @@ module.exports = class KitDomain {
       show,
       count: kitParts.count,
       rows: kitPartsList,
-    }
+    };
 
-    return response
+    return response;
   }
-}
+};

@@ -63,7 +63,7 @@ const getEquipsByEntrance = async (req, res, next) => {
 
     const equipTypes = await productDomain.getEquipsByEntrance({
       query,
-      transaction
+      transaction,
     });
 
     await transaction.commit();
@@ -105,7 +105,7 @@ const getProductByStockBase = async (req, res, next) => {
 
     const products = await productDomain.getProductByStockBase({
       query,
-      transaction
+      transaction,
     });
 
     await transaction.commit();
@@ -122,5 +122,5 @@ module.exports = {
   getAll,
   getEquipsByEntrance,
   getAllNames,
-  getProductByStockBase
+  getProductByStockBase,
 };
