@@ -65,44 +65,44 @@ module.exports = class KitDomain {
       const oldKitDelete = oldKit.map(async (itemOldKit) => {
         const oldKitParts = await KitParts.findAll({
           where: { kitId: itemOldKit.id },
-          attributes: ["id", "amount", "productBaseId"],
+          attributes: ["id", "amount", "productId"],
           transaction,
         });
 
         const kitPartsDeletePromises = oldKitParts.map(async (item) => {
           if (itemOldKit.technicianId) {
-            const productBase = await ProductBase.findByPk(item.productBaseId, {
+            const product = await Product.findByPk(item.productId, {
               transaction,
             });
 
             count = {
               ...count,
-              [item.productBaseId]: count[item.productBaseId]
-                ? count[item.productBaseId]
+              [item.productId]: count[item.productId]
+                ? count[item.productId]
                 : 0,
             };
 
-            count[item.productBaseId] += parseInt(item.amount, 10);
+            count[item.productId] += parseInt(item.amount, 10);
 
-            const productBaseUpdate = {
-              ...productBase,
+            const productUpdate = {
+              ...product,
               available: (
-                parseInt(productBase.available, 10) + count[item.productBaseId]
+                parseInt(product.available, 10) + count[item.productId]
               ).toString(),
               reserved: (
-                parseInt(productBase.reserved, 10) - count[item.productBaseId]
+                parseInt(product.reserved, 10) - count[item.productId]
               ).toString(),
             };
 
             if (
-              parseInt(productBaseUpdate.available, 10) < 0 ||
-              parseInt(productBaseUpdate.reserved, 10) < 0
+              parseInt(productUpdate.available, 10) < 0 ||
+              parseInt(productUpdate.reserved, 10) < 0
             ) {
-              field.productBaseUpdate = true;
-              message.productBaseUpdate = "Número negativo não é valido";
+              field.productUpdate = true;
+              message.productUpdate = "Número negativo não é valido";
               throw new FieldValidationError([{ field, message }]);
             }
-            await productBase.update(productBaseUpdate, { transaction });
+            await product.update(productUpdate, { transaction });
           }
 
           await item.destroy({ transaction });
@@ -125,52 +125,51 @@ module.exports = class KitDomain {
         const { kitParts } = bodyData;
 
         const kitPartsCreattedPromises = kitParts.map(async (item) => {
-          const productBase = await ProductBase.findByPk(item.productBaseId, {
-            include: [Product],
+          const product = await Product.findByPk(item.productId, {
             transaction,
           });
 
           const kitPartsCreatted = {
             amount: item.amount,
             kitId: kitCreated.id,
-            productBaseId: productBase.id,
+            productId: product.id,
           };
 
           await KitParts.create(kitPartsCreatted, { transaction });
 
           count1 = {
             ...count1,
-            [item.productBaseId]: count1[item.productBaseId]
-              ? count1[item.productBaseId]
+            [item.productId]: count1[item.productId]
+              ? count1[item.productId]
               : 0,
           };
 
-          count1[item.productBaseId] += parseInt(item.amount, 10);
+          count1[item.productId] += parseInt(item.amount, 10);
 
-          const productBaseUpdate = {
-            ...productBase,
+          const productUpdate = {
+            ...product,
             available: (
-              parseInt(productBase.available, 10) - count1[item.productBaseId]
+              parseInt(product.available, 10) - count1[item.productId]
             ).toString(),
             reserved: (
-              parseInt(productBase.reserved, 10) + count1[item.productBaseId]
+              parseInt(product.reserved, 10) + count1[item.productId]
             ).toString(),
           };
 
           if (
-            parseInt(productBaseUpdate.available, 10) < 0 ||
-            parseInt(productBaseUpdate.available, 10) < 0
+            parseInt(productUpdate.available, 10) < 0 ||
+            parseInt(productUpdate.available, 10) < 0
           ) {
-            field.productBaseUpdate = true;
-            message.productBaseUpdate = "Número negativo não é valido";
+            field.productUpdate = true;
+            message.productUpdate = "Número negativo não é valido";
             throw new FieldValidationError([{ field, message }]);
           }
 
           if (
-            parseInt(productBaseUpdate.available, 10) <
-            parseInt(productBase.product.minimumStock, 10)
+            parseInt(productUpdate.available, 10) <
+            parseInt(product.minimumStock, 10)
           ) {
-            const messageNotification = `${productBase.product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${productBase.product.minimumStock} unidades`;
+            const messageNotification = `${product.name} está abaixo da quantidade mínima disponível no estoque, que é de ${product.minimumStock} unidades`;
 
             await Notification.create(
               { message: messageNotification },
@@ -178,7 +177,7 @@ module.exports = class KitDomain {
             );
           }
 
-          await productBase.update(productBaseUpdate, { transaction });
+          await product.update(productUpdate, { transaction });
           count1 = 0;
         });
         await Promise.all(kitPartsCreattedPromises);
@@ -193,14 +192,14 @@ module.exports = class KitDomain {
       const { kitParts } = bodyData;
 
       const kitPartsCreattedPromises = kitParts.map(async (item) => {
-        const productBase = await ProductBase.findByPk(item.productBaseId, {
+        const product = await Product.findByPk(item.productId, {
           transaction,
         });
 
         const kitPartsCreatted = {
           amount: item.amount,
           kitId: kitCreatedTecNull.id,
-          productBaseId: productBase.id,
+          productId: product.id,
         };
 
         await KitParts.create(kitPartsCreatted, { transaction });
@@ -240,7 +239,7 @@ module.exports = class KitDomain {
 
     const { getWhere, limit, offset, pageResponse } = formatQuery(newQuery);
 
-    const entrances = await KitParts.findAndCountAll({
+    const kitParts = await KitParts.findAndCountAll({
       where: getWhere("kitParts"),
       include: [
         {
@@ -270,13 +269,13 @@ module.exports = class KitDomain {
       transaction,
     });
 
-    const { rows } = entrances;
+    const { rows, count } = kitParts;
 
     if (rows.length === 0) {
       return {
         page: null,
         show: 0,
-        count: entrances.count,
+        count: kitParts.count,
         rows: [],
       };
     }
@@ -289,10 +288,11 @@ module.exports = class KitDomain {
       return dateformated;
     };
 
-    const formatData = await R.map((kit) => {
+    const formatData = await R.map((kitPart) => {
+      console.log(JSON.parse(JSON.stringify(kitPart)));
       const resp = {
-        kitPartId: kit.id,
-        amount: kit.amount,
+        kitPartId: kitPart.id,
+        amount: kitPart.amount,
         // oldAmount: entrance.oldAmount,
         // stockBase: entrance.stockBase,
         // responsibleUser: entrance.responsibleUser,
@@ -304,31 +304,31 @@ module.exports = class KitDomain {
         // amount: entrance.product.amount,
         // mark: entrance.product.mark.mark,
         // // eslint-disable-next-line max-len
-        name: kit.productBase ? kit.productBase.product.name : null,
-        quantMax: kit.productBase
-          ? parseInt(kit.productBase.available, 10)
+        name: kitPart.product ? kitPart.product.name : null,
+        quantMax: kitPart.product
+          ? parseInt(kitPart.product.available, 10)
           : null,
-        updatedAt: formatDateFunct(kit.updatedAt),
+        updatedAt: formatDateFunct(kitPart.updatedAt),
       };
       return resp;
     });
 
-    const kitList = formatData(rows);
+    const kitPartsList = formatData(rows);
 
-    // const entrancesList = formatData(rows).filter((item) => {
+    // const kitPartsList = formatData(rows).filter((item) => {
     //   if (item.name.indexOf(query.filters.name.toUpperCase()) !== -1) return item
     // })
 
     let show = limit;
-    if (entrances.count < show) {
-      show = entrances.count;
+    if (count < show) {
+      show = count;
     }
 
     const response = {
       page: pageResponse,
       show,
-      count: kitList.count,
-      rows: entrancesList,
+      count,
+      rows: kitPartsList,
     };
 
     return response;
@@ -358,13 +358,8 @@ module.exports = class KitDomain {
       where: getWhere("kitParts"),
       include: [
         {
-          model: ProductBase,
-          include: [
-            {
-              model: Product,
-              where: getWhere("product"),
-            },
-          ],
+          model: Product,
+          where: getWhere("product"),
           required: true,
         },
         {
@@ -393,8 +388,8 @@ module.exports = class KitDomain {
     const formatData = await R.map((kitPart) => {
       const resp = {
         amount: parseInt(kitPart.amount, 10),
-        itemCarrinho: kitPart.productBase.product.name,
-        productBaseId: kitPart.productBase.id,
+        itemCarrinho: kitPart.product.name,
+        productId: kitPart.product.id,
         // oldAmount: kitPart.oldAmount,
         // stockBase: kitPart.stockBase,
         // responsibleUser: kitPart.responsibleUser,

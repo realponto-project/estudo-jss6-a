@@ -56,16 +56,6 @@ module.exports = class OsDomain {
 
     let errors = false;
 
-    // if (reserveNotHasProp('os') || !reserve.os) {
-    //   errors = true
-    //   field.Os = true
-    //   message.Os = 'Por favor o numero da OS.'
-    // } else if (/\D/ig.test(reserve.os)) {
-    //   errors = true
-    //   field.Os = true
-    //   message.Os = 'OS deve cnter apenas números.'
-    // }
-
     if (reserveNotHasProp("razaoSocial") || !reserve.razaoSocial) {
       errors = true;
       field.razaoSocial = true;
@@ -183,18 +173,13 @@ module.exports = class OsDomain {
             oId: reserveCreated.id,
           };
 
-          const osPartCreated = await OsParts.create(osPartsCreatted, {
+          await OsParts.create(osPartsCreatted, {
             transaction,
           });
 
           // throw new FieldValidationError([{ field, message }]);
         } else {
-          const productBase = await ProductBase.findByPk(item.productBaseId, {
-            include: [
-              {
-                model: Product,
-              },
-            ],
+          const product = await Product.findByPk(item.productId, {
             transaction,
           });
 
@@ -204,10 +189,10 @@ module.exports = class OsDomain {
             oId: reserveCreated.id,
           };
 
-          if (!productBase) {
+          if (!product) {
             errors = true;
             field.peca = true;
-            message.peca = "produto não oconst a na base de dados";
+            message.peca = "produto não encontrado";
           }
 
           if (errors) {
@@ -218,7 +203,7 @@ module.exports = class OsDomain {
             transaction,
           });
 
-          if (productBase.product.serial) {
+          if (product.serial) {
             const { serialNumberArray } = item;
 
             if (serialNumberArray.length !== parseInt(item.amount, 10)) {
@@ -234,7 +219,7 @@ module.exports = class OsDomain {
                   where: {
                     serialNumber,
                     reserved: false,
-                    productBaseId: productBase.id,
+                    productId: product.id,
                   },
                   transaction,
                 });
@@ -251,7 +236,7 @@ module.exports = class OsDomain {
                   where: {
                     serialNumber,
                     reserved: false,
-                    productBaseId: productBase.id,
+                    productId: product.id,
                   },
                   transaction,
                 });
@@ -277,22 +262,22 @@ module.exports = class OsDomain {
             }
           }
 
-          const productBaseUpdate = {
-            ...productBase,
+          const productUpdate = {
+            ...product,
             available: (
-              parseInt(productBase.available, 10) - parseInt(item.amount, 10)
+              parseInt(product.available, 10) - parseInt(item.amount, 10)
             ).toString(),
             reserved: (
-              parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
+              parseInt(product.reserved, 10) + parseInt(item.amount, 10)
             ).toString(),
           };
 
           if (
-            parseInt(productBaseUpdate.available, 10) < 0 ||
-            parseInt(productBaseUpdate.available, 10) < 0
+            parseInt(productUpdate.available, 10) < 0 ||
+            parseInt(productUpdate.available, 10) < 0
           ) {
-            field.productBaseUpdate = true;
-            message.productBaseUpdate = "Número negativo não é valido";
+            field.productUpdate = true;
+            message.productUpdate = "Número negativo não é valido";
             throw new FieldValidationError([{ field, message }]);
           }
 
@@ -308,7 +293,7 @@ module.exports = class OsDomain {
           //   )
           // }
 
-          await productBase.update(productBaseUpdate, { transaction });
+          await product.update(productUpdate, { transaction });
         }
       });
       await Promise.all(osPartsCreattedPromises);
@@ -336,10 +321,7 @@ module.exports = class OsDomain {
     const response = await Os.findByPk(reserveCreated.id, {
       include: [
         {
-          model: ProductBase,
-          // include: [{
-          //   model: Product,
-          // }],
+          model: Product,
         },
         {
           model: Technician,
@@ -368,12 +350,10 @@ module.exports = class OsDomain {
         where: { oId: osId },
         transaction,
       });
-      console.log(JSON.parse(JSON.stringify(osParts)));
 
       const osPartsPromise = osParts.map(async (item) => {
-        if (item.productBaseId) {
-          const productBase = await ProductBase.findByPk(item.productBaseId, {
-            include: [Product],
+        if (item.productId) {
+          const product = await Product.findByPk(item.productId, {
             transaction,
           });
 
@@ -393,26 +373,26 @@ module.exports = class OsDomain {
           });
 
           await Promise.all(equipUpdatePromise);
-          const productBaseUpdate = {
-            ...productBase,
+          const productUpdate = {
+            ...product,
             available: (
-              parseInt(productBase.available, 10) + parseInt(item.amount, 10)
+              parseInt(product.available, 10) + parseInt(item.amount, 10)
             ).toString(),
             reserved: (
-              parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)
+              parseInt(product.reserved, 10) - parseInt(item.amount, 10)
             ).toString(),
           };
 
           if (
-            parseInt(productBaseUpdate.available, 10) < 0 ||
-            parseInt(productBaseUpdate.available, 10) < 0
+            parseInt(productUpdate.available, 10) < 0 ||
+            parseInt(productUpdate.available, 10) < 0
           ) {
-            field.productBaseUpdate = true;
-            message.productBaseUpdate = "Número negativo não é valido";
+            field.productUpdate = true;
+            message.productUpdate = "Número negativo não é valido";
             throw new FieldValidationError([{ field, message }]);
           }
 
-          await productBase.update(productBaseUpdate, { transaction });
+          await product.update(productUpdate, { transaction });
         } else {
           const conserto = await Conserto.findByPk(item.consertoId, {
             transaction,
@@ -514,7 +494,7 @@ module.exports = class OsDomain {
 
       let osPartsAll = await OsParts.findAll({
         where: { oId: bodyData.id },
-        attributes: ["id", "productBaseId"],
+        attributes: ["id", "productId"],
         transaction,
       });
 
@@ -532,32 +512,31 @@ module.exports = class OsDomain {
             return null;
           });
 
-          const productBase = await ProductBase.findByPk(
-            osPartsReturn.productBaseId,
-            { include: [Product], transaction }
-          );
+          const product = await Product.findByPk(osPartsReturn.productId, {
+            transaction,
+          });
 
-          if (productBase) {
-            const productBaseUpdate = {
-              ...productBase,
+          if (product) {
+            const productUpdate = {
+              ...product,
               available: (
-                parseInt(productBase.available, 10) +
+                parseInt(product.available, 10) +
                 parseInt(osPartsReturn.amount, 10) -
                 parseInt(item.amount, 10)
               ).toString(),
               reserved: (
-                parseInt(productBase.reserved, 10) -
+                parseInt(product.reserved, 10) -
                 parseInt(osPartsReturn.amount, 10) +
                 parseInt(item.amount, 10)
               ).toString(),
             };
 
             if (
-              parseInt(productBaseUpdate.available, 10) < 0 ||
-              parseInt(productBaseUpdate.available, 10) < 0
+              parseInt(productUpdate.available, 10) < 0 ||
+              parseInt(productUpdate.available, 10) < 0
             ) {
-              field.productBaseUpdate = true;
-              message.productBaseUpdate = "Número negativo não é valido";
+              field.productUpdate = true;
+              message.productUpdate = "Número negativo não é valido";
               throw new FieldValidationError([{ field, message }]);
             }
 
@@ -579,7 +558,7 @@ module.exports = class OsDomain {
             };
 
             await osPartsReturn.update(osPartsUpdate, { transaction });
-            await productBase.update(productBaseUpdate, { transaction });
+            await product.update(productUpdate, { transaction });
           }
         } else {
           if (!HasProp("status", item) || !item.status) {
@@ -623,23 +602,18 @@ module.exports = class OsDomain {
               transaction,
             });
 
-            const productBase = await ProductBase.findByPk(item.productBaseId, {
-              include: [
-                {
-                  model: Product,
-                  attributes: ["serial"],
-                },
-              ],
+            const product = await Product.findByPk(item.productId, {
+              attributes: ["serial"],
               transaction,
             });
 
-            if (!productBase) {
+            if (!product) {
               field.peca = true;
               message.peca = "produto não oconst a na base de dados";
               throw new FieldValidationError([{ field, message }]);
             }
 
-            if (productBase.product.serial) {
+            if (product.serial) {
               const { serialNumberArray } = item;
 
               if (serialNumberArray.length !== parseInt(item.amount, 10)) {
@@ -655,7 +629,7 @@ module.exports = class OsDomain {
                     where: {
                       serialNumber,
                       reserved: false,
-                      productBaseId: productBase.id,
+                      productId: product.id,
                     },
                     transaction,
                   });
@@ -673,7 +647,7 @@ module.exports = class OsDomain {
                     where: {
                       serialNumber,
                       reserved: false,
-                      productBaseId: productBase.id,
+                      productId: product.id,
                     },
                     transaction,
                   });
@@ -690,22 +664,22 @@ module.exports = class OsDomain {
               }
             }
 
-            const productBaseUpdate = {
-              ...productBase,
+            const productUpdate = {
+              ...product,
               available: (
-                parseInt(productBase.available, 10) - parseInt(item.amount, 10)
+                parseInt(product.available, 10) - parseInt(item.amount, 10)
               ).toString(),
               reserved: (
-                parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
+                parseInt(product.reserved, 10) + parseInt(item.amount, 10)
               ).toString(),
             };
 
             if (
-              parseInt(productBaseUpdate.available, 10) < 0 ||
-              parseInt(productBaseUpdate.available, 10) < 0
+              parseInt(productUpdate.available, 10) < 0 ||
+              parseInt(productUpdate.available, 10) < 0
             ) {
-              field.productBaseUpdate = true;
-              message.productBaseUpdate = "Número negativo não é valido";
+              field.productUpdate = true;
+              message.productUpdate = "Número negativo não é valido";
               throw new FieldValidationError([{ field, message }]);
             }
 
@@ -721,7 +695,7 @@ module.exports = class OsDomain {
             //   )
             // }
 
-            await productBase.update(productBaseUpdate, { transaction });
+            await product.update(productUpdate, { transaction });
           }
         }
       });
@@ -749,29 +723,29 @@ module.exports = class OsDomain {
 
           await Promise.all(equipUpdatePromise);
 
-          const productBase = await ProductBase.findByPk(item.productBaseId, {
+          const product = await Product.findByPk(item.productId, {
             transaction,
           });
 
-          if (productBase) {
-            const productBaseUpdate = {
-              ...productBase,
+          if (product) {
+            const productUpdate = {
+              ...product,
               available: (
-                parseInt(productBase.available, 10) +
+                parseInt(product.available, 10) +
                 parseInt(osPartDelete.amount, 10)
               ).toString(),
               reserved: (
-                parseInt(productBase.reserved, 10) -
+                parseInt(product.reserved, 10) -
                 parseInt(osPartDelete.amount, 10)
               ).toString(),
             };
 
             if (
-              parseInt(productBaseUpdate.available, 10) < 0 ||
-              parseInt(productBaseUpdate.available, 10) < 0
+              parseInt(productUpdate.available, 10) < 0 ||
+              parseInt(productUpdate.available, 10) < 0
             ) {
-              field.productBaseUpdate = true;
-              message.productBaseUpdate = "Número negativo não é valido";
+              field.productUpdate = true;
+              message.productUpdate = "Número negativo não é valido";
               throw new FieldValidationError([{ field, message }]);
             }
 
@@ -787,7 +761,7 @@ module.exports = class OsDomain {
             //   )
             // }
 
-            await productBase.update(productBaseUpdate, { transaction });
+            await product.update(productUpdate, { transaction });
           }
 
           osPartDelete.destroy({ transaction });
@@ -814,6 +788,7 @@ module.exports = class OsDomain {
       acendent: true,
       direction: "DESC",
     };
+
     const { query = null, transaction = null } = options;
 
     const newQuery = Object.assign({}, query);
@@ -849,7 +824,6 @@ module.exports = class OsDomain {
       transaction,
     });
 
-    console.log("teste");
     const os = await Os.findAndCountAll({
       where: getWhere("os"),
       include: [
@@ -859,20 +833,24 @@ module.exports = class OsDomain {
         },
         {
           model: Product,
+          through: {
+            paranoid,
+          },
         },
-        // {
-        //   model: Conserto,
-        //   // include: [
-        //   //   {
-        //   //     model: Product,
-        //   //   },
-        //   // ],
-        //   // paranoid,
-        //   // through: {
-        //   //   paranoid,
-        //   // },
-        //   required: !getWhere("osParts"),
-        // },
+        {
+          model: Conserto,
+          include: [
+            {
+              model: Product,
+              paranoid,
+            },
+          ],
+          through: {
+            paranoid: false,
+          },
+          paranoid: false,
+          // required: !getWhere("osParts"),
+        },
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,
@@ -880,8 +858,6 @@ module.exports = class OsDomain {
       paranoid,
       transaction,
     });
-
-    console.log(JSON.parse(JSON.stringify(os)));
 
     const { rows } = os;
 
@@ -954,7 +930,7 @@ module.exports = class OsDomain {
 
     let notDelet = {};
 
-    const formatProduct = (productBases, index) => {
+    const formatProduct = (products, index) => {
       return R.map(async (item) => {
         const { osParts } = item;
         const { amount, output, missOut } = osParts;
@@ -965,6 +941,7 @@ module.exports = class OsDomain {
             transaction,
           }
         );
+
         notDelet[index] =
           output !== "0" ||
           missOut !== "0" ||
@@ -972,7 +949,7 @@ module.exports = class OsDomain {
           !!notDelet[index];
         let equips = [];
 
-        const serial = item.product.serial;
+        const serial = item.serial;
 
         if (serial) {
           equips = await Equip.findAll({
@@ -980,7 +957,8 @@ module.exports = class OsDomain {
             where: { osPartId: osParts.id },
             transaction,
           });
-          notDelet[index] = parseInt(amount, 10) !== equips.length;
+          notDelet[index] =
+            parseInt(amount, 10) !== equips.length || !!notDelet[index];
         }
 
         const quantMax =
@@ -991,8 +969,8 @@ module.exports = class OsDomain {
 
         const resp = {
           serialNumbers: equips,
-          name: item.product.name,
-          serial: item.product.serial,
+          name: item.name,
+          serial: item.serial,
           id: osParts.id,
           amount,
           output,
@@ -1003,7 +981,7 @@ module.exports = class OsDomain {
         };
 
         return resp;
-      }, productBases);
+      }, products);
     };
 
     const formatConserto = (conserto, index) => {
@@ -1052,6 +1030,12 @@ module.exports = class OsDomain {
     const mapIndexed = R.addIndex(R.map);
 
     const formatData = mapIndexed(async (item, index) => {
+      console.log(JSON.parse(JSON.stringify(item)));
+      const products = [
+        ...(await Promise.all(formatProduct(item.products, index))),
+        ...(await Promise.all(formatConserto(item.consertos, index))),
+        ...(await findKitOuts(item.os)),
+      ];
       const resp = {
         id: item.id,
         razaoSocial: item.razaoSocial,
@@ -1062,15 +1046,11 @@ module.exports = class OsDomain {
         technicianId: item.technicianId,
         os: item.os,
         createdAt: formatDateFunct(item.createdAt),
-        products: [
-          ...(await Promise.all(formatProduct(item.productBases, index))),
-          ...(await Promise.all(formatConserto(item.consertos, index))),
-          ...(await findKitOuts(item.os)),
-        ],
+        products,
         notDelet:
-          (item.productBases &&
-            item.productBases.filter(
-              (productBase) => productBase.osParts.deletedAt !== null
+          (item.products &&
+            item.products.filter(
+              (product) => product.osParts.deletedAt !== null
             ).length !== 0) ||
           (item.consertos &&
             item.consertos.filter(
@@ -1099,73 +1079,71 @@ module.exports = class OsDomain {
     return response;
   }
 
-  async getOsByOs(os, options = {}) {
-    const { transaction = null } = options;
+  // async getOsByOs(os, options = {}) {
+  //   const { transaction = null } = options;
 
-    const formatDateFunct = (date) => {
-      moment.locale("pt-br");
-      const formatDate = moment(date);
-      return formatDate;
-    };
+  //   const formatDateFunct = (date) => {
+  //     moment.locale("pt-br");
+  //     const formatDate = moment(date);
+  //     return formatDate;
+  //   };
 
-    const osReturn = await Os.findOne({
-      where: { os },
-      include: [
-        {
-          model: Technician,
-        },
-        {
-          model: ProductBase,
-          include: [
-            {
-              model: Product,
-            },
-            {
-              model: StockBase,
-            },
-          ],
-        },
-      ],
-      transaction,
-    });
+  //   const osReturn = await Os.findOne({
+  //     where: { os },
+  //     include: [
+  //       {
+  //         model: Technician,
+  //       },
+  //       {
+  //         model: ProductBase,
+  //         include: [
+  //           {
+  //             model: Product,
+  //           },
+  //           {
+  //             model: StockBase,
+  //           },
+  //         ],
+  //       },
+  //     ],
+  //     transaction,
+  //   });
 
-    if (!osReturn) {
-      return {
-        razaoSocial: "",
-        cnpj: "",
-        // data: formatDateFunct(new Date()),
-        technician: "",
-        reserve: [],
-      };
-    }
+  //   if (!osReturn) {
+  //     return {
+  //       razaoSocial: "",
+  //       cnpj: "",
+  //       // data: formatDateFunct(new Date()),
+  //       technician: "",
+  //       reserve: [],
+  //     };
+  //   }
 
-    const formatedReserve = R.map((item) => {
-      const resp = {
-        stockBase: item.stockBase.stockBase,
-        amount: item.osParts.amount,
-        nomeProdutoCarrinho: item.product.name,
-        productId: item.productId,
-      };
-      return resp;
-    });
+  //   const formatedReserve = R.map((item) => {
+  //     const resp = {
+  //       stockBase: item.stockBase.stockBase,
+  //       amount: item.osParts.amount,
+  //       nomeProdutoCarrinho: item.product.name,
+  //       productId: item.productId,
+  //     };
+  //     return resp;
+  //   });
 
-    const response = {
-      razaoSocial: osReturn.razaoSocial,
-      cnpj: osReturn.cnpj,
-      data: formatDateFunct(osReturn.date),
-      technician: osReturn.technician.name,
-      reserve: formatedReserve(osReturn.productBases),
-    };
+  //   const response = {
+  //     razaoSocial: osReturn.razaoSocial,
+  //     cnpj: osReturn.cnpj,
+  //     data: formatDateFunct(osReturn.date),
+  //     technician: osReturn.technician.name,
+  //     reserve: formatedReserve(osReturn.productBases),
+  //   };
 
-    return response;
-  }
+  //   return response;
+  // }
 
   async output(bodyData, options = {}) {
     const { transaction = null } = options;
     const bodyDataNotHasProp = (prop) => R.not(R.has(prop, bodyData));
     // const bodyHasProp = prop => R.has(prop, bodyData)
-
-    console.log(bodyData);
 
     const field = {
       osPartsId: false,
@@ -1225,22 +1203,14 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }]);
     }
 
-    const productBase = await ProductBase.findByPk(osPart.productBaseId, {
-      include: [
-        {
-          model: Product,
-          attributes: ["serial"],
-        },
-      ],
+    const product = await Product.findByPk(osPart.productId, {
       transaction,
     });
 
-    // throw new FieldValidationError([{ field, message }]);
+    if (!!product) {
+      let productUpdate = {};
 
-    if (!!productBase) {
-      let productBaseUpdate = {};
-
-      if (productBase.product.serial) {
+      if (product.serial) {
         const { serialNumberArray } = bodyData;
 
         if (serialNumberArray.length !== parseInt(value, 10)) {
@@ -1256,7 +1226,7 @@ module.exports = class OsDomain {
               where: {
                 serialNumber,
                 reserved: true,
-                productBaseId: productBase.id,
+                productId: product.id,
               },
               transaction,
             });
@@ -1274,7 +1244,7 @@ module.exports = class OsDomain {
               where: {
                 serialNumber,
                 reserved: true,
-                productBaseId: productBase.id,
+                productId: product.id,
               },
               transaction,
             });
@@ -1305,37 +1275,37 @@ module.exports = class OsDomain {
       }
 
       if (key === "return") {
-        productBaseUpdate = {
-          ...productBase,
+        productUpdate = {
+          ...product,
           available: (
-            parseInt(productBase.available, 10) + parseInt(value, 10)
+            parseInt(product.available, 10) + parseInt(value, 10)
           ).toString(),
           reserved: (
-            parseInt(productBase.reserved, 10) - parseInt(value, 10)
+            parseInt(product.reserved, 10) - parseInt(value, 10)
           ).toString(),
         };
       } else {
-        productBaseUpdate = {
-          ...productBase,
+        productUpdate = {
+          ...product,
           amount: (
-            parseInt(productBase.amount, 10) - parseInt(value, 10)
+            parseInt(product.amount, 10) - parseInt(value, 10)
           ).toString(),
           reserved: (
-            parseInt(productBase.reserved, 10) - parseInt(value, 10)
+            parseInt(product.reserved, 10) - parseInt(value, 10)
           ).toString(),
         };
       }
 
       if (
-        parseInt(productBaseUpdate.available, 10) < 0 ||
-        parseInt(productBaseUpdate.available, 10) < 0
+        parseInt(productUpdate.available, 10) < 0 ||
+        parseInt(productUpdate.available, 10) < 0
       ) {
-        field.productBaseUpdate = true;
-        message.productBaseUpdate = "Número negativo não é valido";
+        field.productUpdate = true;
+        message.productUpdate = "Número negativo não é valido";
         throw new FieldValidationError([{ field, message }]);
       }
 
-      await productBase.update(productBaseUpdate, { transaction });
+      await product.update(productUpdate, { transaction });
     } else {
       const conserto = await Conserto.findByPk(osPart.consertoId, {
         transaction,
@@ -1365,16 +1335,7 @@ module.exports = class OsDomain {
       [key]: (parseInt(value, 10) + parseInt(osPart[key], 10)).toString(),
     };
 
-    console.log(key);
-    console.log(parseInt(value, 10));
-    console.log(parseInt(osPart[key], 10));
-    console.log(parseInt(value, 10) + parseInt(osPart[key], 10));
-
-    console.log(
-      JSON.parse(
-        JSON.stringify(await osPart.update(osPartUpdate, { transaction }))
-      )
-    );
+    await osPart.update(osPartUpdate, { transaction });
 
     const osPartsUpdate = await OsParts.findByPk(bodyData.osPartsId, {
       transaction,
@@ -1387,7 +1348,7 @@ module.exports = class OsDomain {
     const os = await Os.findByPk(osPart.oId, {
       include: [
         {
-          model: ProductBase,
+          model: Product,
         },
         {
           model: Conserto,
@@ -1396,7 +1357,7 @@ module.exports = class OsDomain {
       transaction,
     });
 
-    if (os.productBases.length === 0 && os.consertos.length === 0) {
+    if (os.products.length === 0 && os.consertos.length === 0) {
       await os.destroy({ transaction });
     }
 
@@ -1404,7 +1365,6 @@ module.exports = class OsDomain {
       transaction,
     });
 
-    // throw new FieldValidationError([{ field, message }]);
     return response;
   }
 };

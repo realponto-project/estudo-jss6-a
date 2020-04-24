@@ -100,18 +100,15 @@ module.exports = class TechnicianReserveDomain {
         transaction,
       }
     );
+    console.log("teste");
+    console.log(bodyData);
 
     if (bodyHasProp("technicianReserveParts")) {
       const { technicianReserveParts } = bodyData;
 
       const technicianReservePartsCreattedPromises = technicianReserveParts.map(
         async (item) => {
-          const productBase = await ProductBase.findByPk(item.productBaseId, {
-            include: [
-              {
-                model: Product,
-              },
-            ],
+          const product = await Product.findByPk(item.productId, {
             transaction,
           });
 
@@ -120,13 +117,11 @@ module.exports = class TechnicianReserveDomain {
             technicianReserveId: technicianReserveCreated.id,
           };
 
-          if (!productBase) {
+          if (!product) {
             field.peca = true;
-            message.peca = "produto não consta na base de dados";
+            message.peca = "produto foi encontrado";
             throw new FieldValidationError([{ field, message }]);
           }
-
-          console.log(technicianReservePartsCreatted);
 
           const technicianReservePartCreated = await TechnicianReserveParts.create(
             technicianReservePartsCreatted,
@@ -135,7 +130,7 @@ module.exports = class TechnicianReserveDomain {
             }
           );
 
-          if (productBase.product.serial) {
+          if (product.serial) {
             const { serialNumberArray } = item;
 
             if (serialNumberArray.length !== parseInt(item.amount, 10)) {
@@ -151,7 +146,7 @@ module.exports = class TechnicianReserveDomain {
                   where: {
                     serialNumber,
                     reserved: false,
-                    productBaseId: productBase.id,
+                    productId: product.id,
                   },
                   transaction,
                 });
@@ -168,7 +163,7 @@ module.exports = class TechnicianReserveDomain {
                   where: {
                     serialNumber,
                     reserved: false,
-                    productBaseId: productBase.id,
+                    productId: product.id,
                   },
                   transaction,
                 });
@@ -186,22 +181,22 @@ module.exports = class TechnicianReserveDomain {
             }
           }
 
-          const productBaseUpdate = {
-            ...productBase,
+          const productUpdate = {
+            ...product,
             available: (
-              parseInt(productBase.available, 10) - parseInt(item.amount, 10)
+              parseInt(product.available, 10) - parseInt(item.amount, 10)
             ).toString(),
             amount: (
-              parseInt(productBase.amount, 10) - parseInt(item.amount, 10)
+              parseInt(product.amount, 10) - parseInt(item.amount, 10)
             ).toString(),
           };
 
           if (
-            parseInt(productBaseUpdate.available, 10) < 0 ||
-            parseInt(productBaseUpdate.available, 10) < 0
+            parseInt(productUpdate.available, 10) < 0 ||
+            parseInt(productUpdate.available, 10) < 0
           ) {
-            field.productBaseUpdate = true;
-            message.productBaseUpdate = "Número negativo não é valido";
+            field.productUpdate = true;
+            message.productUpdate = "Número negativo não é valido";
             throw new FieldValidationError([{ field, message }]);
           }
 
@@ -217,7 +212,7 @@ module.exports = class TechnicianReserveDomain {
           //   )
           // }
 
-          await productBase.update(productBaseUpdate, { transaction });
+          await product.update(productUpdate, { transaction });
         }
       );
       await Promise.all(technicianReservePartsCreattedPromises);
@@ -232,7 +227,7 @@ module.exports = class TechnicianReserveDomain {
       {
         include: [
           {
-            model: ProductBase,
+            model: Product,
           },
         ],
         transaction,
@@ -262,15 +257,7 @@ module.exports = class TechnicianReserveDomain {
           where: getWhere("technician"),
         },
         {
-          model: ProductBase,
-          include: [
-            {
-              model: Product,
-            },
-          ],
-          through: {
-            paranoid: false,
-          },
+          model: Product,
         },
       ],
       order: [[inicialOrder.field, inicialOrder.direction]],
@@ -298,9 +285,7 @@ module.exports = class TechnicianReserveDomain {
       return dateformated;
     };
 
-    const formatProduct = (productBases) => {
-      console.log(JSON.parse(JSON.stringify(productBases)));
-
+    const formatProduct = (products) => {
       return R.map(async (item) => {
         console.log(JSON.parse(JSON.stringify(item)));
         const { technicianReserveParts } = item;
@@ -327,8 +312,8 @@ module.exports = class TechnicianReserveDomain {
 
         const resp = {
           // serialNumbers: equips,
-          name: item.product.name,
-          serial: item.product.serial,
+          name: item.name,
+          serial: item.serial,
           amount,
           output,
           missOut,
@@ -337,11 +322,10 @@ module.exports = class TechnicianReserveDomain {
         };
 
         return resp;
-      }, productBases);
+      }, products);
     };
 
     const formatData = R.map(async (item) => {
-      // console.log(JSON.parse(JSON.stringify(item)));
       const resp = {
         id: item.id,
         razaoSocial: item.razaoSocial,
@@ -351,7 +335,7 @@ module.exports = class TechnicianReserveDomain {
         technician: item.technician.name,
         technicianId: item.technicianId,
         createdAt: formatDateFunct(item.createdAt),
-        products: [...(await Promise.all(formatProduct(item.productBases)))],
+        products: [...(await Promise.all(formatProduct(item.products)))],
       };
 
       return resp;

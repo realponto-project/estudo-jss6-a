@@ -20,6 +20,8 @@ module.exports = class FreeMarketDomain {
   async add(bodyData, options = {}) {
     const { transaction = null } = options;
 
+    console.log(bodyData);
+
     const freeMarket = R.omit(["id"], bodyData);
 
     const freeMarketNotHasProp = (prop) => R.not(R.has(prop, freeMarket));
@@ -105,16 +107,11 @@ module.exports = class FreeMarketDomain {
           { transaction }
         );
 
-        const productBase = await ProductBase.findByPk(item.productBaseId, {
-          include: [
-            {
-              model: Product,
-            },
-          ],
+        const product = await Product.findByPk(item.productId, {
           transaction,
         });
 
-        if (productBase.product.serial) {
+        if (product.serial) {
           const { serialNumberArray } = item;
 
           if (serialNumberArray.length !== parseInt(item.amount, 10)) {
@@ -130,7 +127,7 @@ module.exports = class FreeMarketDomain {
                 where: {
                   serialNumber,
                   reserved: false,
-                  productBaseId: productBase.id,
+                  productId: product.id,
                 },
                 transaction,
               });
@@ -147,7 +144,7 @@ module.exports = class FreeMarketDomain {
                 where: {
                   serialNumber,
                   reserved: false,
-                  productBaseId: productBase.id,
+                  productId: product.id,
                 },
                 transaction,
               });
@@ -164,21 +161,21 @@ module.exports = class FreeMarketDomain {
           }
         }
 
-        const productBaseUpdate = {
-          ...productBase,
+        const productUpdate = {
+          ...product,
           available: (
-            parseInt(productBase.available, 10) - parseInt(item.amount, 10)
+            parseInt(product.available, 10) - parseInt(item.amount, 10)
           ).toString(),
           amount: (
-            parseInt(productBase.amount, 10) - parseInt(item.amount, 10)
+            parseInt(product.amount, 10) - parseInt(item.amount, 10)
           ).toString(),
         };
         if (
-          parseInt(productBaseUpdate.available, 10) < 0 ||
-          parseInt(productBaseUpdate.available, 10) < 0
+          parseInt(productUpdate.available, 10) < 0 ||
+          parseInt(productUpdate.available, 10) < 0
         ) {
-          field.productBaseUpdate = true;
-          message.productBaseUpdate = "Número negativo não é valido";
+          field.productUpdate = true;
+          message.productUpdate = "Número negativo não é valido";
           throw new FieldValidationError([{ field, message }]);
         }
 
@@ -188,7 +185,7 @@ module.exports = class FreeMarketDomain {
         //   await Notification.create({ message: messageNotification }, { transaction })
         // }
 
-        await productBase.update(productBaseUpdate, { transaction });
+        await product.update(productUpdate, { transaction });
       });
       await Promise.all(kitPartsCreattedPromises);
     }
@@ -200,7 +197,7 @@ module.exports = class FreeMarketDomain {
     const response = await FreeMarket.findByPk(freeMarketCreated.id, {
       include: [
         {
-          model: ProductBase,
+          model: Product,
         },
       ],
       transaction,
@@ -244,12 +241,7 @@ module.exports = class FreeMarketDomain {
         //   where: getWhere('technician'),
         // },
         {
-          model: ProductBase,
-          include: [
-            {
-              model: Product,
-            },
-          ],
+          model: Product,
         },
       ],
       order: [[newOrder.field, newOrder.direction]],
@@ -270,13 +262,14 @@ module.exports = class FreeMarketDomain {
     }
 
     const formatProduct = R.map(async (item) => {
+      console.log(JSON.parse(JSON.stringify(item)));
       const resp = {
-        name: item.product.name,
+        name: item.name,
         id: item.freeMarketParts.id,
         amount: item.freeMarketParts.amount,
       };
 
-      if (item.product.serial) {
+      if (item.serial) {
         const equips = await Equip.findAll({
           where: { freeMarketPartId: item.freeMarketParts.id },
           paranoid: false,
@@ -302,7 +295,7 @@ module.exports = class FreeMarketDomain {
         id: item.id,
         trackingCode: item.trackingCode,
         name: item.name,
-        products: await Promise.all(formatProduct(item.productBases)),
+        products: await Promise.all(formatProduct(item.products)),
         createdAt: formatDateFunct(item.createdAt),
       };
       return resp;

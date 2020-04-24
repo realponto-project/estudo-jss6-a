@@ -256,6 +256,16 @@ module.exports = class EntranceDomain {
 
     let errors = false;
 
+    if (entranceNotHasProp("analysis") || !entrance.analysis) {
+      errors = true;
+      field.analysis = true;
+      message.analysis = "analysis cannot undefined";
+    } else if (/\D/gi.test(entrance.analysis)) {
+      errors = true;
+      field.analysis = true;
+      message.analysis = "Não é permitido letras.";
+    }
+
     if (entranceNotHasProp("amountAdded") || !entrance.amountAdded) {
       errors = true;
       field.amountAdded = true;
@@ -312,7 +322,7 @@ module.exports = class EntranceDomain {
       }
     }
 
-    const product = await Product.findByPk(entrance.productId, {
+    let product = await Product.findByPk(entrance.productId, {
       transaction,
     });
 
@@ -322,46 +332,41 @@ module.exports = class EntranceDomain {
       message.productId = "Produto não encontrado";
     }
 
-    // if (product.serial) {
-    //   if (
-    //     entranceNotHasProp("serialNumbers") ||
-    //     entrance.serialNumbers.length === 0
-    //   ) {
-    //     errors = true;
-    //     field.message = true;
-    //     message.message = "Por favor ao menos um numero de série.";
-    //     // eslint-disable-next-line eqeqeq
-    //   } else if (entrance.serialNumbers.length != entrance.amountAdded) {
-    //     errors = true;
-    //     field.message = true;
-    //     message.message =
-    //       "Quantidade adicionada não condiz com a quantidade de números de série.";
-    //   } else {
-    //     const { serialNumbers } = entrance;
-
-    //     // eslint-disable-next-line max-len
-    //     const filterSerialNumber = serialNumbers.filter(
-    //       (este, i) => serialNumbers.indexOf(este) === i
-    //     );
-
-    //     if (serialNumbers.length !== filterSerialNumber.length) {
-    //       errors = true;
-    //       field.message = true;
-    //       message.message = "Há números de série repetido.";
-    //     }
-    //   }
-    // }
+    if (product.serial) {
+      if (
+        entranceNotHasProp("serialNumbers") ||
+        entrance.serialNumbers.length === 0
+      ) {
+        errors = true;
+        field.message = true;
+        message.message = "Por favor ao menos um numero de série.";
+      } else if (entrance.serialNumbers.length != entrance.amountAdded) {
+        errors = true;
+        field.message = true;
+        message.message =
+          "Quantidade adicionada não condiz com a quantidade de números de série.";
+      } else {
+        const { serialNumbers } = entrance;
+        const filterSerialNumber = serialNumbers.filter(
+          (este, i) => serialNumbers.indexOf(este) === i
+        );
+        if (serialNumbers.length !== filterSerialNumber.length) {
+          errors = true;
+          field.message = true;
+          message.message = "Há números de série repetido.";
+        }
+      }
+    }
 
     if (errors) {
       throw new FieldValidationError([{ field, message }]);
     }
-
     if (oldEntrance.analysis) {
       const analysis = (
         parseInt(oldEntrance.product.analysis, 10) -
         parseInt(oldEntrance.amountAdded, 10)
       ).toString();
-      await product.update({ analysis }, { transaction });
+      await oldEntrance.product.update({ analysis }, { transaction });
     } else {
       const amount = (
         parseInt(oldEntrance.product.amount, 10) -
@@ -371,104 +376,101 @@ module.exports = class EntranceDomain {
         parseInt(oldEntrance.product.available, 10) -
         parseInt(oldEntrance.amountAdded, 10)
       ).toString();
-      await product.update({ amount, available }, { transaction });
+      await oldEntrance.product.update({ amount, available }, { transaction });
     }
 
-    //   if (
-    //     parseInt(oldProductBaseUpdate.amount, 10) < 0 ||
-    //     parseInt(oldProductBaseUpdate.available, 10) < 0
-    //   ) {
-    //     field.oldProductBaseUpdate = true;
-    //     message.oldProductBaseUpdate = "Número negativo não é valido";
-    //     throw new FieldValidationError([{ field, message }]);
-    //   }
-    //   await oldProductBase.update(oldProductBaseUpdate, { transaction });
-    // }
+    if (oldEntrance.product.serial) {
+      const equips = await Equip.findAll({
+        where: { entranceId: oldEntrance.id },
+        order: [["serialNumber", "ASC"]],
+        paranoid: false,
+        transaction,
+      });
 
-    if (!productBase) {
-      await ProductBase.create(
-        {
-          productId: entrance.productId,
-          amount: entrance.amountAdded,
-          available: entrance.amountAdded,
-          reserved: "0",
-        },
-        { transaction }
-      );
+      const equipDeletePromise = equips.map(async (item) => {
+        if (item.deletedAt !== null || item.reserved === true) {
+          field.reserved = true;
+          message.reserved = "Há equipamento liberado ou reservado";
+          throw new FieldValidationError([{ field, message }]);
+        }
+        await item.destroy({ force: true, transaction });
+      });
 
-      entrance.oldAmount = "0";
-    } else {
-      entrance.oldAmount = (
-        parseInt(productBase.amount, 10) - parseInt(oldEntrance.amountAdded, 10)
-      ).toString();
-
-      // eslint-disable-next-line max-len
-      const amount = (
-        parseInt(productBase.amount, 10) + parseInt(entrance.amountAdded, 10)
-      ).toString();
-      // eslint-disable-next-line max-len
-      const available = (
-        parseInt(productBase.available, 10) + parseInt(entrance.amountAdded, 10)
-      ).toString();
-
-      const productBaseUpdate = {
-        ...productBase,
-        amount,
-        available,
-      };
-
-      if (
-        parseInt(productBaseUpdate.amount, 10) < 0 ||
-        parseInt(productBaseUpdate.available, 10) < 0
-      ) {
-        field.productBaseUpdate = true;
-        message.productBaseUpdate = "Número negativo não é valido";
-        throw new FieldValidationError([{ field, message }]);
-      }
-
-      await productBase.update(productBaseUpdate, { transaction });
+      await Promise.all(equipDeletePromise);
     }
 
-    productBase = await ProductBase.findOne({
-      where: {
-        productId: entrance.productId,
-      },
+    product = await Product.findByPk(entrance.productId, {
       transaction,
     });
 
-    if (product.serial) {
+    const analysis = (
+      parseInt(product.analysis, 10) + parseInt(entrance.analysis, 10)
+    ).toString();
+
+    // eslint-disable-next-line max-len
+    const amount = (
+      parseInt(product.amount, 10) + parseInt(entrance.amountAdded, 10)
+    ).toString();
+    // eslint-disable-next-line max-len
+    const available = (
+      parseInt(product.available, 10) + parseInt(entrance.amountAdded, 10)
+    ).toString();
+
+    await product.update({ analysis, amount, available }, { transaction });
+
+    entrance.amountAdded = Math.max.apply(null, [
+      entrance.analysis,
+      entrance.amountAdded,
+    ]);
+
+    entrance.analysis = entrance.analysis !== "0";
+
+    if (product.serial && entrance.serialNumbers) {
       const { serialNumbers } = entrance;
 
       const serialNumbersFindPromises = serialNumbers.map(async (item) => {
-        const equip = await Equip.findOne({
-          where: {
-            serialNumber: item,
-            reserved: false,
-          },
-          include: [
-            {
-              model: ProductBase,
-              where: { id: oldProductBase.id },
-              attributes: [],
-            },
-          ],
+        const serialNumberHasExist = await Equip.findOne({
+          where: { serialNumber: item },
+          attributes: [],
+          paranoid: false,
           transaction,
         });
 
-        if (!equip) {
+        if (serialNumberHasExist) {
           field.serialNumbers = true;
-          message.serialNumbers = `${item} não está registrado`;
+          message.serialNumbers = `${item} já está registrado`;
           throw new FieldValidationError([{ field, message }]);
         }
-
-        const equipUpdate = {
-          ...equip,
-          productBaseId: productBase.id,
-        };
-
-        await equip.update(equipUpdate, { transaction });
       });
       await Promise.all(serialNumbersFindPromises);
+
+      const serialNumbersCreatePromises = serialNumbers.map(async (item) => {
+        const equipCreate = {
+          productId: product.id,
+          serialNumber: item,
+          entranceId: entranceCreated.id,
+        };
+
+        await Equip.create(equipCreate, { transaction });
+      });
+      await Promise.all(serialNumbersCreatePromises);
+    }
+
+    const oldProduct = await Product.findByPk(oldEntrance.productId, {
+      transaction,
+    });
+
+    if (
+      parseInt(analysis, 10) < 0 ||
+      parseInt(amount, 10) < 0 ||
+      parseInt(available, 10) < 0 ||
+      parseInt(oldProduct.analysis, 10) < 0 ||
+      parseInt(oldProduct.amount, 10) < 0 ||
+      parseInt(oldProduct.available, 10) < 0
+    ) {
+      field.number = true;
+      message.number = `numero negativo invalido`;
+      throw new FieldValidationError([{ field, message }]);
     }
 
     const newEntrance = {
