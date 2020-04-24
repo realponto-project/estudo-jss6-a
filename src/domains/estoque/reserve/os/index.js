@@ -13,8 +13,6 @@ const ConsertoDomain = require("../../conserto");
 const Os = database.model("os");
 const OsParts = database.model("osParts");
 const Product = database.model("product");
-const ProductBase = database.model("productBase");
-const StockBase = database.model("stockBase");
 const Technician = database.model("technician");
 const Equip = database.model("equip");
 const KitOut = database.model("kitOut");
@@ -33,8 +31,8 @@ module.exports = class OsDomain {
 
     const reserve = R.omit(["id", "osParts"], bodyData);
 
-    const reserveNotHasProp = prop => R.not(R.has(prop, reserve));
-    const bodyHasProp = prop => R.has(prop, bodyData);
+    const reserveNotHasProp = (prop) => R.not(R.has(prop, reserve));
+    const bodyHasProp = (prop) => R.has(prop, bodyData);
     const HasProp = (prop, obj) => R.has(prop, obj);
 
     const field = {
@@ -44,7 +42,7 @@ module.exports = class OsDomain {
       cnpj: false,
       date: false,
       osParts: false,
-      technician: false
+      technician: false,
     };
     const message = {
       // Os: '',
@@ -53,20 +51,10 @@ module.exports = class OsDomain {
       cnpj: "",
       date: "",
       osParts: "",
-      technician: ""
+      technician: "",
     };
 
     let errors = false;
-
-    // if (reserveNotHasProp('os') || !reserve.os) {
-    //   errors = true
-    //   field.Os = true
-    //   message.Os = 'Por favor o numero da OS.'
-    // } else if (/\D/ig.test(reserve.os)) {
-    //   errors = true
-    //   field.Os = true
-    //   message.Os = 'OS deve cnter apenas números.'
-    // }
 
     if (reserveNotHasProp("razaoSocial") || !reserve.razaoSocial) {
       errors = true;
@@ -106,7 +94,7 @@ module.exports = class OsDomain {
     } else {
       const { technicianId } = bodyData;
       const technicianExist = await Technician.findByPk(technicianId, {
-        transaction
+        transaction,
       });
 
       if (!technicianExist) {
@@ -157,7 +145,7 @@ module.exports = class OsDomain {
     if (bodyHasProp("osParts")) {
       const { osParts } = bodyData;
 
-      const osPartsCreattedPromises = osParts.map(async item => {
+      const osPartsCreattedPromises = osParts.map(async (item) => {
         if (!HasProp("status", item) || !item.status) {
           field.status = true;
           message.status = "status cannot null";
@@ -166,7 +154,7 @@ module.exports = class OsDomain {
 
         const status = await StatusExpedition.findOne({
           where: { status: item.status },
-          transaction
+          transaction,
         });
 
         if (!status) {
@@ -182,34 +170,29 @@ module.exports = class OsDomain {
             amount: item.amount,
             consertoId: conserto.id,
             statusExpeditionId: status.id,
-            oId: reserveCreated.id
+            oId: reserveCreated.id,
           };
 
-          const osPartCreated = await OsParts.create(osPartsCreatted, {
-            transaction
+          await OsParts.create(osPartsCreatted, {
+            transaction,
           });
 
           // throw new FieldValidationError([{ field, message }]);
         } else {
-          const productBase = await ProductBase.findByPk(item.productBaseId, {
-            include: [
-              {
-                model: Product
-              }
-            ],
-            transaction
+          const product = await Product.findByPk(item.productId, {
+            transaction,
           });
 
           const osPartsCreatted = {
             ...item,
             statusExpeditionId: status.id,
-            oId: reserveCreated.id
+            oId: reserveCreated.id,
           };
 
-          if (!productBase) {
+          if (!product) {
             errors = true;
             field.peca = true;
-            message.peca = "produto não oconst a na base de dados";
+            message.peca = "produto não encontrado";
           }
 
           if (errors) {
@@ -217,10 +200,10 @@ module.exports = class OsDomain {
           }
 
           const osPartCreated = await OsParts.create(osPartsCreatted, {
-            transaction
+            transaction,
           });
 
-          if (productBase.product.serial) {
+          if (product.serial) {
             const { serialNumberArray } = item;
 
             if (serialNumberArray.length !== parseInt(item.amount, 10)) {
@@ -231,14 +214,14 @@ module.exports = class OsDomain {
             }
 
             if (serialNumberArray.length > 0) {
-              await serialNumberArray.map(async serialNumber => {
+              await serialNumberArray.map(async (serialNumber) => {
                 const equip = await Equip.findOne({
                   where: {
                     serialNumber,
                     reserved: false,
-                    productBaseId: productBase.id
+                    productId: product.id,
                   },
-                  transaction
+                  transaction,
                 });
 
                 if (!equip) {
@@ -248,21 +231,21 @@ module.exports = class OsDomain {
                   throw new FieldValidationError([{ field, message }]);
                 }
               });
-              await serialNumberArray.map(async serialNumber => {
+              await serialNumberArray.map(async (serialNumber) => {
                 const equip = await Equip.findOne({
                   where: {
                     serialNumber,
                     reserved: false,
-                    productBaseId: productBase.id
+                    productId: product.id,
                   },
-                  transaction
+                  transaction,
                 });
 
                 await equip.update(
                   {
                     ...equip,
                     osPartId: osPartCreated.id,
-                    reserved: true
+                    reserved: true,
                   },
                   { transaction }
                 );
@@ -279,22 +262,22 @@ module.exports = class OsDomain {
             }
           }
 
-          const productBaseUpdate = {
-            ...productBase,
+          const productUpdate = {
+            ...product,
             available: (
-              parseInt(productBase.available, 10) - parseInt(item.amount, 10)
+              parseInt(product.available, 10) - parseInt(item.amount, 10)
             ).toString(),
             reserved: (
-              parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
-            ).toString()
+              parseInt(product.reserved, 10) + parseInt(item.amount, 10)
+            ).toString(),
           };
 
           if (
-            parseInt(productBaseUpdate.available, 10) < 0 ||
-            parseInt(productBaseUpdate.available, 10) < 0
+            parseInt(productUpdate.available, 10) < 0 ||
+            parseInt(productUpdate.available, 10) < 0
           ) {
-            field.productBaseUpdate = true;
-            message.productBaseUpdate = "Número negativo não é valido";
+            field.productUpdate = true;
+            message.productUpdate = "Número negativo não é valido";
             throw new FieldValidationError([{ field, message }]);
           }
 
@@ -310,7 +293,7 @@ module.exports = class OsDomain {
           //   )
           // }
 
-          await productBase.update(productBaseUpdate, { transaction });
+          await product.update(productUpdate, { transaction });
         }
       });
       await Promise.all(osPartsCreattedPromises);
@@ -338,16 +321,13 @@ module.exports = class OsDomain {
     const response = await Os.findByPk(reserveCreated.id, {
       include: [
         {
-          model: ProductBase
-          // include: [{
-          //   model: Product,
-          // }],
+          model: Product,
         },
         {
-          model: Technician
-        }
+          model: Technician,
+        },
       ],
-      transaction
+      transaction,
     });
 
     return response;
@@ -357,10 +337,10 @@ module.exports = class OsDomain {
     const { transaction = null } = options;
 
     const field = {
-      os: false
+      os: false,
     };
     const message = {
-      os: ""
+      os: "",
     };
 
     const os = await Os.findByPk(osId, { transaction });
@@ -368,56 +348,54 @@ module.exports = class OsDomain {
     if (os) {
       const osParts = await OsParts.findAll({
         where: { oId: osId },
-        transaction
+        transaction,
       });
-      console.log(JSON.parse(JSON.stringify(osParts)));
 
-      const osPartsPromise = osParts.map(async item => {
-        if (item.productBaseId) {
-          const productBase = await ProductBase.findByPk(item.productBaseId, {
-            include: [Product],
-            transaction
+      const osPartsPromise = osParts.map(async (item) => {
+        if (item.productId) {
+          const product = await Product.findByPk(item.productId, {
+            transaction,
           });
 
           const equips = await Equip.findAll({
             where: { osPartId: item.id },
-            transaction
+            transaction,
           });
 
-          const equipUpdatePromise = equips.map(async equip => {
+          const equipUpdatePromise = equips.map(async (equip) => {
             await equip.update(
               {
                 ...equip,
-                reserved: false
+                reserved: false,
               },
               { transaction }
             );
           });
 
           await Promise.all(equipUpdatePromise);
-          const productBaseUpdate = {
-            ...productBase,
+          const productUpdate = {
+            ...product,
             available: (
-              parseInt(productBase.available, 10) + parseInt(item.amount, 10)
+              parseInt(product.available, 10) + parseInt(item.amount, 10)
             ).toString(),
             reserved: (
-              parseInt(productBase.reserved, 10) - parseInt(item.amount, 10)
-            ).toString()
+              parseInt(product.reserved, 10) - parseInt(item.amount, 10)
+            ).toString(),
           };
 
           if (
-            parseInt(productBaseUpdate.available, 10) < 0 ||
-            parseInt(productBaseUpdate.available, 10) < 0
+            parseInt(productUpdate.available, 10) < 0 ||
+            parseInt(productUpdate.available, 10) < 0
           ) {
-            field.productBaseUpdate = true;
-            message.productBaseUpdate = "Número negativo não é valido";
+            field.productUpdate = true;
+            message.productUpdate = "Número negativo não é valido";
             throw new FieldValidationError([{ field, message }]);
           }
 
-          await productBase.update(productBaseUpdate, { transaction });
+          await product.update(productUpdate, { transaction });
         } else {
           const conserto = await Conserto.findByPk(item.consertoId, {
-            transaction
+            transaction,
           });
 
           await conserto.destroy({ transaction });
@@ -453,13 +431,13 @@ module.exports = class OsDomain {
     const reserveOs = { ...oldReserve };
 
     const HasProp = (prop, obj) => R.has(prop, obj);
-    const reserveHasProp = prop => R.has(prop, reserve);
+    const reserveHasProp = (prop) => R.has(prop, reserve);
 
     const field = {
-      date: false
+      date: false,
     };
     const message = {
-      date: ""
+      date: "",
     };
 
     let errors = false;
@@ -502,7 +480,7 @@ module.exports = class OsDomain {
 
     if (reserveHasProp("technicianId")) {
       const technician = await Technician.findByPk(reserve.technicianId, {
-        transaction
+        transaction,
       });
       if (!technician) {
         errors = true;
@@ -516,50 +494,49 @@ module.exports = class OsDomain {
 
       let osPartsAll = await OsParts.findAll({
         where: { oId: bodyData.id },
-        attributes: ["id", "productBaseId"],
-        transaction
+        attributes: ["id", "productId"],
+        transaction,
       });
 
-      const osPartsUpdatePromises = osParts.map(async item => {
+      const osPartsUpdatePromises = osParts.map(async (item) => {
         if (R.prop("id", item)) {
           const osPartsReturn = await OsParts.findByPk(item.id, {
-            transaction
+            transaction,
           });
 
           // eslint-disable-next-line consistent-return
-          osPartsAll = await osPartsAll.filter(itemOld => {
+          osPartsAll = await osPartsAll.filter((itemOld) => {
             if (itemOld.id !== item.id) {
               return itemOld.id;
             }
             return null;
           });
 
-          const productBase = await ProductBase.findByPk(
-            osPartsReturn.productBaseId,
-            { include: [Product], transaction }
-          );
+          const product = await Product.findByPk(osPartsReturn.productId, {
+            transaction,
+          });
 
-          if (productBase) {
-            const productBaseUpdate = {
-              ...productBase,
+          if (product) {
+            const productUpdate = {
+              ...product,
               available: (
-                parseInt(productBase.available, 10) +
+                parseInt(product.available, 10) +
                 parseInt(osPartsReturn.amount, 10) -
                 parseInt(item.amount, 10)
               ).toString(),
               reserved: (
-                parseInt(productBase.reserved, 10) -
+                parseInt(product.reserved, 10) -
                 parseInt(osPartsReturn.amount, 10) +
                 parseInt(item.amount, 10)
-              ).toString()
+              ).toString(),
             };
 
             if (
-              parseInt(productBaseUpdate.available, 10) < 0 ||
-              parseInt(productBaseUpdate.available, 10) < 0
+              parseInt(productUpdate.available, 10) < 0 ||
+              parseInt(productUpdate.available, 10) < 0
             ) {
-              field.productBaseUpdate = true;
-              message.productBaseUpdate = "Número negativo não é valido";
+              field.productUpdate = true;
+              message.productUpdate = "Número negativo não é valido";
               throw new FieldValidationError([{ field, message }]);
             }
 
@@ -577,11 +554,11 @@ module.exports = class OsDomain {
 
             const osPartsUpdate = {
               ...osPartsReturn,
-              amount: item.amount
+              amount: item.amount,
             };
 
             await osPartsReturn.update(osPartsUpdate, { transaction });
-            await productBase.update(productBaseUpdate, { transaction });
+            await product.update(productUpdate, { transaction });
           }
         } else {
           if (!HasProp("status", item) || !item.status) {
@@ -592,7 +569,7 @@ module.exports = class OsDomain {
 
           const status = await StatusExpedition.findOne({
             where: { status: item.status },
-            transaction
+            transaction,
           });
 
           if (!status) {
@@ -608,40 +585,35 @@ module.exports = class OsDomain {
               amount: conserto.serialNumbers.length,
               consertoId: conserto.id,
               statusExpeditionId: status.id,
-              oId: bodyData.id
+              oId: bodyData.id,
             };
 
             await OsParts.create(osPartsCreatted, {
-              transaction
+              transaction,
             });
           } else {
             const osPartsCreatted = {
               ...item,
               statusExpeditionId: status.id,
-              oId: bodyData.id
+              oId: bodyData.id,
             };
 
             const osPartCreated = await OsParts.create(osPartsCreatted, {
-              transaction
+              transaction,
             });
 
-            const productBase = await ProductBase.findByPk(item.productBaseId, {
-              include: [
-                {
-                  model: Product,
-                  attributes: ["serial"]
-                }
-              ],
-              transaction
+            const product = await Product.findByPk(item.productId, {
+              attributes: ["serial"],
+              transaction,
             });
 
-            if (!productBase) {
+            if (!product) {
               field.peca = true;
               message.peca = "produto não oconst a na base de dados";
               throw new FieldValidationError([{ field, message }]);
             }
 
-            if (productBase.product.serial) {
+            if (product.serial) {
               const { serialNumberArray } = item;
 
               if (serialNumberArray.length !== parseInt(item.amount, 10)) {
@@ -652,14 +624,14 @@ module.exports = class OsDomain {
               }
 
               if (serialNumberArray.length > 0) {
-                await serialNumberArray.map(async serialNumber => {
+                await serialNumberArray.map(async (serialNumber) => {
                   const equip = await Equip.findOne({
                     where: {
                       serialNumber,
                       reserved: false,
-                      productBaseId: productBase.id
+                      productId: product.id,
                     },
-                    transaction
+                    transaction,
                   });
 
                   if (!equip) {
@@ -670,21 +642,21 @@ module.exports = class OsDomain {
                   }
                 });
 
-                await serialNumberArray.map(async serialNumber => {
+                await serialNumberArray.map(async (serialNumber) => {
                   const equip = await Equip.findOne({
                     where: {
                       serialNumber,
                       reserved: false,
-                      productBaseId: productBase.id
+                      productId: product.id,
                     },
-                    transaction
+                    transaction,
                   });
 
                   await equip.update(
                     {
                       ...equip,
                       osPartId: osPartCreated.id,
-                      reserved: true
+                      reserved: true,
                     },
                     { transaction }
                   );
@@ -692,22 +664,22 @@ module.exports = class OsDomain {
               }
             }
 
-            const productBaseUpdate = {
-              ...productBase,
+            const productUpdate = {
+              ...product,
               available: (
-                parseInt(productBase.available, 10) - parseInt(item.amount, 10)
+                parseInt(product.available, 10) - parseInt(item.amount, 10)
               ).toString(),
               reserved: (
-                parseInt(productBase.reserved, 10) + parseInt(item.amount, 10)
-              ).toString()
+                parseInt(product.reserved, 10) + parseInt(item.amount, 10)
+              ).toString(),
             };
 
             if (
-              parseInt(productBaseUpdate.available, 10) < 0 ||
-              parseInt(productBaseUpdate.available, 10) < 0
+              parseInt(productUpdate.available, 10) < 0 ||
+              parseInt(productUpdate.available, 10) < 0
             ) {
-              field.productBaseUpdate = true;
-              message.productBaseUpdate = "Número negativo não é valido";
+              field.productUpdate = true;
+              message.productUpdate = "Número negativo não é valido";
               throw new FieldValidationError([{ field, message }]);
             }
 
@@ -723,27 +695,27 @@ module.exports = class OsDomain {
             //   )
             // }
 
-            await productBase.update(productBaseUpdate, { transaction });
+            await product.update(productUpdate, { transaction });
           }
         }
       });
       await Promise.all(osPartsUpdatePromises);
 
       if (osPartsAll.length > 0) {
-        const osPartsdeletePromises = osPartsAll.map(async item => {
+        const osPartsdeletePromises = osPartsAll.map(async (item) => {
           const osPartDelete = await OsParts.findByPk(item.id, { transaction });
 
           const equips = await Equip.findAll({
             where: { osPartId: item.id },
-            transaction
+            transaction,
           });
 
-          const equipUpdatePromise = equips.map(async equip => {
+          const equipUpdatePromise = equips.map(async (equip) => {
             await equip.update(
               {
                 ...equip,
                 reserved: false,
-                osPartId: null
+                osPartId: null,
               },
               { transaction }
             );
@@ -751,29 +723,29 @@ module.exports = class OsDomain {
 
           await Promise.all(equipUpdatePromise);
 
-          const productBase = await ProductBase.findByPk(item.productBaseId, {
-            transaction
+          const product = await Product.findByPk(item.productId, {
+            transaction,
           });
 
-          if (productBase) {
-            const productBaseUpdate = {
-              ...productBase,
+          if (product) {
+            const productUpdate = {
+              ...product,
               available: (
-                parseInt(productBase.available, 10) +
+                parseInt(product.available, 10) +
                 parseInt(osPartDelete.amount, 10)
               ).toString(),
               reserved: (
-                parseInt(productBase.reserved, 10) -
+                parseInt(product.reserved, 10) -
                 parseInt(osPartDelete.amount, 10)
-              ).toString()
+              ).toString(),
             };
 
             if (
-              parseInt(productBaseUpdate.available, 10) < 0 ||
-              parseInt(productBaseUpdate.available, 10) < 0
+              parseInt(productUpdate.available, 10) < 0 ||
+              parseInt(productUpdate.available, 10) < 0
             ) {
-              field.productBaseUpdate = true;
-              message.productBaseUpdate = "Número negativo não é valido";
+              field.productUpdate = true;
+              message.productUpdate = "Número negativo não é valido";
               throw new FieldValidationError([{ field, message }]);
             }
 
@@ -789,7 +761,7 @@ module.exports = class OsDomain {
             //   )
             // }
 
-            await productBase.update(productBaseUpdate, { transaction });
+            await product.update(productUpdate, { transaction });
           }
 
           osPartDelete.destroy({ transaction });
@@ -814,8 +786,9 @@ module.exports = class OsDomain {
     const inicialOrder = {
       field: "createdAt",
       acendent: true,
-      direction: "DESC"
+      direction: "DESC",
     };
+
     const { query = null, transaction = null } = options;
 
     const newQuery = Object.assign({}, query);
@@ -843,12 +816,12 @@ module.exports = class OsDomain {
       include: [
         {
           model: Technician,
-          where: getWhere("technician")
-        }
+          where: getWhere("technician"),
+        },
       ],
       limit: 0,
       paranoid,
-      transaction
+      transaction,
     });
 
     const os = await Os.findAndCountAll({
@@ -856,38 +829,34 @@ module.exports = class OsDomain {
       include: [
         {
           model: Technician,
-          where: getWhere("technician")
+          where: getWhere("technician"),
         },
         {
-          model: ProductBase,
-          include: [
-            {
-              model: Product
-            }
-          ],
+          model: Product,
           through: {
-            paranoid
-          }
+            paranoid: false,
+          },
         },
         {
           model: Conserto,
           include: [
             {
-              model: Product
-            }
+              model: Product,
+              paranoid,
+            },
           ],
-          paranoid,
           through: {
-            paranoid
-          }
-          // required: !getWhere("osParts")
-        }
+            paranoid: false,
+          },
+          paranoid,
+          required: !getWhere("osParts"),
+        },
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
       paranoid,
-      transaction
+      transaction,
     });
 
     const { rows } = os;
@@ -897,11 +866,11 @@ module.exports = class OsDomain {
         page: null,
         show: 0,
         count: os.count,
-        rows: []
+        rows: [],
       };
     }
 
-    const formatDateFunct = date => {
+    const formatDateFunct = (date) => {
       moment.locale("pt-br");
       const formatDate = moment(date).format("L");
       const formatHours = moment(date).format("LT");
@@ -929,18 +898,18 @@ module.exports = class OsDomain {
     //   return resp;
     // });
 
-    const formatKitOut = R.map(item => {
+    const formatKitOut = R.map((item) => {
       const resp = {
         name: `#${item.kitPart.productBase.product.name}`,
         amount: "-",
         output: item.amount,
         missOut: "-",
-        return: "-"
+        return: "-",
       };
       return resp;
     });
 
-    const findKitOuts = async os => {
+    const findKitOuts = async (os) => {
       const kitOuts = await KitOut.findAll({
         where: { os },
         include: [
@@ -948,17 +917,12 @@ module.exports = class OsDomain {
             model: KitParts,
             include: [
               {
-                model: ProductBase,
-                include: [
-                  {
-                    model: Product
-                  }
-                ]
-              }
-            ]
-          }
+                model: Product,
+              },
+            ],
+          },
         ],
-        transaction
+        transaction,
       });
 
       return formatKitOut(kitOuts);
@@ -966,17 +930,18 @@ module.exports = class OsDomain {
 
     let notDelet = {};
 
-    const formatProduct = (productBases, index) => {
-      return R.map(async item => {
+    const formatProduct = (products, index) => {
+      return R.map(async (item) => {
         const { osParts } = item;
         const { amount, output, missOut } = osParts;
         const status = await StatusExpedition.findByPk(
           osParts.statusExpeditionId,
           {
             attributes: ["status"],
-            transaction
+            transaction,
           }
         );
+
         notDelet[index] =
           output !== "0" ||
           missOut !== "0" ||
@@ -984,15 +949,16 @@ module.exports = class OsDomain {
           !!notDelet[index];
         let equips = [];
 
-        const serial = item.product.serial;
+        const serial = item.serial;
 
         if (serial) {
           equips = await Equip.findAll({
             attributes: ["serialNumber"],
             where: { osPartId: osParts.id },
-            transaction
+            transaction,
           });
-          notDelet[index] = parseInt(amount, 10) !== equips.length;
+          notDelet[index] =
+            parseInt(amount, 10) !== equips.length || !!notDelet[index];
         }
 
         const quantMax =
@@ -1003,30 +969,31 @@ module.exports = class OsDomain {
 
         const resp = {
           serialNumbers: equips,
-          name: item.product.name,
-          serial: item.product.serial,
+          name: item.name,
+          serial: item.serial,
           id: osParts.id,
           amount,
           output,
           missOut,
           return: osParts.return,
+          deletedAt: osParts.deletedAt,
           quantMax,
-          status: status && status.status
+          status: status && status.status,
         };
 
         return resp;
-      }, productBases);
+      }, products);
     };
 
     const formatConserto = (conserto, index) => {
-      return R.map(async item => {
+      return R.map(async (item) => {
         const { osParts, serialNumbers } = item;
         const { amount, output, missOut } = osParts;
         const status = await StatusExpedition.findByPk(
           osParts.statusExpeditionId,
           {
             attributes: ["status"],
-            transaction
+            transaction,
           }
         );
 
@@ -1043,7 +1010,7 @@ module.exports = class OsDomain {
           parseInt(missOut, 10);
 
         const resp = {
-          serialNumbers: serialNumbers.map(number => {
+          serialNumbers: serialNumbers.map((number) => {
             return { serialNumber: number };
           }),
           name: item.product.name,
@@ -1053,8 +1020,9 @@ module.exports = class OsDomain {
           output,
           missOut,
           return: osParts.return,
+          deletedAt: osParts.deletedAt,
           quantMax,
-          status: status && status.status
+          status: status && status.status,
         };
 
         return resp;
@@ -1064,6 +1032,12 @@ module.exports = class OsDomain {
     const mapIndexed = R.addIndex(R.map);
 
     const formatData = mapIndexed(async (item, index) => {
+      console.log(JSON.parse(JSON.stringify(item)));
+      const products = [
+        ...(await Promise.all(formatProduct(item.products, index))),
+        ...(await Promise.all(formatConserto(item.consertos, index))),
+        ...(await findKitOuts(item.os)),
+      ];
       const resp = {
         id: item.id,
         razaoSocial: item.razaoSocial,
@@ -1074,21 +1048,17 @@ module.exports = class OsDomain {
         technicianId: item.technicianId,
         os: item.os,
         createdAt: formatDateFunct(item.createdAt),
-        products: [
-          ...(await Promise.all(formatProduct(item.productBases, index))),
-          ...(await Promise.all(formatConserto(item.consertos, index))),
-          ...(await findKitOuts(item.os))
-        ],
+        products,
         notDelet:
-          (item.productBases &&
-            item.productBases.filter(
-              productBase => productBase.osParts.deletedAt !== null
+          (item.products &&
+            item.products.filter(
+              (product) => product.osParts.deletedAt !== null
             ).length !== 0) ||
           (item.consertos &&
             item.consertos.filter(
-              conserto => conserto.osParts.deletedAt !== null
+              (conserto) => conserto.osParts.deletedAt !== null
             ).length !== 0) ||
-          notDelet[index]
+          notDelet[index],
       };
 
       return resp;
@@ -1105,87 +1075,85 @@ module.exports = class OsDomain {
       page: pageResponse,
       show,
       count,
-      rows: osList
+      rows: osList,
     };
 
     return response;
   }
 
-  async getOsByOs(os, options = {}) {
-    const { transaction = null } = options;
+  // async getOsByOs(os, options = {}) {
+  //   const { transaction = null } = options;
 
-    const formatDateFunct = date => {
-      moment.locale("pt-br");
-      const formatDate = moment(date);
-      return formatDate;
-    };
+  //   const formatDateFunct = (date) => {
+  //     moment.locale("pt-br");
+  //     const formatDate = moment(date);
+  //     return formatDate;
+  //   };
 
-    const osReturn = await Os.findOne({
-      where: { os },
-      include: [
-        {
-          model: Technician
-        },
-        {
-          model: ProductBase,
-          include: [
-            {
-              model: Product
-            },
-            {
-              model: StockBase
-            }
-          ]
-        }
-      ],
-      transaction
-    });
+  //   const osReturn = await Os.findOne({
+  //     where: { os },
+  //     include: [
+  //       {
+  //         model: Technician,
+  //       },
+  //       {
+  //         model: ProductBase,
+  //         include: [
+  //           {
+  //             model: Product,
+  //           },
+  //           {
+  //             model: StockBase,
+  //           },
+  //         ],
+  //       },
+  //     ],
+  //     transaction,
+  //   });
 
-    if (!osReturn) {
-      return {
-        razaoSocial: "",
-        cnpj: "",
-        // data: formatDateFunct(new Date()),
-        technician: "",
-        reserve: []
-      };
-    }
+  //   if (!osReturn) {
+  //     return {
+  //       razaoSocial: "",
+  //       cnpj: "",
+  //       // data: formatDateFunct(new Date()),
+  //       technician: "",
+  //       reserve: [],
+  //     };
+  //   }
 
-    const formatedReserve = R.map(item => {
-      const resp = {
-        stockBase: item.stockBase.stockBase,
-        amount: item.osParts.amount,
-        nomeProdutoCarrinho: item.product.name,
-        productId: item.productId
-      };
-      return resp;
-    });
+  //   const formatedReserve = R.map((item) => {
+  //     const resp = {
+  //       stockBase: item.stockBase.stockBase,
+  //       amount: item.osParts.amount,
+  //       nomeProdutoCarrinho: item.product.name,
+  //       productId: item.productId,
+  //     };
+  //     return resp;
+  //   });
 
-    const response = {
-      razaoSocial: osReturn.razaoSocial,
-      cnpj: osReturn.cnpj,
-      data: formatDateFunct(osReturn.date),
-      technician: osReturn.technician.name,
-      reserve: formatedReserve(osReturn.productBases)
-    };
+  //   const response = {
+  //     razaoSocial: osReturn.razaoSocial,
+  //     cnpj: osReturn.cnpj,
+  //     data: formatDateFunct(osReturn.date),
+  //     technician: osReturn.technician.name,
+  //     reserve: formatedReserve(osReturn.productBases),
+  //   };
 
-    return response;
-  }
+  //   return response;
+  // }
 
   async output(bodyData, options = {}) {
     const { transaction = null } = options;
-    const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData));
+    const bodyDataNotHasProp = (prop) => R.not(R.has(prop, bodyData));
     // const bodyHasProp = prop => R.has(prop, bodyData)
-
-    console.log(bodyData);
 
     const field = {
       osPartsId: false,
-      add: false
+      add: false,
     };
     const message = {
       osPartsId: "",
-      add: ""
+      add: "",
     };
 
     let errors = false;
@@ -1196,7 +1164,7 @@ module.exports = class OsDomain {
       message.osPartsId = "Informe o id do produto.";
     } else {
       const osPart = await OsParts.findByPk(bodyData.osPartsId, {
-        transaction
+        transaction,
       });
 
       if (!osPart) {
@@ -1237,22 +1205,14 @@ module.exports = class OsDomain {
       throw new FieldValidationError([{ field, message }]);
     }
 
-    const productBase = await ProductBase.findByPk(osPart.productBaseId, {
-      include: [
-        {
-          model: Product,
-          attributes: ["serial"]
-        }
-      ],
-      transaction
+    const product = await Product.findByPk(osPart.productId, {
+      transaction,
     });
 
-    // throw new FieldValidationError([{ field, message }]);
+    if (!!product) {
+      let productUpdate = {};
 
-    if (!!productBase) {
-      let productBaseUpdate = {};
-
-      if (productBase.product.serial) {
+      if (product.serial) {
         const { serialNumberArray } = bodyData;
 
         if (serialNumberArray.length !== parseInt(value, 10)) {
@@ -1263,14 +1223,14 @@ module.exports = class OsDomain {
         }
 
         if (serialNumberArray.length > 0) {
-          await serialNumberArray.map(async serialNumber => {
+          await serialNumberArray.map(async (serialNumber) => {
             const equip = await Equip.findOne({
               where: {
                 serialNumber,
                 reserved: true,
-                productBaseId: productBase.id
+                productId: product.id,
               },
-              transaction
+              transaction,
             });
 
             if (!equip) {
@@ -1281,21 +1241,21 @@ module.exports = class OsDomain {
               throw new FieldValidationError([{ field, message }]);
             }
           });
-          await serialNumberArray.map(async serialNumber => {
+          await serialNumberArray.map(async (serialNumber) => {
             const equip = await Equip.findOne({
               where: {
                 serialNumber,
                 reserved: true,
-                productBaseId: productBase.id
+                productId: product.id,
               },
-              transaction
+              transaction,
             });
 
             if (key !== "output") {
               await equip.update(
                 {
                   ...equip,
-                  osPartId: null
+                  osPartId: null,
                 },
                 { transaction }
               );
@@ -1307,7 +1267,7 @@ module.exports = class OsDomain {
               await equip.update(
                 {
                   ...equip,
-                  reserved: false
+                  reserved: false,
                 },
                 { transaction }
               );
@@ -1317,47 +1277,47 @@ module.exports = class OsDomain {
       }
 
       if (key === "return") {
-        productBaseUpdate = {
-          ...productBase,
+        productUpdate = {
+          ...product,
           available: (
-            parseInt(productBase.available, 10) + parseInt(value, 10)
+            parseInt(product.available, 10) + parseInt(value, 10)
           ).toString(),
           reserved: (
-            parseInt(productBase.reserved, 10) - parseInt(value, 10)
-          ).toString()
+            parseInt(product.reserved, 10) - parseInt(value, 10)
+          ).toString(),
         };
       } else {
-        productBaseUpdate = {
-          ...productBase,
+        productUpdate = {
+          ...product,
           amount: (
-            parseInt(productBase.amount, 10) - parseInt(value, 10)
+            parseInt(product.amount, 10) - parseInt(value, 10)
           ).toString(),
           reserved: (
-            parseInt(productBase.reserved, 10) - parseInt(value, 10)
-          ).toString()
+            parseInt(product.reserved, 10) - parseInt(value, 10)
+          ).toString(),
         };
       }
 
       if (
-        parseInt(productBaseUpdate.available, 10) < 0 ||
-        parseInt(productBaseUpdate.available, 10) < 0
+        parseInt(productUpdate.available, 10) < 0 ||
+        parseInt(productUpdate.available, 10) < 0
       ) {
-        field.productBaseUpdate = true;
-        message.productBaseUpdate = "Número negativo não é valido";
+        field.productUpdate = true;
+        message.productUpdate = "Número negativo não é valido";
         throw new FieldValidationError([{ field, message }]);
       }
 
-      await productBase.update(productBaseUpdate, { transaction });
+      await product.update(productUpdate, { transaction });
     } else {
       const conserto = await Conserto.findByPk(osPart.consertoId, {
-        transaction
+        transaction,
       });
 
       const outSerialNumbers = bodyData.serialNumberArray;
 
       const serialNumbers = conserto.serialNumbers;
 
-      outSerialNumbers.map(item => {
+      outSerialNumbers.map((item) => {
         // console.log(R.indexOf(item, serialNumbers));
         serialNumbers.splice(R.indexOf(item, serialNumbers), 1);
       });
@@ -1374,22 +1334,13 @@ module.exports = class OsDomain {
 
     const osPartUpdate = {
       ...osPart,
-      [key]: (parseInt(value, 10) + parseInt(osPart[key], 10)).toString()
+      [key]: (parseInt(value, 10) + parseInt(osPart[key], 10)).toString(),
     };
 
-    console.log(key);
-    console.log(parseInt(value, 10));
-    console.log(parseInt(osPart[key], 10));
-    console.log(parseInt(value, 10) + parseInt(osPart[key], 10));
-
-    console.log(
-      JSON.parse(
-        JSON.stringify(await osPart.update(osPartUpdate, { transaction }))
-      )
-    );
+    await osPart.update(osPartUpdate, { transaction });
 
     const osPartsUpdate = await OsParts.findByPk(bodyData.osPartsId, {
-      transaction
+      transaction,
     });
 
     if (total - parseInt(value, 10) === 0) {
@@ -1399,24 +1350,23 @@ module.exports = class OsDomain {
     const os = await Os.findByPk(osPart.oId, {
       include: [
         {
-          model: ProductBase
+          model: Product,
         },
         {
-          model: Conserto
-        }
+          model: Conserto,
+        },
       ],
-      transaction
+      transaction,
     });
 
-    if (os.productBases.length === 0 && os.consertos.length === 0) {
+    if (os.products.length === 0 && os.consertos.length === 0) {
       await os.destroy({ transaction });
     }
 
     const response = await OsParts.findByPk(bodyData.osPartsId, {
-      transaction
+      transaction,
     });
 
-    // throw new FieldValidationError([{ field, message }]);
     return response;
   }
 };

@@ -22,11 +22,9 @@ const mark = require("./estoque/product/mark");
 const notification = require("./estoque/notification");
 const os = require("./estoque/reserve/os");
 const osParts = require("./estoque/reserve/osParts");
-const stockBase = require("./estoque/stockBase");
 const technician = require("./estoque/technician");
 const technicianReserve = require("./estoque/reserve/technicianReserve");
 const technicianReserveParts = require("./estoque/reserve/technicianReserveParts");
-const productBase = require("./estoque/stockBase/productBase");
 const statusExpedition = require("./estoque/reserve/statusExpedition");
 const emprestimo = require("./estoque/emprestimo");
 const conserto = require("./estoque/conserto");
@@ -63,11 +61,9 @@ module.exports = [
   notification,
   os,
   osParts,
-  stockBase,
   technician,
   technicianReserve,
   technicianReserveParts,
-  productBase,
   statusExpedition,
   emprestimo,
   conserto,
@@ -77,5 +73,5 @@ module.exports = [
   entryEquipment,
   pause,
   process,
-  time
+  time,
 ];

@@ -1,7 +1,6 @@
-
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    const freeMarketParts = queryInterface.createTable('freeMarketParts', {
+    const freeMarketParts = queryInterface.createTable("freeMarketParts", {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -26,30 +25,30 @@ module.exports = {
         defaultValue: null,
         type: Sequelize.DATE,
       },
-      productBaseId: {
+      productId: {
         type: Sequelize.UUID,
         references: {
-          model: 'productBase',
-          key: 'id',
+          model: "product",
+          key: "id",
         },
         allowNull: false,
       },
       freeMarketId: {
         type: Sequelize.UUID,
         references: {
-          model: 'freeMarket',
-          key: 'id',
+          model: "freeMarket",
+          key: "id",
         },
         allowNull: false,
       },
-    })
+    });
 
     freeMarketParts.associate = (models) => {
-      freeMarketParts.belongsTo(models.freeMarket)
-      freeMarketParts.belongsTo(models.productBase)
-    }
+      freeMarketParts.belongsTo(models.freeMarket);
+      freeMarketParts.belongsTo(models.productBase);
+    };
 
-    return freeMarketParts
+    return freeMarketParts;
   },
-  down: queryInterface => queryInterface.dropTable('freeMarketParts'),
-}
+  down: (queryInterface) => queryInterface.dropTable("freeMarketParts"),
+};

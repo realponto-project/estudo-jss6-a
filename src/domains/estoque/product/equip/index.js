@@ -17,7 +17,6 @@ const { FieldValidationError } = require("../../../../helpers/errors");
 // const EquipType = database.model('equipType')
 // const EquipModel = database.model('equipModel')
 const Product = database.model("product");
-const ProductBase = database.model("productBase");
 const Company = database.model("company");
 const Equip = database.model("equip");
 const User = database.model("user");
@@ -25,7 +24,6 @@ const OsParts = database.model("osParts");
 const Os = database.model("os");
 const FreeMarketParts = database.model("freeMarketParts");
 const FreeMarket = database.model("freeMarket");
-const StockBase = database.model("stockBase");
 const Emprestimo = database.model("emprestimo");
 const Mark = database.model("mark");
 
@@ -33,18 +31,15 @@ module.exports = class EquipDomain {
   async add(bodyData, options = {}) {
     const { transaction = null } = options;
 
-    const equip = R.omit(
-      ["id", "productId", "stockBase", "serialNumbers"],
-      bodyData
-    );
+    const equip = R.omit(["id", "productId", "serialNumbers"], bodyData);
 
-    const equipNotHasProp = prop => R.not(R.has(prop, equip));
+    const equipNotHasProp = (prop) => R.not(R.has(prop, equip));
     const NotHasProp = (prop, obj) => R.not(R.has(prop, obj));
 
     const field = {
       productId: false,
       stockBase: false,
-      serialNumbers: false
+      serialNumbers: false,
       // equipModelId: false,
       // companyId: false,
       // corLeitor: false,
@@ -59,7 +54,7 @@ module.exports = class EquipDomain {
     const message = {
       productId: "",
       stockBase: "",
-      serialNumbers: ""
+      serialNumbers: "",
       // equipModelId: '',
       // companyId: '',
       // corLeitor: '',
@@ -118,7 +113,7 @@ module.exports = class EquipDomain {
       message.productId = "Por favor informe productId.";
     } else {
       const productBase = await Product.findByPk(bodyData.productId, {
-        transaction
+        transaction,
       });
 
       if (!productBase) {
@@ -135,7 +130,7 @@ module.exports = class EquipDomain {
     } else {
       const stockBase = await StockBase.findOne({
         where: { stockBase: bodyData.stockBase },
-        transaction
+        transaction,
       });
 
       if (stockBase) {
@@ -152,7 +147,7 @@ module.exports = class EquipDomain {
     } else {
       const serialNumberReturned = await Equip.findOne({
         where: { serialNumber: equip.serialNumber },
-        transaction
+        transaction,
       });
 
       if (serialNumberReturned) {
@@ -263,10 +258,10 @@ module.exports = class EquipDomain {
       include: [
         {
           model: StockBase,
-          where: { stockBase }
-        }
+          where: { stockBase },
+        },
       ],
-      transaction
+      transaction,
     });
 
     equip.productBaseId = productBase.id;
@@ -300,7 +295,7 @@ module.exports = class EquipDomain {
     const inicialOrder = {
       field: "createdAt",
       acendent: true,
-      direction: "DESC"
+      direction: "DESC",
     };
 
     const { query = null, transaction = null } = options;
@@ -331,17 +326,17 @@ module.exports = class EquipDomain {
               include: [
                 {
                   model: Mark,
-                  where: getWhere("mark")
-                }
-              ]
-            }
-          ]
-        }
+                  where: getWhere("mark"),
+                },
+              ],
+            },
+          ],
+        },
       ],
       offset,
       limit,
       order: [[newOrder.field, newOrder.direction]],
-      transaction
+      transaction,
     });
 
     const { rows } = equips;
@@ -351,11 +346,11 @@ module.exports = class EquipDomain {
         page: null,
         show: 0,
         count: equips.count,
-        rows: []
+        rows: [],
       };
     }
 
-    const formatData = R.map(equip => {
+    const formatData = R.map((equip) => {
       const resp = {
         id: equip.id,
         reserved: equip.reserved,
@@ -365,7 +360,7 @@ module.exports = class EquipDomain {
         mark:
           equip.productBase &&
           equip.productBase.product.mark &&
-          equip.productBase.product.mark.mark
+          equip.productBase.product.mark.mark,
       };
 
       return resp;
@@ -379,7 +374,7 @@ module.exports = class EquipDomain {
       page: pageResponse,
       show: equipsList.length,
       count: equips.count,
-      rows: equipsList
+      rows: equipsList,
     };
 
     // console.log(response);
@@ -717,173 +712,12 @@ module.exports = class EquipDomain {
   //   return response
   // }
 
-  async update(bodyData, options = {}) {
-    const { transaction = null } = options;
-
-    const equip = R.omit(["id"], bodyData);
-
-    const oldEquip = await Equip.findByPk(bodyData.id);
-
-    const newEquip = JSON.parse(JSON.stringify(oldEquip));
-
-    Object.assign(newEquip, R.omit(["mark", "type", "model"], equip));
-
-    // const equipNotHasProp = prop => R.not(R.has(prop, equip))
-    const newEquipNotHasProp = prop => R.not(R.has(prop, newEquip));
-
-    const field = {
-      // equipModelId: false,
-      companyId: false,
-      serialNumber: false,
-      corLeitor: false,
-      tipoCracha: false,
-      details: false,
-      responsibleUser: false,
-      proximidade: false,
-      bio: false,
-      barras: false,
-      cartografico: false
-    };
-    const message = {
-      // equipModelId: '',
-      companyId: "",
-      serialNumber: "",
-      corLeitor: "",
-      tipoCracha: "",
-      details: "",
-      responsibleUser: "",
-      proximidade: "",
-      bio: "",
-      barras: "",
-      cartografico: ""
-    };
-
-    let errors = false;
-
-    if (newEquipNotHasProp("serialNumber") || !newEquip.serialNumber) {
-      errors = true;
-      field.serialNumber = true;
-      message.serialNumber = "informe o número de série.";
-    } else {
-      const serialNumberReturned = await Equip.findOne({
-        where: { serialNumber: newEquip.serialNumber },
-        transaction
-      });
-
-      if (
-        serialNumberReturned &&
-        newEquip.serialNumber !== oldEquip.serialNumber
-      ) {
-        errors = true;
-        field.serialNumber = true;
-        message.serialNumber = "já está cadastrado.";
-      }
-    }
-
-    if (
-      newEquipNotHasProp("proximidade") ||
-      typeof newEquip.proximidade !== "boolean"
-    ) {
-      errors = true;
-      field.proximidade = true;
-      message.proximidade = "proximidade não é um booleano";
-    }
-    if (newEquipNotHasProp("bio") || typeof newEquip.bio !== "boolean") {
-      errors = true;
-      field.bio = true;
-      message.bio = "bio não é um booleano";
-    }
-    if (newEquipNotHasProp("barras") || typeof newEquip.barras !== "boolean") {
-      errors = true;
-      field.barras = true;
-      message.barras = "barras não é um booleano";
-    }
-    if (
-      newEquipNotHasProp("cartografico") ||
-      typeof newEquip.cartografico !== "boolean"
-    ) {
-      errors = true;
-      field.cartografico = true;
-      message.cartografico = "cartografico não é um booleano";
-    }
-
-    if (
-      newEquipNotHasProp("corLeitor") ||
-      (newEquip.corLeitor !== "Branco" &&
-        newEquip.corLeitor !== "Vermelho" &&
-        newEquip.corLeitor !== "Azul" &&
-        newEquip.corLeitor !== "Verde" &&
-        newEquip.corLeitor !== "NaoSeAplica")
-    ) {
-      errors = true;
-      field.corLeitor = true;
-      message.corLeitor = "leitor inválido.";
-    }
-
-    if (
-      newEquipNotHasProp("tipoCracha") ||
-      (newEquip.tipoCracha !== "Hid" &&
-        newEquip.tipoCracha !== "Mifare" &&
-        newEquip.tipoCracha !== "Wiegand" &&
-        newEquip.tipoCracha !== "Abatrack" &&
-        newEquip.tipoCracha !== "Sarial" &&
-        newEquip.tipoCracha !== "NaoSeAplica")
-    ) {
-      errors = true;
-      field.tipoCracha = true;
-      message.tipoCracha = "leitor inválido.";
-    }
-
-    // if (equipNotHasProp('type') || !equip.type) {
-    //   errors = true
-    //   field.type = true
-    //   message.type = 'informe o tipo.'
-    // }
-
-    // if (equipNotHasProp('mark') || !equip.mark) {
-    //   errors = true
-    //   field.mark = true
-    //   message.mark = 'informe a marca.'
-    // }
-
-    // if (equipNotHasProp('model') || !equip.model) {
-    //   errors = true
-    //   field.model = true
-    //   message.model = 'informe o modelo.'
-    // }
-
-    // const equipModel = await EquipModel.findOne({
-    //   where: { model: equip.model },
-    //   include: [{
-    //     model: EquipMark,
-    //     where: { mark: equip.mark },
-    //     include: [{
-    //       model: EquipType,
-    //       where: { type: equip.type },
-    //     }],
-    //   }],
-    // })
-
-    // if (!equipModel) {
-    //   errors = true
-    //   field.model = true
-    //   message.model = 'Modelo não encontrado.'
-    // }
-
-    if (errors) {
-      throw new FieldValidationError([{ field, message }]);
-    }
-
-    const response = await oldEquip.update(newEquip, { transaction });
-
-    return response;
-  }
-
   async getOneBySerialNumber(serialNumber, options = {}) {
     const { transaction = null } = options;
+    console.log(serialNumber);
     const response = await Equip.findOne({
       where: {
-        serialNumber
+        serialNumber,
       },
       attributes: [
         "id",
@@ -891,7 +725,6 @@ module.exports = class EquipDomain {
         "deletedAt",
         "osPartId",
         "freeMarketPartId",
-        "productBaseId"
       ],
       include: [
         {
@@ -902,19 +735,13 @@ module.exports = class EquipDomain {
             {
               paranoid: false,
               attributes: ["os"],
-              model: Os
-            }
-          ]
+              model: Os,
+            },
+          ],
         },
         {
-          model: ProductBase,
-          attributes: ["productId"],
-          include: [
-            {
-              model: Product,
-              attributes: ["name"]
-            }
-          ]
+          model: Product,
+          attributes: ["name"],
         },
         {
           paranoid: false,
@@ -924,14 +751,16 @@ module.exports = class EquipDomain {
             {
               paranoid: false,
               attributes: ["trackingCode"],
-              model: FreeMarket
-            }
-          ]
-        }
+              model: FreeMarket,
+            },
+          ],
+        },
       ],
       paranoid: false,
-      transaction
+      transaction,
     });
+
+    console.log(JSON.parse(JSON.stringify(response)));
 
     return response;
   }

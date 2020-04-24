@@ -1,55 +1,40 @@
 const Sequelize = require("sequelize");
 
-module.exports = sequelize => {
+module.exports = (sequelize) => {
   const entrance = sequelize.define("entrance", {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
 
     amountAdded: {
       type: Sequelize.STRING,
-      allowNull: false
-    },
-
-    oldAmount: {
-      type: Sequelize.STRING,
-      allowNull: false
+      allowNull: false,
     },
 
     responsibleUser: {
       type: Sequelize.STRING,
-      allowNull: false
+      allowNull: false,
     },
 
-    stockBase: {
-      type: Sequelize.ENUM([
-        "REALPONTO",
-        "NOVAREAL",
-        "PONTOREAL",
-        "EMPRESTIMO",
-        "INSUMOS"
-      ]),
-      allowNull: false
-    },
     analysis: {
       type: Sequelize.BOOLEAN,
-      defautValue: false
-    }
+      defautValue: false,
+    },
   });
 
-  entrance.associate = models => {
+  entrance.associate = (models) => {
     entrance.belongsTo(models.product, {
       foreignKey: {
-        allowNull: false
-      }
+        allowNull: false,
+      },
     });
 
     entrance.belongsTo(models.company, {
       foreignKey: {
-        allowNull: true
-      }
+        allowNull: true,
+      },
     });
   };
 

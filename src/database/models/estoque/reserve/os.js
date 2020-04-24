@@ -1,44 +1,44 @@
 const Sequelize = require("sequelize");
 
-module.exports = sequelize => {
+module.exports = (sequelize) => {
   const os = sequelize.define("os", {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
-      primaryKey: true
+      primaryKey: true,
     },
 
     os: {
       type: Sequelize.STRING,
       allowNull: true,
-      unique: true
+      unique: true,
     },
 
     razaoSocial: {
       type: Sequelize.STRING,
-      allowNull: true
+      allowNull: true,
     },
 
     cnpj: {
       type: Sequelize.STRING,
-      allowNull: false
+      allowNull: false,
     },
 
     date: {
       type: Sequelize.DATE,
       allowNull: false,
       defaultValue: new Date(),
-      timestamps: false
-    }
+      timestamps: false,
+    },
   });
 
-  os.associate = models => {
-    os.belongsToMany(models.productBase, { through: "osParts" });
+  os.associate = (models) => {
+    os.belongsToMany(models.product, { through: "osParts" });
     os.belongsToMany(models.conserto, { through: "osParts" });
     os.belongsTo(models.technician, {
       foreignKey: {
-        allowNull: true
-      }
+        allowNull: true,
+      },
     });
   };
 

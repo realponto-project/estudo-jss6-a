@@ -1,7 +1,7 @@
-const Sequelize = require('sequelize')
+const Sequelize = require("sequelize");
 
 module.exports = (sequelize) => {
-  const product = sequelize.define('product', {
+  const product = sequelize.define("product", {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
@@ -14,7 +14,7 @@ module.exports = (sequelize) => {
     },
 
     category: {
-      type: Sequelize.ENUM(['peca', 'equipamento', 'acessorios']),
+      type: Sequelize.ENUM(["peca", "equipamento", "acessorios"]),
       allowNull: false,
     },
 
@@ -37,14 +37,38 @@ module.exports = (sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-  })
+
+    amount: {
+      type: Sequelize.STRING,
+      defaultValue: "0",
+      allowNull: false,
+    },
+
+    available: {
+      type: Sequelize.STRING,
+      defaultValue: "0",
+      allowNull: false,
+    },
+
+    reserved: {
+      type: Sequelize.STRING,
+      defaultValue: "0",
+      allowNull: false,
+    },
+
+    analysis: {
+      type: Sequelize.STRING,
+      defaultValue: "0",
+      allowNull: false,
+    },
+  });
 
   product.associate = (models) => {
     product.belongsTo(models.mark, {
       foreignKey: {
         allowNull: false,
       },
-    })
+    });
 
     // product.belongsTo(models.part, {
     //   foreignKey: {
@@ -58,15 +82,13 @@ module.exports = (sequelize) => {
     //   },
     // })
 
-    product.belongsTo(models.equipType)
+    product.belongsTo(models.equipType);
 
     product.belongsToMany(models.product, {
-      as: 'productToMany',
-      through: 'productProduct',
-    })
+      as: "productToMany",
+      through: "productProduct",
+    });
+  };
 
-    product.belongsToMany(models.stockBase, { through: 'productBase' })
-  }
-
-  return product
-}
+  return product;
+};

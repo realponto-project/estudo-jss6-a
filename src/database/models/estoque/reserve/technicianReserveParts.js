@@ -1,7 +1,7 @@
-const Sequelize = require('sequelize')
+const Sequelize = require("sequelize");
 
 module.exports = (sequelize) => {
-  const technicianReserveParts = sequelize.define('technicianReserveParts', {
+  const technicianReserveParts = sequelize.define("technicianReserveParts", {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
@@ -12,13 +12,12 @@ module.exports = (sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-  })
+  });
 
   technicianReserveParts.associate = (models) => {
-    technicianReserveParts.belongsTo(models.product)
-    technicianReserveParts.belongsTo(models.technicianReserve)
-    technicianReserveParts.belongsTo(models.productBase)
-  }
+    technicianReserveParts.belongsTo(models.product);
+    technicianReserveParts.belongsTo(models.technicianReserve);
+  };
 
-  return technicianReserveParts
-}
+  return technicianReserveParts;
+};

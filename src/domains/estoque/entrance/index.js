@@ -17,36 +17,32 @@ const User = database.model("user");
 const Mark = database.model("mark");
 // const Part = database.model('part')
 // const EquipModel = database.model('equipModel')
-const StockBase = database.model("stockBase");
-const ProductBase = database.model("productBase");
 const Equip = database.model("equip");
 
-module.exports = class TechnicianDomain {
+module.exports = class EntranceDomain {
   async add(bodyData, options = {}) {
     const { transaction = null } = options;
 
     const entrance = R.omit(["id"], bodyData);
 
-    const entranceNotHasProp = prop => R.not(R.has(prop, entrance));
+    const entranceNotHasProp = (prop) => R.not(R.has(prop, entrance));
     // const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
 
     const field = {
       amountAdded: false,
-      stockBase: false,
       productId: false,
       companyId: false,
       message: false,
       responsibleUser: false,
-      analysis: false
+      analysis: false,
     };
     const message = {
       amountAdded: "",
-      stockBase: "",
       productId: "",
       companyId: "",
       message: "",
       responsibleUser: "",
-      analysis: ""
+      analysis: "",
     };
 
     let errors = false;
@@ -71,18 +67,6 @@ module.exports = class TechnicianDomain {
       message.amountAdded = "Não é permitido letras.";
     }
 
-    const stockBaseArray = ["REALPONTO", "NOVAREAL", "PONTOREAL", "EMPRESTIMO"];
-
-    if (entranceNotHasProp("stockBase") || !entrance.stockBase) {
-      errors = true;
-      field.stockBase = true;
-      message.stockBase = "Por favor informar a base de estoque.";
-    } else if (!stockBaseArray.filter(value => value === entrance.stockBase)) {
-      errors = true;
-      field.stockBase = true;
-      message.stockBase = "Base de estoque inválida.";
-    }
-
     if (entranceNotHasProp("responsibleUser")) {
       errors = true;
       field.responsibleUser = true;
@@ -92,7 +76,7 @@ module.exports = class TechnicianDomain {
 
       const user = await User.findOne({
         where: { username: responsibleUser },
-        transaction
+        transaction,
       });
 
       if (!user) {
@@ -119,7 +103,7 @@ module.exports = class TechnicianDomain {
     } else {
       const fornecedor = await Company.findByPk(entrance.companyId, {
         where: { relation: "fornecedor" },
-        transaction
+        transaction,
       });
 
       if (!fornecedor) {
@@ -130,19 +114,13 @@ module.exports = class TechnicianDomain {
     }
 
     const product = await Product.findByPk(entrance.productId, {
-      transaction
+      transaction,
     });
 
     if (!product) {
       errors = true;
       field.productId = true;
       message.productId = "Produto não encontrado";
-    }
-
-    if (entrance.stockBase === "EMPRESTIMO" && !product.serial) {
-      errors = true;
-      field.stockBase = true;
-      message.stockBase = "deve conter numero de serie";
     }
 
     if (product.serial && !entrance.analysis) {
@@ -179,83 +157,39 @@ module.exports = class TechnicianDomain {
       throw new FieldValidationError([{ field, message }]);
     }
 
-    const stockBase = await StockBase.findOne({
-      where: { stockBase: entrance.stockBase },
-      transaction
-    });
+    const analysis = (
+      parseInt(product.analysis, 10) + parseInt(entrance.analysis, 10)
+    ).toString();
 
-    let productBase = await ProductBase.findOne({
-      where: {
-        productId: entrance.productId,
-        stockBaseId: stockBase.id
-      },
-      transaction
-    });
+    // eslint-disable-next-line max-len
+    const amount = (
+      parseInt(product.amount, 10) + parseInt(entrance.amountAdded, 10)
+    ).toString();
+    // eslint-disable-next-line max-len
+    const available = (
+      parseInt(product.available, 10) + parseInt(entrance.amountAdded, 10)
+    ).toString();
 
-    if (!productBase) {
-      await ProductBase.create(
-        {
-          productId: entrance.productId,
-          stockBaseId: stockBase.id,
-          amount: entrance.amountAdded,
-          available: entrance.amountAdded,
-          analysis: entrance.analysis,
-          reserved: "0"
-        },
-        { transaction }
-      );
+    await product.update({ analysis, amount, available }, { transaction });
 
-      entrance.oldAmount = "0";
-    } else {
-      entrance.oldAmount = productBase.amount;
+    entrance.amountAdded = Math.max.apply(null, [
+      entrance.analysis,
+      entrance.amountAdded,
+    ]);
 
-      const analysis = (
-        parseInt(productBase.analysis, 10) + parseInt(entrance.analysis, 10)
-      ).toString();
+    entrance.analysis = entrance.analysis !== "0";
 
-      // eslint-disable-next-line max-len
-      const amount = (
-        parseInt(productBase.amount, 10) + parseInt(entrance.amountAdded, 10)
-      ).toString();
-      // eslint-disable-next-line max-len
-      const available = (
-        parseInt(productBase.available, 10) + parseInt(entrance.amountAdded, 10)
-      ).toString();
+    const entranceCreated = await Entrance.create(entrance, { transaction });
 
-      const productBaseUpdate = {
-        ...productBase,
-        amount,
-        available,
-        analysis
-      };
-
-      await productBase.update(productBaseUpdate, { transaction });
-    }
-
-    productBase = await ProductBase.findOne({
-      where: {
-        productId: entrance.productId,
-        stockBaseId: stockBase.id
-      },
-      transaction
-    });
-
-    if (product.serial && entrance.serialNumber) {
+    if (product.serial && entrance.serialNumbers) {
       const { serialNumbers } = entrance;
 
-      const serialNumbersFindPromises = serialNumbers.map(async item => {
+      const serialNumbersFindPromises = serialNumbers.map(async (item) => {
         const serialNumberHasExist = await Equip.findOne({
           where: { serialNumber: item },
           attributes: [],
-          include: [
-            {
-              model: ProductBase,
-              where: { id: productBase.id },
-              attributes: []
-            }
-          ],
           paranoid: false,
-          transaction
+          transaction,
         });
 
         if (serialNumberHasExist) {
@@ -266,11 +200,11 @@ module.exports = class TechnicianDomain {
       });
       await Promise.all(serialNumbersFindPromises);
 
-      const serialNumbersCreatePromises = serialNumbers.map(async item => {
+      const serialNumbersCreatePromises = serialNumbers.map(async (item) => {
         const equipCreate = {
-          productBaseId: productBase.id,
+          productId: product.id,
           serialNumber: item,
-          loan: entrance.stockBase === "EMPRESTIMO"
+          entranceId: entranceCreated.id,
         };
 
         await Equip.create(equipCreate, { transaction });
@@ -278,25 +212,16 @@ module.exports = class TechnicianDomain {
       await Promise.all(serialNumbersCreatePromises);
     }
 
-    entrance.amountAdded = Math.max.apply(null, [
-      entrance.analysis,
-      entrance.amountAdded
-    ]);
-
-    entrance.analysis = entrance.analysis !== "0";
-
-    const entranceCreated = await Entrance.create(entrance, { transaction });
-
     const response = await Entrance.findByPk(entranceCreated.id, {
       include: [
         {
-          model: Company
+          model: Company,
         },
         {
-          model: Product
-        }
+          model: Product,
+        },
       ],
-      transaction
+      transaction,
     });
 
     return response;
@@ -307,29 +232,39 @@ module.exports = class TechnicianDomain {
 
     const entrance = R.omit(["id"], bodyData);
 
-    const oldEntrance = await Entrance.findByPk(bodyData.id, { transaction });
+    const oldEntrance = await Entrance.findByPk(bodyData.id, {
+      include: [{ model: Product }],
+      transaction,
+    });
 
-    const entranceNotHasProp = prop => R.not(R.has(prop, entrance));
-    // const bodyDataNotHasProp = prop => R.not(R.has(prop, bodyData))
+    const entranceNotHasProp = (prop) => R.not(R.has(prop, entrance));
 
     const field = {
       amountAdded: false,
-      stockBase: false,
       productId: false,
       companyId: false,
       message: false,
-      responsibleUser: false
+      responsibleUser: false,
     };
     const message = {
       amountAdded: "",
-      stockBase: "",
       productId: "",
       companyId: "",
       message: "",
-      responsibleUser: ""
+      responsibleUser: "",
     };
 
     let errors = false;
+
+    if (entranceNotHasProp("analysis") || !entrance.analysis) {
+      errors = true;
+      field.analysis = true;
+      message.analysis = "analysis cannot undefined";
+    } else if (/\D/gi.test(entrance.analysis)) {
+      errors = true;
+      field.analysis = true;
+      message.analysis = "Não é permitido letras.";
+    }
 
     if (entranceNotHasProp("amountAdded") || !entrance.amountAdded) {
       errors = true;
@@ -341,18 +276,6 @@ module.exports = class TechnicianDomain {
       message.amountAdded = "Não é permitido letras.";
     }
 
-    const stockBaseArray = ["REALPONTO", "NOVAREAL", "PONTOREAL", "EMPRESTIMO"];
-
-    if (entranceNotHasProp("stockBase") || !entrance.stockBase) {
-      errors = true;
-      field.stockBase = true;
-      message.stockBase = "Por favor informar a base de estoque.";
-    } else if (!stockBaseArray.filter(value => value === entrance.stockBase)) {
-      errors = true;
-      field.stockBase = true;
-      message.stockBase = "Base de estoque inválida.";
-    }
-
     if (entranceNotHasProp("responsibleUser")) {
       errors = true;
       field.responsibleUser = true;
@@ -362,7 +285,7 @@ module.exports = class TechnicianDomain {
 
       const user = await User.findOne({
         where: { username: responsibleUser },
-        transaction
+        transaction,
       });
 
       if (!user) {
@@ -389,7 +312,7 @@ module.exports = class TechnicianDomain {
     } else {
       const fornecedor = await Company.findByPk(entrance.companyId, {
         where: { relation: "fornecedor" },
-        transaction
+        transaction,
       });
 
       if (!fornecedor) {
@@ -399,8 +322,8 @@ module.exports = class TechnicianDomain {
       }
     }
 
-    const product = await Product.findByPk(entrance.productId, {
-      transaction
+    let product = await Product.findByPk(entrance.productId, {
+      transaction,
     });
 
     if (!product) {
@@ -417,7 +340,6 @@ module.exports = class TechnicianDomain {
         errors = true;
         field.message = true;
         message.message = "Por favor ao menos um numero de série.";
-        // eslint-disable-next-line eqeqeq
       } else if (entrance.serialNumbers.length != entrance.amountAdded) {
         errors = true;
         field.message = true;
@@ -425,12 +347,9 @@ module.exports = class TechnicianDomain {
           "Quantidade adicionada não condiz com a quantidade de números de série.";
       } else {
         const { serialNumbers } = entrance;
-
-        // eslint-disable-next-line max-len
         const filterSerialNumber = serialNumbers.filter(
           (este, i) => serialNumbers.indexOf(este) === i
         );
-
         if (serialNumbers.length !== filterSerialNumber.length) {
           errors = true;
           field.message = true;
@@ -442,157 +361,121 @@ module.exports = class TechnicianDomain {
     if (errors) {
       throw new FieldValidationError([{ field, message }]);
     }
-
-    const stockBase = await StockBase.findOne({
-      where: { stockBase: entrance.stockBase },
-      transaction
-    });
-
-    const oldStockBase = await StockBase.findOne({
-      where: { stockBase: oldEntrance.stockBase },
-      transaction
-    });
-
-    let productBase = await ProductBase.findOne({
-      where: {
-        productId: entrance.productId,
-        stockBaseId: stockBase.id
-      },
-      transaction
-    });
-
-    const oldProductBase = await ProductBase.findOne({
-      where: {
-        productId: oldEntrance.productId,
-        stockBaseId: oldStockBase.id
-      },
-      transaction
-    });
-
-    if (!oldProductBase) {
-      field.message = true;
-      message.message = "ProductBase não encontrada.";
-      throw new FieldValidationError([{ field, message }]);
-    } else {
-      // eslint-disable-next-line max-len
-      const amount = (
-        parseInt(oldProductBase.amount, 10) -
+    if (oldEntrance.analysis) {
+      const analysis = (
+        parseInt(oldEntrance.product.analysis, 10) -
         parseInt(oldEntrance.amountAdded, 10)
       ).toString();
-      // eslint-disable-next-line max-len
-      const available = (
-        parseInt(oldProductBase.available, 10) -
+      await oldEntrance.product.update({ analysis }, { transaction });
+    } else {
+      const amount = (
+        parseInt(oldEntrance.product.amount, 10) -
         parseInt(oldEntrance.amountAdded, 10)
       ).toString();
-
-      const oldProductBaseUpdate = {
-        ...oldProductBase,
-        amount,
-        available
-      };
-
-      if (
-        parseInt(oldProductBaseUpdate.amount, 10) < 0 ||
-        parseInt(oldProductBaseUpdate.available, 10) < 0
-      ) {
-        field.oldProductBaseUpdate = true;
-        message.oldProductBaseUpdate = "Número negativo não é valido";
-        throw new FieldValidationError([{ field, message }]);
-      }
-      await oldProductBase.update(oldProductBaseUpdate, { transaction });
-    }
-
-    if (!productBase) {
-      await ProductBase.create(
-        {
-          productId: entrance.productId,
-          stockBaseId: stockBase.id,
-          amount: entrance.amountAdded,
-          available: entrance.amountAdded,
-          reserved: "0"
-        },
-        { transaction }
-      );
-
-      entrance.oldAmount = "0";
-    } else {
-      entrance.oldAmount = (
-        parseInt(productBase.amount, 10) - parseInt(oldEntrance.amountAdded, 10)
-      ).toString();
-
-      // eslint-disable-next-line max-len
-      const amount = (
-        parseInt(productBase.amount, 10) + parseInt(entrance.amountAdded, 10)
-      ).toString();
-      // eslint-disable-next-line max-len
       const available = (
-        parseInt(productBase.available, 10) + parseInt(entrance.amountAdded, 10)
+        parseInt(oldEntrance.product.available, 10) -
+        parseInt(oldEntrance.amountAdded, 10)
       ).toString();
-
-      const productBaseUpdate = {
-        ...productBase,
-        amount,
-        available
-      };
-
-      if (
-        parseInt(productBaseUpdate.amount, 10) < 0 ||
-        parseInt(productBaseUpdate.available, 10) < 0
-      ) {
-        field.productBaseUpdate = true;
-        message.productBaseUpdate = "Número negativo não é valido";
-        throw new FieldValidationError([{ field, message }]);
-      }
-
-      await productBase.update(productBaseUpdate, { transaction });
+      await oldEntrance.product.update({ amount, available }, { transaction });
     }
 
-    productBase = await ProductBase.findOne({
-      where: {
-        productId: entrance.productId,
-        stockBaseId: stockBase.id
-      },
-      transaction
-    });
+    if (oldEntrance.product.serial) {
+      const equips = await Equip.findAll({
+        where: { entranceId: oldEntrance.id },
+        order: [["serialNumber", "ASC"]],
+        paranoid: false,
+        transaction,
+      });
 
-    if (product.serial) {
-      const { serialNumbers } = entrance;
-
-      const serialNumbersFindPromises = serialNumbers.map(async item => {
-        const equip = await Equip.findOne({
-          where: {
-            serialNumber: item,
-            reserved: false
-          },
-          include: [
-            {
-              model: ProductBase,
-              where: { id: oldProductBase.id },
-              attributes: []
-            }
-          ],
-          transaction
-        });
-
-        if (!equip) {
-          field.serialNumbers = true;
-          message.serialNumbers = `${item} não está registrado`;
+      const equipDeletePromise = equips.map(async (item) => {
+        if (item.deletedAt !== null || item.reserved === true) {
+          field.reserved = true;
+          message.reserved = "Há equipamento liberado ou reservado";
           throw new FieldValidationError([{ field, message }]);
         }
+        await item.destroy({ force: true, transaction });
+      });
 
-        const equipUpdate = {
-          ...equip,
-          productBaseId: productBase.id
-        };
+      await Promise.all(equipDeletePromise);
+    }
 
-        await equip.update(equipUpdate, { transaction });
+    product = await Product.findByPk(entrance.productId, {
+      transaction,
+    });
+
+    const analysis = (
+      parseInt(product.analysis, 10) + parseInt(entrance.analysis, 10)
+    ).toString();
+
+    // eslint-disable-next-line max-len
+    const amount = (
+      parseInt(product.amount, 10) + parseInt(entrance.amountAdded, 10)
+    ).toString();
+    // eslint-disable-next-line max-len
+    const available = (
+      parseInt(product.available, 10) + parseInt(entrance.amountAdded, 10)
+    ).toString();
+
+    await product.update({ analysis, amount, available }, { transaction });
+
+    entrance.amountAdded = Math.max.apply(null, [
+      entrance.analysis,
+      entrance.amountAdded,
+    ]);
+
+    entrance.analysis = entrance.analysis !== "0";
+
+    if (product.serial && entrance.serialNumbers) {
+      const { serialNumbers } = entrance;
+
+      const serialNumbersFindPromises = serialNumbers.map(async (item) => {
+        const serialNumberHasExist = await Equip.findOne({
+          where: { serialNumber: item },
+          attributes: [],
+          paranoid: false,
+          transaction,
+        });
+
+        if (serialNumberHasExist) {
+          field.serialNumbers = true;
+          message.serialNumbers = `${item} já está registrado`;
+          throw new FieldValidationError([{ field, message }]);
+        }
       });
       await Promise.all(serialNumbersFindPromises);
+
+      const serialNumbersCreatePromises = serialNumbers.map(async (item) => {
+        const equipCreate = {
+          productId: product.id,
+          serialNumber: item,
+          entranceId: entranceCreated.id,
+        };
+
+        await Equip.create(equipCreate, { transaction });
+      });
+      await Promise.all(serialNumbersCreatePromises);
+    }
+
+    const oldProduct = await Product.findByPk(oldEntrance.productId, {
+      transaction,
+    });
+
+    if (
+      parseInt(analysis, 10) < 0 ||
+      parseInt(amount, 10) < 0 ||
+      parseInt(available, 10) < 0 ||
+      parseInt(oldProduct.analysis, 10) < 0 ||
+      parseInt(oldProduct.amount, 10) < 0 ||
+      parseInt(oldProduct.available, 10) < 0
+    ) {
+      field.number = true;
+      message.number = `numero negativo invalido`;
+      throw new FieldValidationError([{ field, message }]);
     }
 
     const newEntrance = {
       ...oldEntrance,
-      ...entrance
+      ...entrance,
     };
 
     await oldEntrance.update(newEntrance, { transaction });
@@ -600,13 +483,13 @@ module.exports = class TechnicianDomain {
     const response = await Entrance.findByPk(bodyData.id, {
       include: [
         {
-          model: Company
+          model: Company,
         },
         {
-          model: Product
-        }
+          model: Product,
+        },
       ],
-      transaction
+      transaction,
     });
 
     return response;
@@ -618,10 +501,10 @@ module.exports = class TechnicianDomain {
     const deletEntrance = await Entrance.findByPk(id, { transaction });
 
     const field = {
-      id: false
+      id: false,
     };
     const message = {
-      id: ""
+      id: "",
     };
 
     if (!deletEntrance) {
@@ -631,22 +514,13 @@ module.exports = class TechnicianDomain {
     }
 
     const equips = await Equip.findAll({
-      where: {
-        createdAt: {
-          [operators.gte]: moment(deletEntrance.createdAt)
-            .subtract(3, "seconds")
-            .toString(),
-          [operators.lte]: moment(deletEntrance.createdAt)
-            .add(3, "seconds")
-            .toString()
-        }
-      },
+      where: { entranceId: id },
       order: [["serialNumber", "ASC"]],
       paranoid: false,
-      transaction
+      transaction,
     });
 
-    const equipDeletePromise = equips.map(async item => {
+    const equipDeletePromise = equips.map(async (item) => {
       if (item.deletedAt !== null || item.reserved === true) {
         field.reserved = true;
         message.reserved = "Há equipamento liberado ou reservado";
@@ -657,27 +531,18 @@ module.exports = class TechnicianDomain {
 
     await Promise.all(equipDeletePromise);
 
-    const stockBase = await StockBase.findOne({
-      where: { stockBase: deletEntrance.stockBase },
-      transaction
+    const product = await Product.findByPk(deletEntrance.productId, {
+      transaction,
     });
 
-    const productBase = await ProductBase.findOne({
-      where: {
-        productId: deletEntrance.productId,
-        stockBaseId: stockBase.id
-      },
-      transaction
-    });
-
-    if (!productBase) {
+    if (!product) {
       field.message = true;
-      message.message = "ProductBase não encontrada.";
+      message.message = "product não encontrada.";
       throw new FieldValidationError([{ field, message }]);
     } else {
-      let analysis = parseInt(productBase.analysis, 10);
-      let amount = parseInt(productBase.amount, 10);
-      let available = parseInt(productBase.available, 10);
+      let analysis = parseInt(product.analysis, 10);
+      let amount = parseInt(product.amount, 10);
+      let available = parseInt(product.available, 10);
 
       if (deletEntrance.analysis) {
         analysis = (
@@ -690,19 +555,20 @@ module.exports = class TechnicianDomain {
         ).toString();
       }
 
-      const productBaseUpdate = {
-        ...productBase,
+      const productUpdate = {
+        ...product,
         amount,
         available,
-        analysis
+        analysis,
       };
 
+      console.log("testet");
       if (analysis < 0 || amount < 0 || available < 0) {
         field.productBaseUpdate = true;
         message.productBaseUpdate = "Número negativo não é valido";
         throw new FieldValidationError([{ field, message }]);
       }
-      await productBase.update(productBaseUpdate, { transaction });
+      await product.update(productUpdate, { transaction });
     }
 
     await deletEntrance.destroy({ force: true, transaction });
@@ -714,7 +580,7 @@ module.exports = class TechnicianDomain {
     const inicialOrder = {
       field: "createdAt",
       acendent: true,
-      direction: "DESC"
+      direction: "DESC",
     };
 
     const { query = null, transaction = null } = options;
@@ -737,21 +603,18 @@ module.exports = class TechnicianDomain {
         {
           model: Product,
           where: getWhere("product"),
-          // where: { include: [{ model: Part, where: { name: 'FONT 3 V' } }] },
-          // where: getWhere('product'),
           include: [
             {
-              model: Mark
-            }
+              model: Mark,
+            },
           ],
-          // or: true,
-          required: true
-        }
+          required: true,
+        },
       ],
       order: [[newOrder.field, newOrder.direction]],
       limit,
       offset,
-      transaction
+      transaction,
     });
 
     const { rows } = entrances;
@@ -761,11 +624,11 @@ module.exports = class TechnicianDomain {
         page: null,
         show: 0,
         count: entrances.count,
-        rows: []
+        rows: [],
       };
     }
 
-    const formatDateFunct = date => {
+    const formatDateFunct = (date) => {
       moment.locale("pt-br");
       const formatDate = moment(date).format("L");
       const formatHours = moment(date).format("LT");
@@ -774,13 +637,12 @@ module.exports = class TechnicianDomain {
     };
 
     // eslint-disable-next-line consistent-return
-    const formatData = R.map(entrance => {
+    const formatData = R.map((entrance) => {
       if (entrance.product) {
         const resp = {
           id: entrance.id,
           amountAdded: entrance.amountAdded,
           oldAmount: entrance.oldAmount,
-          stockBase: entrance.stockBase,
           responsibleUser: entrance.responsibleUser,
           companyId: entrance.company.id,
           razaoSocial: entrance.company.razaoSocial,
@@ -795,7 +657,7 @@ module.exports = class TechnicianDomain {
           // eslint-disable-next-line max-len
           name: entrance.product.name,
           createdAtNotFormatted: entrance.createdAt,
-          createdAt: formatDateFunct(entrance.createdAt)
+          createdAt: formatDateFunct(entrance.createdAt),
         };
         return resp;
       }
@@ -817,7 +679,7 @@ module.exports = class TechnicianDomain {
       page: pageResponse,
       show,
       count: entrances.count,
-      rows: entrancesList
+      rows: entrancesList,
     };
 
     return response;

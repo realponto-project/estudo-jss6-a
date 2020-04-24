@@ -1,7 +1,7 @@
-const Sequelize = require('sequelize')
+const Sequelize = require("sequelize");
 
 module.exports = (sequelize) => {
-  const technicianReserve = sequelize.define('technicianReserve', {
+  const technicianReserve = sequelize.define("technicianReserve", {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,
@@ -19,18 +19,18 @@ module.exports = (sequelize) => {
       defaultValue: new Date(),
       timestamps: false,
     },
-  })
+  });
 
   technicianReserve.associate = (models) => {
-    technicianReserve.belongsToMany(models.productBase, {
-      through: 'technicianReserveParts',
-    })
+    technicianReserve.belongsToMany(models.product, {
+      through: "technicianReserveParts",
+    });
     technicianReserve.belongsTo(models.technician, {
       foreignKey: {
         allowNull: false,
       },
-    })
-  }
+    });
+  };
 
-  return technicianReserve
-}
+  return technicianReserve;
+};

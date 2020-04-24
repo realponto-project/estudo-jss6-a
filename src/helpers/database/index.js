@@ -8,8 +8,6 @@ const typeAccount = new TypeAccount();
 const userDomain = new UserDomain();
 const statusExpeditionDomain = new StatusExpeditionDomain();
 
-const StockBase = db.model("stockBase");
-
 const dropAllTable = () => db.dropAllSchemas();
 
 const isDatabaseConnected = () => db.authenticate();
@@ -53,7 +51,7 @@ const createUserAdmin = async () => {
     gerROs: true,
     delROs: true,
     updateRos: true,
-    addStatus: true
+    addStatus: true,
   };
 
   await typeAccount.add(typeAccountMock);
@@ -88,14 +86,9 @@ const createUserAdmin = async () => {
     gerROs: true,
     delROs: true,
     updateRos: true,
-    addStatus: true
+    addStatus: true,
   };
   await userDomain.user_Create(userAdmin);
-
-  await StockBase.create({ stockBase: "EMPRESTIMO" });
-  await StockBase.create({ stockBase: "REALPONTO" });
-  await StockBase.create({ stockBase: "NOVAREAL" });
-  await StockBase.create({ stockBase: "PONTOREAL" });
 
   await statusExpeditionDomain.add({ status: "venda" });
 };
@@ -105,5 +98,5 @@ module.exports = {
   forceCreateTables,
   dropAndDisconnectDatabase,
   dropAllTable,
-  createUserAdmin
+  createUserAdmin,
 };
