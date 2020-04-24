@@ -105,69 +105,69 @@ module.exports = class StockDomain {
     return response;
   }
 
-  async getAllNotification(options = {}) {
-    const inicialOrder = {
-      field: "createdAt",
-      acendent: true,
-      direction: "DESC",
-    };
+  // async getAllNotification(options = {}) {
+  //   const inicialOrder = {
+  //     field: "createdAt",
+  //     acendent: true,
+  //     direction: "DESC",
+  //   };
 
-    const { query = null, transaction = null } = options;
+  //   const { query = null, transaction = null } = options;
 
-    const newQuery = Object.assign({}, query);
-    const newOrder = query && query.order ? query.order : inicialOrder;
+  //   const newQuery = Object.assign({}, query);
+  //   const newOrder = query && query.order ? query.order : inicialOrder;
 
-    if (newOrder.acendent) {
-      newOrder.direction = "DESC";
-    } else {
-      newOrder.direction = "ASC";
-    }
+  //   if (newOrder.acendent) {
+  //     newOrder.direction = "DESC";
+  //   } else {
+  //     newOrder.direction = "ASC";
+  //   }
 
-    const { limit, offset, pageResponse } = formatQuery(newQuery);
+  //   const { limit, offset, pageResponse } = formatQuery(newQuery);
 
-    const notifications = await Notification.findAndCountAll({
-      // attributes: ['id', 'amount', 'available'],
-      order: [[newOrder.field, newOrder.direction]],
-      limit,
-      offset,
-      transaction,
-    });
+  //   const notifications = await Notification.findAndCountAll({
+  //     // attributes: ['id', 'amount', 'available'],
+  //     order: [[newOrder.field, newOrder.direction]],
+  //     limit,
+  //     offset,
+  //     transaction,
+  //   });
 
-    const { rows } = notifications;
+  //   const { rows } = notifications;
 
-    if (rows.length === 0) {
-      return {
-        page: null,
-        show: 0,
-        count: notifications.count,
-        rows: [],
-      };
-    }
+  //   if (rows.length === 0) {
+  //     return {
+  //       page: null,
+  //       show: 0,
+  //       count: notifications.count,
+  //       rows: [],
+  //     };
+  //   }
 
-    const formatData = R.map((entrance) => {
-      const resp = {
-        id: entrance.id,
-        message: entrance.message,
-      };
-      return resp;
-    });
+  //   const formatData = R.map((entrance) => {
+  //     const resp = {
+  //       id: entrance.id,
+  //       message: entrance.message,
+  //     };
+  //     return resp;
+  //   });
 
-    const notificationsList = formatData(rows);
+  //   const notificationsList = formatData(rows);
 
-    let show = limit;
-    if (notifications.count < show) {
-      show = notifications.count;
-    }
+  //   let show = limit;
+  //   if (notifications.count < show) {
+  //     show = notifications.count;
+  //   }
 
-    const response = {
-      page: pageResponse,
-      show,
-      count: notifications.count,
-      rows: notificationsList,
-    };
+  //   const response = {
+  //     page: pageResponse,
+  //     show,
+  //     count: notifications.count,
+  //     rows: notificationsList,
+  //   };
 
-    return response;
-  }
+  //   return response;
+  // }
 
   async updatteProductBase(body, options = {}) {
     const { transaction = null } = options;
@@ -189,14 +189,14 @@ module.exports = class StockDomain {
       serialNumbers: false,
     };
 
-    let productBase = null;
+    let product = null;
 
     if (bodyNotHasProp("id") || !body.id) {
       errors = true;
       field.id = true;
       message.id = "";
     } else {
-      productBase = await ProductBase.findByPk(body.id, { transaction });
+      product = await Product.findByPk(body.id, { transaction });
     }
 
     if (
@@ -240,7 +240,7 @@ module.exports = class StockDomain {
 
     const serialNumbersCreatePromises = serialNumbers.map(async (item) => {
       const equipCreate = {
-        productBaseId: productBase.id,
+        productId: product.id,
         serialNumber: item,
         loan: false,
       };
@@ -249,17 +249,15 @@ module.exports = class StockDomain {
     });
     await Promise.all(serialNumbersCreatePromises);
 
-    const analysis = (
-      parseInt(productBase.analysis, 10) - body.amount
-    ).toString();
+    const analysis = (parseInt(product.analysis, 10) - body.amount).toString();
 
-    const amount = (parseInt(productBase.amount, 10) + body.amount).toString();
+    const amount = (parseInt(product.amount, 10) + body.amount).toString();
 
     const available = (
-      parseInt(productBase.available, 10) + body.amount
+      parseInt(product.available, 10) + body.amount
     ).toString();
 
-    return await productBase.update(
+    return await product.update(
       { analysis, amount, available },
       { transaction }
     );
