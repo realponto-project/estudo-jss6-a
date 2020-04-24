@@ -834,7 +834,7 @@ module.exports = class OsDomain {
         {
           model: Product,
           through: {
-            paranoid,
+            paranoid: false,
           },
         },
         {
@@ -848,8 +848,8 @@ module.exports = class OsDomain {
           through: {
             paranoid: false,
           },
-          paranoid: false,
-          // required: !getWhere("osParts"),
+          paranoid,
+          required: !getWhere("osParts"),
         },
       ],
       order: [[newOrder.field, newOrder.direction]],
@@ -976,6 +976,7 @@ module.exports = class OsDomain {
           output,
           missOut,
           return: osParts.return,
+          deletedAt: osParts.deletedAt,
           quantMax,
           status: status && status.status,
         };
@@ -1019,6 +1020,7 @@ module.exports = class OsDomain {
           output,
           missOut,
           return: osParts.return,
+          deletedAt: osParts.deletedAt,
           quantMax,
           status: status && status.status,
         };
